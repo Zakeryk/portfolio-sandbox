@@ -5,44 +5,68 @@ const projectsDir = path.join(__dirname, 'projects');
 const outputFile = path.join(__dirname, 'data.json');
 
 const getProjects = () => {
-    if (!fs.existsSync(projectsDir)) return [];
-
+    // 1. Check if Projects folder exists
+    if (!fs.existsSync(projectsDir)) {
+        console.log("❌ ERROR: Could not find a 'projects' folder at:", projectsDir);
+        return [];
+    }
+    
     const items = fs.readdirSync(projectsDir, { withFileTypes: true });
-
-    return items
+    
+    const projects = items
         .filter(item => item.isDirectory())
         .map(dir => {
             const dirPath = path.join(projectsDir, dir.name);
             const files = fs.readdirSync(dirPath);
 
-            if (files.includes('index.html')) {
-                // Default Data
-                let meta = { title: dir.name.toUpperCase().replace(/-/g, ' '), tags: [], active: true };
+            console.log(`\n📂 Checking: ${dir.name}`);
 
-                // Meta Override
-                if (files.includes('meta.json')) {
-                    try { meta = { ...meta, ...JSON.parse(fs.readFileSync(path.join(dirPath, 'meta.json'))) }; } catch (e) {}
-                }
-
-                if (meta.active === false) return null;
-
-                return {
-                    id: dir.name,
-                    path: `./projects/${dir.name}/index.html`,
-                    title: meta.title,
-                    tags: meta.tags,
-                    active: true,
-                    image: files.includes('thumb.jpg') ? `./projects/${dir.name}/thumb.jpg` : null,
-                    date: fs.statSync(dirPath).birthtime
-                };
+            // 2. Check for index.html
+            if (!files.includes('index.html')) {
+                console.log(`   ❌ SKIPPED: No index.html found inside.`);
+                return null;
             }
-            return null;
+
+            // 3. Check Meta
+            let meta = { title: dir.name, active: true };
+            if (files.includes('meta.json')) {
+                try { 
+                    const m = JSON.parse(fs.readFileSync(path.join(dirPath, 'meta.json')));
+                    meta = { ...meta, ...m };
+                    console.log(`   📄 Found meta.json (Active: ${meta.active})`);
+                } catch (e) {
+                    console.log(`   ⚠️ Error reading meta.json`);
+                }
+            }
+
+            // 4. Check Active Status
+            if (meta.active === false) {
+                console.log(`   ⛔ SKIPPED: active is set to false.`);
+                return null;
+            }
+
+            console.log(`   ✅ INCLUDED!`);
+
+            return {
+                id: dir.name,
+                path: `./projects/${dir.name}/index.html`,
+                title: meta.title.toUpperCase().replace(/-/g, ' '),
+                tags: meta.tags || ['Experiment'],
+                active: true,
+                image: files.includes('thumb.jpg') ? `./projects/${dir.name}/thumb.jpg` : null,
+                date: fs.statSync(dirPath).birthtime
+            };
         })
         .filter(Boolean)
         .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    return projects;
 };
 
-console.log("🔍 Scanning projects...");
+console.log("---------------------------------------------------");
+console.log("🔍 DIAGNOSTIC SCAN STARTED");
+console.log("---------------------------------------------------");
 const data = getProjects();
+console.log("---------------------------------------------------");
 fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
-console.log(`✅ Success! Added ${data.length} projects.`);
+console.log(`📝 Wrote ${data.length} items to data.json`);
