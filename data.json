@@ -1,7 +1,7 @@
 [
   {
     "id": "concept_grassball_2",
-    "path": "./projects/concept_grassball_2/index.html",
+    "path": "./projects/concept_grassball_2/",
     "title": "CONCEPT_GRASSBALL_2",
     "tags": [
       "Experiment"
@@ -12,7 +12,7 @@
   },
   {
     "id": "concept_dark",
-    "path": "./projects/concept_dark/index.html",
+    "path": "./projects/concept_dark/",
     "title": "CONCEPT_DARK",
     "tags": [
       "Experiment"
@@ -23,7 +23,7 @@
   },
   {
     "id": "concept_wii",
-    "path": "./projects/concept_wii/index.html",
+    "path": "./projects/concept_wii/",
     "title": "CONCEPT_WII",
     "tags": [
       "Experiment"

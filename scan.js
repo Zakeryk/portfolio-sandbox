@@ -47,7 +47,7 @@ const getProjects = () => {
 
             return {
                 id: dir.name,
-                path: `./projects/${dir.name}/index.html`,
+                path: `./projects/${dir.name}/`,
                 title: meta.title.toUpperCase().replace(/-/g, ' '),
                 tags: meta.tags || ['Experiment'],
                 active: true,
