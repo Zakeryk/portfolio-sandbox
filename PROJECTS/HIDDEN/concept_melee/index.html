@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Concept Melee</title>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="ui-layer">
+    <div id="version-info"
+      style="display: none; position: fixed; bottom: 10px; right: 10px; color: white; font-family: monospace; pointer-events: none;">
+      v0.0.1</div>
+    <!-- Overlay elements can go here -->
+  </div>
+  <div id="gui-container" style="position: fixed; top: 0; right: 0; z-index: 1000; display: none;"></div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+
+</html>

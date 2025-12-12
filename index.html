@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANDBOX | ZAK KNOWLTON</title>
+    <style>
+        /* BASE THEME */
+        :root {
+            --bg: #050505;
+            --card: #111;
+            --border: #222;
+            --text: #fff;
+            --text-dim: #666;
+            --accent: #fff;
+        }
+        body { margin: 0; background-color: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        #app { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
+
+        /* HEADER */
+        header { 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 20px; margin-bottom: 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: var(--text-dim); }
+        
+        /* CONTROLS */
+        .controls { display: flex; gap: 15px; align-items: center; }
+        .stats { font-size: 11px; font-family: monospace; color: #444; }
+        
+        button#view-toggle {
+            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+            padding: 6px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; border-radius: 4px; transition: all 0.2s;
+        }
+        button#view-toggle:hover { border-color: #555; color: #fff; }
+
+        /* GRID / LIST CONTAINER */
+        .grid { display: grid; gap: 10px; }
+
+        /* CARD SHARED STYLES */
+        .card { 
+            background: var(--card); border: 1px solid var(--border); 
+            text-decoration: none; color: inherit; display: flex; 
+            overflow: hidden; transition: transform 0.1s, border-color 0.1s;
+        }
+        .card:hover { border-color: #444; transform: translateY(-1px); }
+        .card-img { background-color: #000; background-size: cover; background-position: center; flex-shrink: 0; }
+        .card-info { padding: 15px; flex: 1; display: flex; }
+        .tag { font-size: 9px; border: 1px solid #333; padding: 2px 6px; border-radius: 4px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- MODE: LIST (DEFAULT) --- */
+        .grid.list-mode { grid-template-columns: 1fr; }
+        .grid.list-mode .card { height: 60px; border-radius: 4px; align-items: center; }
+        .grid.list-mode .card-img { height: 100%; width: 60px; border-right: 1px solid var(--border); }
+        .grid.list-mode .card-info { align-items: center; justify-content: space-between; padding: 0 20px; }
+        .grid.list-mode .card-title { font-size: 13px; font-weight: 600; }
+
+        /* --- MODE: TILES (OPTIONAL) --- */
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .grid.tile-mode .card { flex-direction: column; height: 240px; border-radius: 8px; }
+        .grid.tile-mode .card-img { width: 100%; height: 140px; border-bottom: 1px solid var(--border); }
+        .grid.tile-mode .card-info { flex-direction: column; justify-content: space-between; }
+        .grid.tile-mode .card-title { font-size: 15px; font-weight: 700; }
+
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <header>
+            <h1>PROJECTS</h1>
+            <div class="controls">
+                <div class="stats" id="status">LOADING...</div>
+                <button id="view-toggle">Switch to Tiles</button>
+            </div>
+        </header>
+
+        <div class="grid list-mode" id="project-grid">
+            </div>
+    </div>
+
+    <script>
+        // 1. Fetch & Render Data
+        fetch('./data.json')
+            .then(res => res.json())
+            .then(data => {
+                const grid = document.getElementById('project-grid');
+                document.getElementById('status').innerText = `${data.length} NODES`;
+                
+                data.forEach(p => {
+                    const card = document.createElement('a');
+                    card.href = p.path;
+                    card.className = 'card';
+                    
+                    const imgStyle = p.image ? `background-image: url('${p.image}')` : '';
+                    
+                    // Logic to handle missing images elegantly
+                    const imgDiv = p.image 
+                        ? `<div class="card-img" style="${imgStyle}"></div>` 
+                        : `<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:#333;font-size:8px;">//</div>`;
+
+                    card.innerHTML = `
+                        ${imgDiv}
+                        <div class="card-info">
+                            <div class="card-title">${p.title}</div>
+                            <span class="tag">DEV</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            })
+            .catch(err => {
+                document.getElementById('status').innerText = 'OFFLINE';
+                console.error(err);
+            });
+
+        // 2. View Toggle Logic
+        const toggleBtn = document.getElementById('view-toggle');
+        const gridContainer = document.getElementById('project-grid');
+        let isList = true;
+
+        toggleBtn.addEventListener('click', () => {
+            isList = !isList;
+            if (isList) {
+                gridContainer.classList.remove('tile-mode');
+                gridContainer.classList.add('list-mode');
+                toggleBtn.innerText = "SWITCH TO TILES";
+            } else {
+                gridContainer.classList.remove('list-mode');
+                gridContainer.classList.add('tile-mode');
+                toggleBtn.innerText = "SWITCH TO LIST";
+            }
+        });
+    </script>
+</body>
+</html>

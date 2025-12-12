@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Dashboard with Zak 3D</title>
+    <style>
+        /* --- GLOBAL DARK MODE STYLES --- */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif; /* A common modern sans-serif */
+            background-color: #1a1a1a; /* Dark background */
+            color: #e0e0e0; /* Light text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Hide scrollbars */
+        }
+
+        /* --- UI CONTAINER --- */
+        .dashboard-container {
+            width: 90vw; /* Adjust as needed */
+            max-width: 1400px; /* Max width for large screens */
+            height: 80vh; /* Adjust as needed */
+            max-height: 900px;
+            background-color: #242424; /* Darker panel background */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Main content | Listing Board */
+            gap: 20px;
+            padding: 20px;
+            box-sizing: border-box;
+            overflow: hidden; /* Important for inner scrollable areas */
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto; /* Scrollable for main content */
+            padding-right: 10px; /* Give space for scrollbar */
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2c2c2c;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .header-logo {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-tabs span {
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-tabs span.active {
+            background-color: #3a3a3a; /* Darker active tab */
+            color: #7affd4; /* Highlight color */
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-profile img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #555;
+        }
+
+        .overview-card {
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 25px;
+            height: 300px; /* Fixed height for illustration */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+            overflow: hidden; /* To contain pseudo-background */
+        }
+
+        .overview-card h2 {
+            margin: 0;
+            font-size: 1.5em;
+            color: #e0e0e0;
+        }
+
+        .overview-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-item .value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #7affd4; /* Highlight color */
+        }
+
+        .stat-item .label {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .chart-placeholder {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .listing-board-panel {
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative; /* For the canvas to position correctly */
+            overflow: hidden; /* To hide canvas overflow */
+        }
+
+        .listing-board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .listing-board-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            color: #e0e0e0;
+        }
+
+        /* --- THREE.JS CANVAS STYLES --- */
+        #threejs-canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute; /* Position within the parent .listing-board-panel */
+            top: 0;
+            left: 0;
+            z-index: 1; /* Below UI elements if any, but above panel background */
+            background-color: #1a1a1a; /* Dark background for the 3D scene */
+            border-radius: 12px; /* Match parent's border-radius */
+        }
+        #threejs-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- Placeholders for other UI elements (simple dark mode version) --- */
+        .card {
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .grid-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .mini-card {
+            background-color: #3a3a3a;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .messages-card {
+            background-color: #2c2c2c;
+            border-radius: 12px;
+            padding: 20px;
+            height: 100%; /* Fill remaining space */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #3a3a3a;
+        }
+        .message-item img {
+            width: 30px; height: 30px; border-radius: 50%; background-color: #555;
+        }
+        .message-item .text { font-size: 0.9em; }
+
+        .button {
+            background-color: #4a4a4a;
+            color: #e0e0e0;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        .tag {
+            background-color: #5a5a5a;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.7em;
+            color: #e0e0e0;
+        }
+
+        /* Placeholder styles for other elements */
+        .text-input {
+            background-color: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 8px;
+            color: #e0e0e0;
+        }
+        select {
+            background-color: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 8px;
+            color: #e0e0e0;
+            appearance: none; /* Remove default dropdown arrow */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22292.4%22 height%3D%22292.4%22%3E%3Cpath fill%3D%22%23e0e0e0%22 d%3D%22M287 69.4a17.6 17.6 0 0 0-13-5.4H18.4c-5 0-9.3 1.8-12.9 5.4A17.6 17.6 0 0 0 0 82.2c0 5 1.8 9.3 5.4 12.9l128 128c3.6 3.6 7.8 5.4 12.8 5.4s9.2-1.8 12.8-5.4l128-128c3.6-3.5 5.4-7.8 5.4-12.8 0-5-1.8-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 12px;
+        }
+
+        /* Adjust scrollbar for dark theme */
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: #2c2c2c;
+            border-radius: 10px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: #4a4a4a;
+            border-radius: 10px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: #5a5a5a;
+        }
+
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <div class="main-content">
+            <div class="header-bar">
+                <div class="header-logo">Lumina</div>
+                <div class="nav-tabs">
+                    <span class="active">Overview</span>
+                    <span>Properties</span>
+                    <span>Support</span>
+                </div>
+                <div class="user-profile">
+                    <img src="https://via.placeholder.com/30/555555/FFFFFF?text=A" alt="Alex Morgan">
+                    <span>Alex Morgan</span>
+                    <span class="tag">Online</span>
+                </div>
+            </div>
+
+            <div class="overview-card">
+                <h2>Total Volume</h2>
+                <div class="overview-stats">
+                    <div class="stat-item">
+                        <span class="value">$8,245k</span>
+                        <span class="label">Total Volume</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="value">42.1%</span>
+                        <span class="label">Engagement</span>
+                    </div>
+                </div>
+                <div class="chart-placeholder" style="margin-top: 20px;">
+                    [Charts & Data Visualizations Here]
+                </div>
+            </div>
+
+            <div class="grid-section">
+                <div class="card">
+                    <h3>Sales Statistic</h3>
+                    <div class="mini-card">Total Sales: $38.4K</div>
+                    <div class="chart-placeholder" style="height: 100px; margin-top: 10px;">[Sales Chart]</div>
+                </div>
+                <div class="messages-card">
+                    <h3>Messages</h3>
+                    <div class="message-item">
+                        <img src="https://via.placeholder.com/30/555555/FFFFFF?text=S" alt="Sarah Jenkins">
+                        <div class="text">Sarah Jenkins: Preparing opacity regarding the lett...</div>
+                    </div>
+                    <div class="message-item">
+                        <img src="https://via.placeholder.com/30/555555/FFFFFF?text=M" alt="Marcus Chen">
+                        <div class="text">Marcus Chen: Great! Glad to send the docs over.</div>
+                    </div>
+                    <div class="message-item">
+                        <img src="https://via.placeholder.com/30/555555/FFFFFF?text=E" alt="Elara Vance">
+                        <div class="text">Elara Vance: Thanks, I appreciate the update!</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Analytics Access</h3>
+                <p style="font-size:0.9em; opacity:0.8;">Gain comprehensive insights into your property performance.</p>
+                <div class="button" style="width: fit-content; margin-top: 10px;">Access Analytics</div>
+            </div>
+        </div>
+
+        <div class="listing-board-panel">
+            <div class="listing-board-header">
+                <h3>Listing Board</h3>
+                <select>
+                    <option>Recent listed</option>
+                    <option>Price high to low</option>
+                </select>
+            </div>
+
+            <div id="threejs-canvas-container">
+                <canvas id="threejs-canvas"></canvas>
+            </div>
+            </div>
+    </div>
+
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.154.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.154.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- CONFIG ---
+        const IMAGE_FILENAME = 'full_image_orb.jpg'; // Your original image with background
+        // ----------------
+
+        // Get the specific container for Three.js
+        const canvasContainer = document.getElementById('threejs-canvas-container');
+        const canvas = document.getElementById('threejs-canvas');
+
+        // 1. Setup Scene
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a); // Dark background for the 3D scene panel
+        scene.fog = new THREE.FogExp2(0x1a1a1a, 0.08);
+
+        const camera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 100);
+        camera.position.set(0, 0, 7); // Centered and pulled back
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, canvas: canvas, alpha: true });
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.1;
+
+        // 2. The Interactive Orb (Full Image on a Plane)
+        const textureLoader = new THREE.TextureLoader();
+        const fullImageTexture = textureLoader.load(IMAGE_FILENAME, (texture) => {
+            const imageAspect = texture.image.width / texture.image.height;
+            const planeHeight = 4; // Arbitrary base height for visual balance
+            const planeWidth = planeHeight * imageAspect;
+            orbPlane.scale.set(planeWidth, planeHeight, 1);
+            orbPlane.position.z = 0; // Ensure it's centered in Z
+            orbPlane.position.y = -planeHeight / 2 + 0.5; // Offset to appear "on" the ground
+        });
+        fullImageTexture.colorSpace = THREE.SRGBColorSpace;
+
+        const orbGeo = new THREE.PlaneGeometry(1, 1); // Will be scaled on texture load
+        const orbMat = new THREE.MeshBasicMaterial({ // Use BasicMaterial for direct image display
+            map: fullImageTexture,
+            transparent: false, // Image includes its own background now
+            side: THREE.DoubleSide
+        });
+        const orbPlane = new THREE.Mesh(orbGeo, orbMat);
+        orbPlane.castShadow = false; // No shadow from the 2D plane itself
+        orbPlane.receiveShadow = false;
+        scene.add(orbPlane);
+
+        // 3. Fake "Ground" Sphere for Reflection/Visual Anchor (Optional but good for depth)
+        const groundGeo = new THREE.SphereGeometry(3, 64, 64);
+        const groundMat = new THREE.MeshStandardMaterial({
+            color: 0x222222, // Dark ground color
+            roughness: 0.8,
+            metalness: 0.1
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.position.y = -3; // Position below the main orbPlane
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+
+        // 4. Lighting - Adjusted for dark mode and cinematic feel
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3); // Softer ambient
+        scene.add(ambientLight);
+
+        // Directional Key Light (from top-right, warm)
+        const dirLight = new THREE.DirectionalLight(0xffd700, 1.5); // Golden warm light
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 20;
+        dirLight.shadow.camera.left = -10;
+        dirLight.shadow.camera.right = 10;
+        dirLight.shadow.camera.top = 10;
+        dirLight.shadow.camera.bottom = -10;
+        scene.add(dirLight);
+
+        // Fill Light (from bottom-left, cool)
+        const fillLight = new THREE.DirectionalLight(0x00aaff, 0.8); // Cool blue light
+        fillLight.position.set(-5, -5, 5);
+        scene.add(fillLight);
+
+        // 5. Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.07;
+        controls.enablePan = false;
+        controls.minDistance = 3;
+        controls.maxDistance = 10;
+        // Full 360 orbit (no restrictions)
+        controls.minPolarAngle = 0;
+        controls.maxPolarAngle = Math.PI;
+
+        // 6. Animation Loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+
+            // Billboard logic: Orb plane always faces the camera
+            orbPlane.lookAt(camera.position);
+
+            // Subtle rotation for the ground sphere
+            ground.rotation.y = time * 0.05;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // 7. Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wii Concept OS</title>
+  <link rel="stylesheet" href="styles/style.css">
+  <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
+  <!-- Preload font for cleanliness -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <!-- SVG Clip Path Definition -->
+  <svg width="0" height="0" style="position: absolute;">
+    <defs>
+      <clipPath id="curved-bottom" clipPathUnits="objectBoundingBox">
+        <!-- Tab proportions with gradual curves: 10% raised, gradual transition, 60% lowered, gradual transition, 10% raised -->
+        <path d="
+          M 0,0
+          L 0,0.75
+          L 0.1,0.75
+          C 0.13,0.75 0.18,0.82 0.25,0.95
+          L 0.75,0.95
+          C 0.82,0.82 0.87,0.75 0.9,0.75
+          L 1,0.75
+          L 1,0
+          Z
+        " />
+      </clipPath>
+    </defs>
+  </svg>
+
+  <div id="scene-container">
+    <div id="primary-panel">
+      <div id="canvas-wrapper">
+        <!-- Canvas will be injected here by JS -->
+      </div>
+      <div id="clock"></div>
+    </div>
+
+    <!-- Curved border overlay -->
+    <svg id="curved-border"
+      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15;">
+      <path id="border-path" fill="none" stroke="#7ec1d9" stroke-width="3" />
+    </svg>
+
+    <div id="instructions"
+      style="position: fixed; bottom: 20px; left: 20px; color: white; font-size: 12px; z-index: 100;">
+      [~] Toggle Controls
+    </div>
+  </div>
+  <img id="custom-cursor" src="assets/wiicursor_sprite.png" alt="cursor">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+
+  <script type="importmap">
+        {
+          "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+          }
+        }
+    </script>
+  <script type="module" src="scripts/main.js"></script>
+</body>
+
+</html>
