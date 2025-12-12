@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SANDBOX | ZAK KNOWLTON</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <style>
         /* BASE THEME */
         :root {
             --bg: #050505;
             --card: #111;
             --border: #222;
-            --text: #fff;
+            --text: #eee;
             --text-dim: #666;
             --accent: #fff;
         }
@@ -47,26 +48,52 @@
             overflow: hidden; transition: transform 0.1s, border-color 0.1s;
         }
         .card:hover { border-color: #444; transform: translateY(-1px); }
-        .card-img { background-color: #000; background-size: cover; background-position: center; flex-shrink: 0; }
-        .card-info { padding: 15px; flex: 1; display: flex; }
-        .tag { font-size: 9px; border: 1px solid #333; padding: 2px 6px; border-radius: 4px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-title { font-size: 13px; font-weight: 600; letter-spacing: 0.5px;}
+        .card-meta { display: flex; align-items: center; gap: 10px; }
 
-        /* --- MODE: LIST (DEFAULT) --- */
+        .tag { 
+            font-size: 9px; border: 1px solid #333; padding: 3px 6px; 
+            border-radius: 4px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .date { font-size: 10px; color: #444; font-family: monospace; }
+
+        /* --- MODE: LIST (Compact) --- */
         .grid.list-mode { grid-template-columns: 1fr; }
-        .grid.list-mode .card { height: 60px; border-radius: 4px; align-items: center; }
-        .grid.list-mode .card-img { height: 100%; width: 60px; border-right: 1px solid var(--border); }
-        .grid.list-mode .card-info { align-items: center; justify-content: space-between; padding: 0 20px; }
-        .grid.list-mode .card-title { font-size: 13px; font-weight: 600; }
+        .grid.list-mode .card { height: 50px; border-radius: 4px; align-items: center; }
+        .grid.list-mode .card-img { display: none; } /* No images in list mode for cleaner look, or keep if you prefer */
+        
+        /* If you WANT images in list mode, uncomment below and remove line above */
+        /* .grid.list-mode .card-img { height: 100%; width: 50px; background-size: cover; border-right: 1px solid var(--border); } 
+        */
 
-        /* --- MODE: TILES (OPTIONAL) --- */
-        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .grid.tile-mode .card { flex-direction: column; height: 240px; border-radius: 8px; }
-        .grid.tile-mode .card-img { width: 100%; height: 140px; border-bottom: 1px solid var(--border); }
-        .grid.tile-mode .card-info { flex-direction: column; justify-content: space-between; }
-        .grid.tile-mode .card-title { font-size: 15px; font-weight: 700; }
+        .grid.list-mode .card-info { 
+            flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; 
+        }
+
+        /* --- MODE: TILES (Gallery) --- */
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .grid.tile-mode .card { flex-direction: column; height: 260px; border-radius: 8px; }
+        
+        /* IMAGE FIX: 'contain' keeps the whole square visible inside the rectangle */
+        .grid.tile-mode .card-img { 
+            width: 100%; height: 160px; 
+            background-color: #000; 
+            background-size: contain; 
+            background-repeat: no-repeat;
+            background-position: center;
+            border-bottom: 1px solid var(--border); 
+        }
+
+        .grid.tile-mode .card-info { 
+            flex: 1; padding: 15px; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+        }
+        
+        /* Push meta to bottom */
+        .grid.tile-mode .card-meta { justify-content: space-between; width: 100%; margin-top: auto; }
 
     </style>
-    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
 
@@ -79,8 +106,7 @@
             </div>
         </header>
 
-        <div class="grid list-mode" id="project-grid">
-            </div>
+        <div class="grid list-mode" id="project-grid"></div>
     </div>
 
     <script>
@@ -89,25 +115,41 @@
             .then(res => res.json())
             .then(data => {
                 const grid = document.getElementById('project-grid');
-                document.getElementById('status').innerText = `${data.length} NODES`;
                 
-                data.forEach(p => {
+                // Filter active projects only
+                const visibleProjects = data.filter(p => p.active !== false);
+
+                document.getElementById('status').innerText = `${visibleProjects.length} NODES`;
+                
+                visibleProjects.forEach(p => {
                     const card = document.createElement('a');
                     card.href = p.path;
                     card.className = 'card';
                     
-                    const imgStyle = p.image ? `background-image: url('${p.image}')` : '';
+                    // Image Handling
+                    const imgUrl = p.image || ''; 
+                    const imgStyle = imgUrl ? `background-image: url('${imgUrl}')` : '';
                     
-                    // Logic to handle missing images elegantly
-                    const imgDiv = p.image 
-                        ? `<div class="card-img" style="${imgStyle}"></div>` 
-                        : `<div class="card-img" style="display:flex;align-items:center;justify-content:center;color:#333;font-size:8px;">//</div>`;
+                    // If no image, show a subtle "//" placeholder
+                    const imgContent = imgUrl ? '' : '<span style="color:#222">//</span>';
+                    
+                    const imgDiv = `<div class="card-img" style="${imgStyle}; display:flex; align-items:center; justify-content:center;">${imgContent}</div>`;
+
+                    // Date Formatting (e.g. Dec '23)
+                    const dateObj = new Date(p.date);
+                    const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+
+                    // Tag Handling (Grab first tag or default to EXP)
+                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'EXP';
 
                     card.innerHTML = `
                         ${imgDiv}
                         <div class="card-info">
                             <div class="card-title">${p.title}</div>
-                            <span class="tag">DEV</span>
+                            <div class="card-meta">
+                                <span class="date">${dateStr}</span>
+                                <span class="tag">${mainTag}</span>
+                            </div>
                         </div>
                     `;
                     grid.appendChild(card);
