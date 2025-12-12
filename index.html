@@ -3,181 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SANDBOX | ZAK KNOWLTON</title>
+    <title>SANDBOX | R182 + BARBA</title>
+    
     <style>
-        /* --- CORE --- */
-        :root {
-            --bg: #050505;
-            --card: #0a0a0a;
-            --border: #222;
-            --active: #444;
-            --text: #e0e0e0;
-            --dim: #555;
-            --accent: #fff;
-        }
-
-        body { 
-            margin: 0; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            overflow-y: scroll;
-        }
-
-        /* NOISE GRAIN */
-        .noise {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99; opacity: 0.05;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
-        #app { max-width: 800px; margin: 0 auto; padding: 80px 20px; position: relative; z-index: 1; }
-
-        /* --- HEADER --- */
-        header { 
-            border-bottom: 1px solid var(--border); 
-            padding-bottom: 20px; margin-bottom: 40px; 
-            display: flex; justify-content: space-between; align-items: flex-end; 
-        }
-
-        .brand h1 { font-size: 12px; letter-spacing: 2px; margin: 0; color: var(--accent); font-weight: 700; }
-        .brand .sub { font-size: 10px; color: var(--dim); margin-top: 5px; font-family: monospace; }
-
-        .controls { display: flex; gap: 20px; align-items: center; }
-        .stats { font-size: 10px; font-family: monospace; color: var(--dim); }
+        :root { --bg: #050505; --card: rgba(20,20,20,0.6); --border: #333; --text: #eee; --dim: #666; --accent: #fff; }
         
-        button#view-toggle {
-            background: transparent; border: 1px solid var(--border); color: var(--dim);
-            padding: 8px 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
-            cursor: pointer; transition: all 0.2s;
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        
+        /* THE CANVAS (PERSISTENT LAYER) */
+        #canvas-container {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; /* Behind everything */
+            pointer-events: none; /* Let clicks pass through */
         }
-        button#view-toggle:hover { border-color: var(--dim); color: var(--text); }
 
-        /* --- GRID SYSTEM --- */
+        /* LAYOUT */
+        #app { max-width: 800px; margin: 0 auto; padding: 80px 20px; position: relative; z-index: 10; }
+
+        /* HEADER */
+        header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 40px; backdrop-filter: blur(5px); }
+        .brand h1 { font-size: 12px; letter-spacing: 2px; margin: 0; color: var(--accent); }
+        .controls button {
+            background: transparent; border: 1px solid var(--dim); color: var(--dim);
+            padding: 8px 12px; font-size: 9px; cursor: pointer; transition: 0.2s;
+        }
+        .controls button:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* GRID */
         .grid { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); }
-
-        /* --- CARD --- */
+        
         .card { 
-            background: var(--card); 
-            text-decoration: none; color: inherit; display: flex; 
-            position: relative; overflow: hidden;
+            background: var(--card); text-decoration: none; color: inherit; display: flex; 
+            backdrop-filter: blur(10px); /* Glassmorphism */
             transition: background 0.2s;
         }
-        .card:hover { background: #111; }
-        
-        /* THE PLACEHOLDER BOX */
+        .card:hover { background: rgba(50,50,50,0.8); }
+
         .card-visual { 
-            background: #080808; 
-            display: flex; align-items: center; justify-content: center;
-            border-right: 1px solid var(--border);
-            font-family: monospace; color: #222; font-weight: 700;
-            transition: color 0.2s;
+            background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+            font-family: monospace; color: #444; border-right: 1px solid var(--border);
         }
-        .card:hover .card-visual { color: var(--accent); }
+        .card-info { flex: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center; }
+        .card-meta { display: flex; gap: 10px; font-size: 10px; color: var(--dim); font-family: monospace; }
 
-        .card-info { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
-        .card-title { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text); }
-        .card-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
-
-        .tag { 
-            font-size: 9px; border: 1px solid #222; padding: 2px 6px; 
-            color: #666; text-transform: uppercase; letter-spacing: 0.5px; 
-        }
-        .date { font-size: 10px; color: #444; font-family: monospace; }
-
-        /* --- LIST MODE (Default) --- */
-        .grid.list-mode { grid-template-columns: 1fr; gap: 1px; }
+        /* MODES */
+        .grid.list-mode { grid-template-columns: 1fr; }
         .grid.list-mode .card { height: 64px; }
-        .grid.list-mode .card-visual { width: 64px; height: 100%; font-size: 14px; letter-spacing: -2px; }
+        .grid.list-mode .card-visual { width: 64px; height: 100%; }
         .grid.list-mode .card-info { flex-direction: row; justify-content: space-between; align-items: center; }
-        .grid.list-mode .card-meta { margin-top: 0; }
 
-        /* --- TILE MODE --- */
-        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1px; }
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
         .grid.tile-mode .card { flex-direction: column; height: 240px; }
-        .grid.tile-mode .card-visual { 
-            width: 100%; height: 160px; 
-            border-right: none; border-bottom: 1px solid var(--border); 
-            font-size: 24px; letter-spacing: -4px;
-        }
+        .grid.tile-mode .card-visual { width: 100%; height: 160px; border-right: none; border-bottom: 1px solid var(--border); font-size: 24px; }
         .grid.tile-mode .card-info { padding: 15px; justify-content: space-between; }
-        .grid.tile-mode .card-meta { width: 100%; justify-content: space-between; }
-
     </style>
+
+    <script src="https://unpkg.com/@barba/core"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
-<body>
 
-    <div class="noise"></div>
+<body data-barba="wrapper">
 
-    <div id="app">
-        <header>
-            <div class="brand">
-                <h1>ZAK.SANDBOX</h1>
-                <div class="sub">INDEX v.2.0</div>
-            </div>
-            <div class="controls">
-                <div class="stats" id="status">READING DATA...</div>
-                <button id="view-toggle">[ TILES ]</button>
-            </div>
-        </header>
+    <div id="canvas-container"></div>
 
-        <div class="grid list-mode" id="project-grid"></div>
-    </div>
+    <main data-barba="container" data-barba-namespace="home">
+        <div id="app">
+            <header>
+                <div class="brand"><h1>ZAK.SANDBOX</h1></div>
+                <div class="controls"><button id="view-toggle">[ TILES ]</button></div>
+            </header>
+
+            <div class="grid list-mode" id="project-grid">
+                </div>
+        </div>
+    </main>
 
     <script>
-        // 1. DATA LOGIC
-        // Pointing to local file. If this fails, script handles the error.
-        fetch('./data.json')
-            .then(res => res.json())
-            .then(data => {
-                const grid = document.getElementById('project-grid');
-                const projects = data.filter(p => p.active !== false);
+        const rawData = [
+            { title: "Dark Mode Ecom", date: "2025-11-20", path: "#", tag: "DEV" },
+            { title: "Three.js r182 Test", date: "2025-12-01", path: "#", tag: "3D" },
+            { title: "Barba Transition", date: "2025-12-10", path: "#", tag: "UI" },
+            { title: "Client Dashboard", date: "2025-10-15", path: "#", tag: "SaaS" }
+        ];
 
-                // Update Status
-                document.getElementById('status').innerText = `:: ${projects.length} NODES LOADED`;
-                
-                projects.forEach((p, index) => {
-                    const card = document.createElement('a');
-                    card.href = p.path;
-                    card.className = 'card';
-                    
-                    // Date Format: YY.MM.DD (ISO style is cleaner for devs)
-                    const d = new Date(p.date);
-                    const dateStr = `${d.getFullYear().toString().slice(-2)}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getDate().toString().padStart(2,'0')}`;
-                    const tag = (p.tags && p.tags.length) ? p.tags[0] : 'RAW';
+        function initApp() {
+            const grid = document.getElementById('project-grid');
+            if(!grid) return;
 
-                    card.innerHTML = `
-                        <div class="card-visual">//</div>
-                        <div class="card-info">
-                            <div class="card-title">${p.title}</div>
-                            <div class="card-meta">
-                                <span class="tag">${tag}</span>
-                                <span class="date">${dateStr}</span>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
-                });
-            })
-            .catch(err => {
-                document.getElementById('status').innerHTML = '<span style="color:red">ERR_CONNECTION_REFUSED</span>';
-                document.getElementById('project-grid').innerHTML = '<div style="padding:20px; color:#444; font-family:monospace;">Waiting for data.json...</div>';
+            // 1. Render Grid
+            grid.innerHTML = '';
+            rawData.forEach(p => {
+                const card = document.createElement('a');
+                card.href = p.path;
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-visual">//</div>
+                    <div class="card-info">
+                        <div>${p.title}</div>
+                        <div class="card-meta"><span>${p.tag}</span><span>${p.date}</span></div>
+                    </div>
+                `;
+                grid.appendChild(card);
             });
 
-        // 2. VIEW TOGGLE
-        const btn = document.getElementById('view-toggle');
-        const box = document.getElementById('project-grid');
-        let isList = true;
-
-        btn.addEventListener('click', () => {
-            isList = !isList;
-            if (isList) {
-                box.className = 'grid list-mode';
-                btn.innerText = "[ TILES ]";
-            } else {
-                box.className = 'grid tile-mode';
-                btn.innerText = "[ LIST ]";
+            // 2. Bind Toggle
+            const btn = document.getElementById('view-toggle');
+            if(btn) {
+                btn.onclick = () => {
+                    if (grid.classList.contains('list-mode')) {
+                        grid.className = 'grid tile-mode';
+                        btn.innerText = "[ LIST ]";
+                    } else {
+                        grid.className = 'grid list-mode';
+                        btn.innerText = "[ TILES ]";
+                    }
+                };
             }
+        }
+
+        // Run on initial load
+        initApp();
+    </script>
+
+    <script>
+        barba.init({
+            transitions: [{
+                name: 'fade',
+                leave(data) {
+                    return gsap.to(data.current.container, { opacity: 0, y: -20, duration: 0.4 });
+                },
+                enter(data) {
+                    return gsap.from(data.next.container, { 
+                        opacity: 0, y: 20, duration: 0.4,
+                        onStart: () => { initApp(); } // CRITICAL: Re-run UI logic
+                    });
+                }
+            }]
         });
     </script>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.182.0/build/three.module.js" } }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        // Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Fog to blend deep into background
+        scene.fog = new THREE.FogExp2(0x050505, 0.08);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+        camera.position.z = 15;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Object: Wireframe Icosahedron (Cyber/Node vibe)
+        const geo = new THREE.IcosahedronGeometry(6, 2);
+        const mat = new THREE.MeshBasicMaterial({ 
+            color: 0x333333, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        scene.add(mesh);
+
+        // Animation
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            
+            mesh.rotation.y = t * 0.05;
+            mesh.rotation.x = Math.sin(t * 0.1) * 0.1;
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+
 </body>
 </html>
