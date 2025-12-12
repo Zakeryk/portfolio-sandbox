@@ -1,13 +1,13 @@
 [
   {
-    "id": "concept_grassball_2",
-    "path": "./projects/concept_grassball_2/index.html",
-    "title": "CONCEPT_GRASSBALL_2",
+    "id": "concept_grassball",
+    "path": "./projects/concept_grassball/index.html",
+    "title": "CONCEPT_GRASSBALL",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_grassball_2/thumb.jpg",
+    "image": "./projects/concept_grassball/thumb.jpg",
     "date": "2025-12-12T19:07:00.674Z"
   },
   {
