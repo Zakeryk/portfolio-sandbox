@@ -4,113 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SANDBOX | ZAK KNOWLTON</title>
-    <link rel="icon" type="image/png" href="favicon.png">
     <style>
-        /* BASE THEME */
+        /* --- CORE --- */
         :root {
             --bg: #050505;
-            --card: #111;
+            --card: #0a0a0a;
             --border: #222;
-            --text: #eee;
-            --text-dim: #666;
+            --active: #444;
+            --text: #e0e0e0;
+            --dim: #555;
             --accent: #fff;
         }
-        body { margin: 0; background-color: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-        
-        #app { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
 
-        /* HEADER */
+        body { 
+            margin: 0; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            overflow-y: scroll;
+        }
+
+        /* NOISE GRAIN */
+        .noise {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99; opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        #app { max-width: 800px; margin: 0 auto; padding: 80px 20px; position: relative; z-index: 1; }
+
+        /* --- HEADER --- */
         header { 
             border-bottom: 1px solid var(--border); 
-            padding-bottom: 20px; margin-bottom: 30px; 
-            display: flex; justify-content: space-between; align-items: center; 
+            padding-bottom: 20px; margin-bottom: 40px; 
+            display: flex; justify-content: space-between; align-items: flex-end; 
         }
-        h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: var(--text-dim); }
-        
-        /* CONTROLS */
-        .controls { display: flex; gap: 15px; align-items: center; }
-        .stats { font-size: 11px; font-family: monospace; color: #444; }
+
+        .brand h1 { font-size: 12px; letter-spacing: 2px; margin: 0; color: var(--accent); font-weight: 700; }
+        .brand .sub { font-size: 10px; color: var(--dim); margin-top: 5px; font-family: monospace; }
+
+        .controls { display: flex; gap: 20px; align-items: center; }
+        .stats { font-size: 10px; font-family: monospace; color: var(--dim); }
         
         button#view-toggle {
-            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-            padding: 6px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-            cursor: pointer; border-radius: 4px; transition: all 0.2s;
+            background: transparent; border: 1px solid var(--border); color: var(--dim);
+            padding: 8px 12px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; transition: all 0.2s;
         }
-        button#view-toggle:hover { border-color: #555; color: #fff; }
+        button#view-toggle:hover { border-color: var(--dim); color: var(--text); }
 
-        /* GRID / LIST CONTAINER */
-        .grid { display: grid; gap: 10px; }
+        /* --- GRID SYSTEM --- */
+        .grid { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); }
 
-        /* CARD SHARED STYLES */
+        /* --- CARD --- */
         .card { 
-            background: var(--card); border: 1px solid var(--border); 
+            background: var(--card); 
             text-decoration: none; color: inherit; display: flex; 
-            overflow: hidden; transition: transform 0.1s, border-color 0.1s;
+            position: relative; overflow: hidden;
+            transition: background 0.2s;
         }
-        .card:hover { border-color: #444; transform: translateY(-1px); }
-        .card-title { font-size: 13px; font-weight: 600; letter-spacing: 0.5px;}
-        .card-meta { display: flex; align-items: center; gap: 10px; }
-        .card-img { 
-            background-color: #000; 
-            background-repeat: no-repeat; 
-            background-position: center; 
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .card:hover { background: #111; }
+        
+        /* THE PLACEHOLDER BOX */
+        .card-visual { 
+            background: #080808; 
+            display: flex; align-items: center; justify-content: center;
+            border-right: 1px solid var(--border);
+            font-family: monospace; color: #222; font-weight: 700;
+            transition: color 0.2s;
         }
+        .card:hover .card-visual { color: var(--accent); }
+
+        .card-info { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 20px; }
+        .card-title { font-size: 13px; font-weight: 500; letter-spacing: 0.5px; color: var(--text); }
+        .card-meta { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
 
         .tag { 
-            font-size: 9px; border: 1px solid #333; padding: 3px 6px; 
-            border-radius: 4px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;
-            white-space: nowrap;
+            font-size: 9px; border: 1px solid #222; padding: 2px 6px; 
+            color: #666; text-transform: uppercase; letter-spacing: 0.5px; 
         }
         .date { font-size: 10px; color: #444; font-family: monospace; }
 
-        /* --- MODE: LIST (Compact) --- */
-        .grid.list-mode { grid-template-columns: 1fr; }
-        .grid.list-mode .card { height: 60px; border-radius: 4px; align-items: center; }
-        
-        /* LIST IMAGE STYLES */
-        .grid.list-mode .card-img { 
-            width: 60px; 
-            height: 100%; 
-            border-right: 1px solid var(--border); 
-            background-size: cover; /* Fill the square */
-        }
+        /* --- LIST MODE (Default) --- */
+        .grid.list-mode { grid-template-columns: 1fr; gap: 1px; }
+        .grid.list-mode .card { height: 64px; }
+        .grid.list-mode .card-visual { width: 64px; height: 100%; font-size: 14px; letter-spacing: -2px; }
+        .grid.list-mode .card-info { flex-direction: row; justify-content: space-between; align-items: center; }
+        .grid.list-mode .card-meta { margin-top: 0; }
 
-        .grid.list-mode .card-info { 
-            flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; 
-        }
-
-        /* --- MODE: TILES (Gallery) --- */
-        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .grid.tile-mode .card { flex-direction: column; height: 260px; border-radius: 8px; }
-        
-        /* TILE IMAGE STYLES */
-        .grid.tile-mode .card-img { 
+        /* --- TILE MODE --- */
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1px; }
+        .grid.tile-mode .card { flex-direction: column; height: 240px; }
+        .grid.tile-mode .card-visual { 
             width: 100%; height: 160px; 
-            border-bottom: 1px solid var(--border); 
-            background-size: contain; /* Don't crop sprites */
+            border-right: none; border-bottom: 1px solid var(--border); 
+            font-size: 24px; letter-spacing: -4px;
         }
-
-        .grid.tile-mode .card-info { 
-            flex: 1; padding: 15px; 
-            display: flex; flex-direction: column; justify-content: space-between; 
-        }
-        
-        .grid.tile-mode .card-meta { justify-content: space-between; width: 100%; margin-top: auto; }
+        .grid.tile-mode .card-info { padding: 15px; justify-content: space-between; }
+        .grid.tile-mode .card-meta { width: 100%; justify-content: space-between; }
 
     </style>
 </head>
 <body>
 
+    <div class="noise"></div>
+
     <div id="app">
         <header>
-            <h1>PROJECT SANDBOX</h1>
+            <div class="brand">
+                <h1>ZAK.SANDBOX</h1>
+                <div class="sub">INDEX v.2.0</div>
+            </div>
             <div class="controls">
-                <div class="stats" id="status">LOADING...</div>
-                <button id="view-toggle">Switch to Tiles</button>
+                <div class="stats" id="status">READING DATA...</div>
+                <button id="view-toggle">[ TILES ]</button>
             </div>
         </header>
 
@@ -118,49 +124,34 @@
     </div>
 
     <script>
-        // 1. Fetch & Render Data
+        // 1. DATA LOGIC
+        // Pointing to local file. If this fails, script handles the error.
         fetch('./data.json')
             .then(res => res.json())
             .then(data => {
                 const grid = document.getElementById('project-grid');
-                
-                // Filter active projects only
-                const visibleProjects = data.filter(p => p.active !== false);
+                const projects = data.filter(p => p.active !== false);
 
-                document.getElementById('status').innerText = `${visibleProjects.length} NODES`;
+                // Update Status
+                document.getElementById('status').innerText = `:: ${projects.length} NODES LOADED`;
                 
-                visibleProjects.forEach(p => {
+                projects.forEach((p, index) => {
                     const card = document.createElement('a');
                     card.href = p.path;
                     card.className = 'card';
                     
-                    // Image Handling
-                    const imgUrl = p.image || ''; 
-                    const imgStyle = imgUrl ? `background-image: url('${imgUrl}')` : '';
-                    
-                    // The Placeholder: Shows // if no image exists
-                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">//</span>';
-                    
-                    // Apply styles
-                    const imgDiv = `<div class="card-img" style="${imgStyle}">${imgContent}</div>`;
-
-                    // Date Formatting (MM.DD.YY)
-                    const dateObj = new Date(p.date);
-                    const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-                    const dd = dateObj.getDate().toString().padStart(2, '0');
-                    const yy = dateObj.getFullYear().toString().slice(-2);
-                    const dateStr = `${mm}.${dd}.${yy}`;
-                    
-                    // Tag Handling
-                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'EXP';
+                    // Date Format: YY.MM.DD (ISO style is cleaner for devs)
+                    const d = new Date(p.date);
+                    const dateStr = `${d.getFullYear().toString().slice(-2)}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getDate().toString().padStart(2,'0')}`;
+                    const tag = (p.tags && p.tags.length) ? p.tags[0] : 'RAW';
 
                     card.innerHTML = `
-                        ${imgDiv}
+                        <div class="card-visual">//</div>
                         <div class="card-info">
                             <div class="card-title">${p.title}</div>
                             <div class="card-meta">
+                                <span class="tag">${tag}</span>
                                 <span class="date">${dateStr}</span>
-                                <span class="tag">${mainTag}</span>
                             </div>
                         </div>
                     `;
@@ -168,25 +159,23 @@
                 });
             })
             .catch(err => {
-                document.getElementById('status').innerText = 'OFFLINE';
-                console.error(err);
+                document.getElementById('status').innerHTML = '<span style="color:red">ERR_CONNECTION_REFUSED</span>';
+                document.getElementById('project-grid').innerHTML = '<div style="padding:20px; color:#444; font-family:monospace;">Waiting for data.json...</div>';
             });
 
-        // 2. View Toggle Logic
-        const toggleBtn = document.getElementById('view-toggle');
-        const gridContainer = document.getElementById('project-grid');
+        // 2. VIEW TOGGLE
+        const btn = document.getElementById('view-toggle');
+        const box = document.getElementById('project-grid');
         let isList = true;
 
-        toggleBtn.addEventListener('click', () => {
+        btn.addEventListener('click', () => {
             isList = !isList;
             if (isList) {
-                gridContainer.classList.remove('tile-mode');
-                gridContainer.classList.add('list-mode');
-                toggleBtn.innerText = "SWITCH TO TILES";
+                box.className = 'grid list-mode';
+                btn.innerText = "[ TILES ]";
             } else {
-                gridContainer.classList.remove('list-mode');
-                gridContainer.classList.add('tile-mode');
-                toggleBtn.innerText = "SWITCH TO LIST";
+                box.className = 'grid tile-mode';
+                btn.innerText = "[ LIST ]";
             }
         });
     </script>
