@@ -1,7 +1,9 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-# Run the SMART Deploy
+# --- 1. WEB DEPLOY (Smart FTP) ---
+echo "--------------------------------------"
+# Try to find Node in common locations
 if [ -f "/usr/local/bin/node" ]; then
     /usr/local/bin/node smart_deploy.js
 elif [ -f "/opt/homebrew/bin/node" ]; then
@@ -10,8 +12,28 @@ else
     node smart_deploy.js
 fi
 
-echo ""
-#read -n 1 -s -r -p "Press any key to close..."
+# --- 2. GITHUB SYNC ---
+echo "--------------------------------------"
+echo "🐙  CHECKING GITHUB STATUS..."
 
-# Kill the window
+# Check if there are changes to commit
+if [[ `git status --porcelain` ]]; then
+  # Add all changes
+  git add .
+  
+  # Commit with timestamp
+  git commit -m "Deploy: $(date '+%Y-%m-%d %H:%M')"
+  
+  # Push to the cloud
+  git push origin main
+  
+  echo "✅  PUSHED TO GITHUB."
+else
+  echo "✅  NO NEW CHANGES FOR GITHUB."
+fi
+
+echo "--------------------------------------"
+
+# --- 3. FINISH ---
+# Comment out the next line if you want the window to stay open on errors
 osascript -e 'tell application "Terminal" to close front window' & exit

@@ -18,7 +18,7 @@
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_dark_3d/thumb.jpg",
+    "image": null,
     "date": "2025-11-20T18:11:49.155Z"
   },
   {
@@ -29,7 +29,7 @@
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_grassball_2/thumb.jpg",
+    "image": null,
     "date": "2025-11-20T18:11:49.155Z"
   }
 ]
