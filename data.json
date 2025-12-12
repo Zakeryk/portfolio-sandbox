@@ -8,17 +8,17 @@
     ],
     "active": true,
     "image": "./projects/concept_dark/thumb.jpg",
-    "date": "2025-12-12T23:07:29.158Z"
+    "date": "2025-12-12T23:07:38.061Z"
   },
   {
-    "id": "concept_grassball_2",
-    "path": "./projects/concept_grassball_2/",
-    "title": "CONCEPT_GRASSBALL_2",
+    "id": "concept_grassball",
+    "path": "./projects/concept_grassball/",
+    "title": "CONCEPT_GRASSBALL",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_grassball_2/thumb.jpg",
+    "image": "./projects/concept_grassball/thumb.jpg",
     "date": "2025-12-12T19:07:00.674Z"
   },
   {
