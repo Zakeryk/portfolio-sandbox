@@ -49,9 +49,19 @@ async function smartDeploy() {
 
         // 3. Gather Files
         let allFiles = getAllFiles("./projects");
-        allFiles.push("index.html");
-        allFiles.push("data.json");
-        if(fs.existsSync("eyeball-favi.jpg")) allFiles.push("eyeball-favi.jpg");
+        
+        // Manual Root Files
+        const rootFiles = [
+            "index.html", 
+            "data.json", 
+            ".htaccess",      // <--- Added Security File
+            "favicon.png",    // <--- Added Favicon
+            "eyeball-favi.jpg"
+        ];
+
+        rootFiles.forEach(file => {
+            if(fs.existsSync(file)) allFiles.push(file);
+        });
 
         // 4. Compare with Cache
         const toUpload = [];
