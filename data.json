@@ -1,24 +1,24 @@
 [
   {
-    "id": "concept_grassball_3",
-    "path": "./projects/concept_grassball_3/index.html",
-    "title": "CONCEPT_GRASSBALL_3",
+    "id": "concept_grassball_2",
+    "path": "./projects/concept_grassball_2/index.html",
+    "title": "CONCEPT_GRASSBALL_2",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_grassball_3/thumb.jpg",
+    "image": "./projects/concept_grassball_2/thumb.jpg",
     "date": "2025-12-12T19:07:00.674Z"
   },
   {
-    "id": "concept_dark_3d",
-    "path": "./projects/concept_dark_3d/index.html",
-    "title": "CONCEPT_DARK_3D",
+    "id": "concept_dark",
+    "path": "./projects/concept_dark/index.html",
+    "title": "CONCEPT_DARK",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_dark_3d/thumb.jpg",
+    "image": "./projects/concept_dark/thumb.jpg",
     "date": "2025-12-12T19:05:58.562Z"
   },
   {
