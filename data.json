@@ -31,5 +31,16 @@
     "active": true,
     "image": null,
     "date": "2025-11-20T18:11:49.155Z"
+  },
+  {
+    "id": "portfolio_gemini_01",
+    "path": "./projects/portfolio_gemini_01/index.html",
+    "title": "PORTFOLIO_GEMINI_01",
+    "tags": [
+      "Experiment"
+    ],
+    "active": true,
+    "image": null,
+    "date": "2025-11-20T04:52:57.181Z"
   }
 ]
