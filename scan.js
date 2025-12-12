@@ -19,11 +19,8 @@ const getProjects = () => {
             const dirPath = path.join(projectsDir, dir.name);
             const files = fs.readdirSync(dirPath);
 
-            console.log(`\n📂 Checking: ${dir.name}`);
-
             // 2. Check for index.html
             if (!files.includes('index.html')) {
-                console.log(`   ❌ SKIPPED: No index.html found inside.`);
                 return null;
             }
 
@@ -33,19 +30,20 @@ const getProjects = () => {
                 try { 
                     const m = JSON.parse(fs.readFileSync(path.join(dirPath, 'meta.json')));
                     meta = { ...meta, ...m };
-                    console.log(`   📄 Found meta.json (Active: ${meta.active})`);
-                } catch (e) {
-                    console.log(`   ⚠️ Error reading meta.json`);
-                }
+                } catch (e) {}
             }
 
             // 4. Check Active Status
             if (meta.active === false) {
-                console.log(`   ⛔ SKIPPED: active is set to false.`);
                 return null;
             }
 
-            console.log(`   ✅ INCLUDED!`);
+            // 5. Get Last Modified Date (Check both folder and index.html)
+            const folderStats = fs.statSync(dirPath);
+            const indexStats = fs.statSync(path.join(dirPath, 'index.html'));
+            
+            // Use whichever is newer (usually the file)
+            const lastUpdated = indexStats.mtime > folderStats.mtime ? indexStats.mtime : folderStats.mtime;
 
             return {
                 id: dir.name,
@@ -54,7 +52,7 @@ const getProjects = () => {
                 tags: meta.tags || ['Experiment'],
                 active: true,
                 image: files.includes('thumb.jpg') ? `./projects/${dir.name}/thumb.jpg` : null,
-                date: fs.statSync(dirPath).birthtime
+                date: lastUpdated // <--- CHANGED TO MODIFIED DATE
             };
         })
         .filter(Boolean)
@@ -64,9 +62,7 @@ const getProjects = () => {
 };
 
 console.log("---------------------------------------------------");
-console.log("🔍 DIAGNOSTIC SCAN STARTED");
-console.log("---------------------------------------------------");
+console.log("🔍 SCANNING FOR UPDATES...");
 const data = getProjects();
-console.log("---------------------------------------------------");
 fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
-console.log(`📝 Wrote ${data.length} items to data.json`);
+console.log(`✅ Success! Index updated with ${data.length} projects.`);
