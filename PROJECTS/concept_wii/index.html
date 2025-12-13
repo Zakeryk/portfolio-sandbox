@@ -213,7 +213,7 @@
         
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-        mesh.userData.wasClicked = false; // New state property
+        mesh.userData.wasClicked = false; // Flag for click release overshoot
         
         scene.add(mesh);
         channelBlocks.push(mesh);
@@ -252,22 +252,23 @@
     window.addEventListener('mousedown', (e) => {
         if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
         
-        isMouseDown = true; // Set general mouse state
+        isMouseDown = true; 
         lastMoveTime = performance.now(); 
 
+        // Universal cursor shrink
+        cursorState.targetScale = 0.8; 
+        
         if (INTERSECTED) { 
-            // Shrink cursor when clicking a tile
-            cursorState.targetScale = 0.8; 
-            INTERSECTED.userData.wasClicked = true; // Mark block as clicked
+            // Mark tile for overshoot on release
+            INTERSECTED.userData.wasClicked = true; 
         } 
-        // Background click: cursorState.targetScale remains 1.0
     });
 
     window.addEventListener('mouseup', () => {
-        isMouseDown = false; // Clear general mouse state
+        isMouseDown = false; 
         lastMoveTime = performance.now(); 
         
-        // Cursor snaps back to normal size (1.0) on release.
+        // Universal cursor return to normal
         cursorState.targetScale = 1.0; 
     });
 
@@ -311,8 +312,8 @@
         const SPRING_TENSION = 0.2; 
         const SPRING_DAMPING = 0.75; 
         const LERP_CLICK = 0.2; 
-        const LERP_ENTER = 0.1;
-        const LERP_EXIT = 0.06; // Slow ease factor
+        const LERP_ENTER_HOVER = 0.1;
+        const LERP_EXIT_HOVER = 0.06; // Slow ease factor
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
@@ -321,13 +322,14 @@
             
             if (currentlyHovered) {
                 if (isMouseDown) {
-                    targetS = 0.95; // CLICKING
+                    targetS = 0.95; // CLICK DOWN
                 } else {
                     targetS = 1.05; // HOVERING/RELEASE
                 }
             } else {
                 targetS = 1.0; // NORMAL/EXIT
-                b.userData.wasClicked = false; // Clear click state on exit
+                // Clear click flag if cursor leaves the block
+                if (b.userData.wasClicked) b.userData.wasClicked = false; 
             }
 
             if (targetS === 0.95) {
@@ -335,11 +337,10 @@
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } 
-            else if (targetS === 1.05 && wasClicked && !isMouseDown) {
+            else if (wasClicked && targetS === 1.05) {
                 // 2. CLICK RELEASE: Rubber Band Overshoot (Spring)
-                // This state only lasts 1 frame if wasClicked is immediately reset, but the spring takes over.
-                // Resetting wasClicked will be handled by mouseup/mouseleave logic below.
-
+                // This condition guarantees spring runs exactly when the mouse is released over the tile.
+                
                 const tension = SPRING_TENSION; 
                 const damping = SPRING_DAMPING; 
                 const dist = targetS - b.scale.x;
@@ -348,17 +349,17 @@
                 const next = b.scale.x + b.userData.velocity.x;
                 b.scale.set(next, next, next);
                 
-                // Clear the state flag after spring starts
+                // Clear the flag immediately after starting the spring
                 b.userData.wasClicked = false;
             }
             else if (targetS === 1.0 && b.scale.x > 1.0) {
                 // 3. HOVER EXIT: Slow Lerp (Smooth Ease)
-                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
+                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT_HOVER);
                 b.userData.velocity.set(0,0,0);
             }
             else {
-                // 4. HOVER ENTER/General Lerp (Standard Snappy Ease)
-                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_ENTER);
+                // 4. HOVER ENTER/General Lerp
+                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_ENTER_HOVER);
                 b.userData.velocity.set(0,0,0);
             }
         });
@@ -375,7 +376,6 @@
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
         
-        // Cursor scale logic (0.2 factor)
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
         
         if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
