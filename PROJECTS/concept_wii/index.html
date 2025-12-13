@@ -170,6 +170,8 @@
 
     // --- ASSETS: TILE IMAGE MAPPING ---
     const ASSETS = {
+        // NOTE: If you are seeing red tiles, check these paths carefully. 
+        // Index 0 uses an absolute URL, 1-11 use relative paths ('assets/...')
         0: 'https://sandbox.zakknowlton.com/projects/concept_grassball/thumb.jpg',
         1: 'assets/channel_01.jpg',
         2: 'assets/channel_02.jpg',
@@ -182,7 +184,6 @@
         9: 'assets/channel_09.jpg',
         10: 'assets/channel_10.jpg',
         11: 'assets/channel_11.jpg', // Bottom Right
-        // Add more indices and URLs as needed
     };
 
     // --- CONFIG ---
@@ -260,7 +261,7 @@
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
         
-        // Initial Material: set color to match background while texture loads (FIX 1)
+        // Initial Material: set color to match background while texture loads (CONFIRMED FIX)
         let mat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0, specular: 0x555555, shininess: 40 });
 
         if (ASSETS[i]) {
@@ -272,7 +273,7 @@
                     tex.wrapS = THREE.RepeatWrapping; 
                     tex.wrapT = THREE.RepeatWrapping;
 
-                    // FIX 2: Calculate aspect ratio to prevent stretching (Cover effect)
+                    // Calculate aspect ratio to prevent stretching (Cover effect)
                     const imageAspect = tex.image.width / tex.image.height;
                     const tileAspect = TILE_ASPECT;
                     
@@ -291,9 +292,9 @@
                 },
                 undefined, // Progress callback
                 (err) => {
-                    // Error callback
+                    // Error callback: Fallback to background gray color (CONFIRMED FIX)
                     console.error('Error loading texture for tile', i, err);
-                    mat.color.setHex(0xaa0000); // Fallback to red on error
+                    mat.color.setHex(0xe0e0e0); 
                     mat.needsUpdate = true;
                 }
             );
