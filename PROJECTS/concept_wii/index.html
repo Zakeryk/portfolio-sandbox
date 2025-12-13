@@ -71,7 +71,7 @@
     
     #custom-cursor img { 
         display: block;
-        width: 46px; 
+        width: 46px; /* 30% bigger */
         height: auto;
     }
 
@@ -165,7 +165,7 @@
     
     let INTERSECTED = null;
     let cameraTween = null;
-    let lastMoveTime = performance.now(); // Track last mouse movement
+    let lastMoveTime = performance.now(); 
 
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
@@ -264,7 +264,7 @@
     window.addEventListener('mousemove', (e) => {
         cursorState.targetX = e.clientX;
         cursorState.targetY = e.clientY;
-        lastMoveTime = performance.now(); // Update last move time
+        lastMoveTime = performance.now(); 
         
         const rect = container.getBoundingClientRect();
         pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
@@ -301,35 +301,63 @@
         const SPRING_TENSION = 0.2; 
         const SPRING_DAMPING = 0.75; 
         const LERP_CLICK = 0.2; 
+        const LERP_EXIT = 0.06; // Slow ease factor
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
+            let isClickingThis = false;
+            let shouldSpring = false;
 
             if (b === INTERSECTED) {
                 if (cursorState.targetScale <= 1.0) {
                     targetS = 0.95; // CLICKING
+                    isClickingThis = true;
                 } else {
-                    targetS = 1.05; // HOVERING
+                    targetS = 1.05; // HOVERING/RELEASE
                 }
             } else {
-                targetS = 1.0; // NORMAL
+                targetS = 1.0; // NORMAL/EXIT
             }
 
-            if (targetS === 0.95) {
-                // CLICK DOWN: Sync with cursor (Fast Lerp)
+            if (isClickingThis) {
+                // 1. CLICK DOWN: Sync with cursor (Fast Lerp)
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } 
             else {
-                // HOVER/RELEASE/EXIT: Spring Physics for ALL transitions (including hover exit)
-                const current = b.scale.x;
-                const dist = targetS - current;
+                // Determine if we need to spring (click release) or slow ease (hover exit)
                 
-                b.userData.velocity.x += dist * SPRING_TENSION;
-                b.userData.velocity.x *= SPRING_DAMPING;
+                // Spring required if: 
+                // a) Coming up from compressed state (0.95 -> 1.05) OR
+                // b) Already springing (velocity is high)
+                const isClickRelease = b.scale.x < 0.99; 
                 
-                const nextS = current + b.userData.velocity.x;
-                b.scale.set(nextS, nextS, nextS);
+                if (targetS === 1.05 && isClickRelease) {
+                    // CLICK RELEASE: Rubber Band Overshoot (Spring)
+                    shouldSpring = true;
+                }
+                else if (targetS === 1.0 && b.scale.x > 1.0) {
+                    // HOVER EXIT: Slow Lerp
+                    b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
+                    b.userData.velocity.set(0,0,0);
+                }
+                else {
+                    // HOVER ENTER/General Lerp
+                    // Use a slightly faster lerp here so the initial hover is snappy
+                    b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), 0.1);
+                    b.userData.velocity.set(0,0,0);
+                }
+
+                if (shouldSpring) {
+                    const current = b.scale.x;
+                    const dist = targetS - current;
+                    
+                    b.userData.velocity.x += dist * SPRING_TENSION;
+                    b.userData.velocity.x *= SPRING_DAMPING;
+                    
+                    const nextS = current + b.userData.velocity.x;
+                    b.scale.set(nextS, nextS, nextS);
+                }
             }
         });
 
@@ -352,29 +380,19 @@
         cursorState.prevX = cursorState.x;
 
         // --- ROTATION LOGIC ---
-        const isClicking = cursorState.targetScale <= 1.0; 
         const isMoving = Math.abs(dx) > 0.001;
         const isIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
+        
+        let targetBaseRotation = -10; // Default tilt
 
-        let targetBaseRotation;
-
-        if (isClicking) {
-            targetBaseRotation = 0;
-        } else if (isMoving) {
-            targetBaseRotation = -10;
-        } else if (isIdle) {
-            targetBaseRotation = 0; 
-        } else {
-             targetBaseRotation = -10;
+        if (isIdle) {
+            targetBaseRotation = 0; // Straight when idle
         }
         
-        // Decay the tilt towards the current targetBaseRotation
-        // decayFactor = 0.1 is 10%, decayFactor = 0.2 is 20% (double the speed)
-        const decayFactor = isIdle ? 0.1 : 1; // 0.1 for slow decay when idle (half the time to return to 0)
+        const decayFactor = isIdle ? 0.1 : 1; 
         
-        // Use LERP to apply the decay effect
+        // Decay the current angle towards the targetBaseRotation
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
-
 
         const velocityTilt = dx * 2.5; 
         const targetAngle = baseRotation + velocityTilt;
