@@ -71,7 +71,7 @@
     
     #custom-cursor img { 
         display: block;
-        width: 46px; /* 30% bigger */
+        width: 46px; 
         height: auto;
     }
 
@@ -250,21 +250,24 @@
     window.addEventListener('mousedown', (e) => {
         if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
         
+        lastMoveTime = performance.now(); // Reset idle timer on click down
+
         if (INTERSECTED) { 
+            // Only shrink cursor when clicking a tile
             cursorState.targetScale = 1.0; 
-        } else {
-            cursorState.targetScale = 0.8; 
-        }
+        } 
+        // Do not touch cursor scale if clicking background (targetScale remains 1.0)
     });
 
     window.addEventListener('mouseup', () => {
+        lastMoveTime = performance.now(); // Reset idle timer on click release
         cursorState.targetScale = INTERSECTED ? 1.3 : 1.0;
     });
 
     window.addEventListener('mousemove', (e) => {
         cursorState.targetX = e.clientX;
         cursorState.targetY = e.clientY;
-        lastMoveTime = performance.now(); 
+        lastMoveTime = performance.now(); // Reset idle timer on move
         
         const rect = container.getBoundingClientRect();
         pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
@@ -306,7 +309,6 @@
         channelBlocks.forEach(b => {
             let targetS = 1.0;
             let isClickingThis = false;
-            let shouldSpring = false;
 
             if (b === INTERSECTED) {
                 if (cursorState.targetScale <= 1.0) {
@@ -325,38 +327,29 @@
                 b.userData.velocity.set(0,0,0);
             } 
             else {
-                // Determine if we need to spring (click release) or slow ease (hover exit)
-                
-                // Spring required if: 
-                // a) Coming up from compressed state (0.95 -> 1.05) OR
-                // b) Already springing (velocity is high)
-                const isClickRelease = b.scale.x < 0.99; 
-                
-                if (targetS === 1.05 && isClickRelease) {
+                // Check if coming from compressed state (requires spring)
+                const isClickRelease = b.scale.x < 0.99 && targetS > 1.0; 
+
+                if (isClickRelease) {
                     // CLICK RELEASE: Rubber Band Overshoot (Spring)
-                    shouldSpring = true;
+                    const tension = SPRING_TENSION; 
+                    const damping = SPRING_DAMPING; 
+                    const dist = targetS - b.scale.x;
+                    b.userData.velocity.x += dist * tension;
+                    b.userData.velocity.x *= damping;
+                    const next = b.scale.x + b.userData.velocity.x;
+                    b.scale.set(next, next, next);
                 }
                 else if (targetS === 1.0 && b.scale.x > 1.0) {
-                    // HOVER EXIT: Slow Lerp
+                    // HOVER EXIT: Slow Lerp (Smooth Ease)
                     b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
                     b.userData.velocity.set(0,0,0);
                 }
                 else {
                     // HOVER ENTER/General Lerp
-                    // Use a slightly faster lerp here so the initial hover is snappy
+                    // Use a standard lerp to keep hover feeling responsive
                     b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), 0.1);
                     b.userData.velocity.set(0,0,0);
-                }
-
-                if (shouldSpring) {
-                    const current = b.scale.x;
-                    const dist = targetS - current;
-                    
-                    b.userData.velocity.x += dist * SPRING_TENSION;
-                    b.userData.velocity.x *= SPRING_DAMPING;
-                    
-                    const nextS = current + b.userData.velocity.x;
-                    b.scale.set(nextS, nextS, nextS);
                 }
             }
         });
