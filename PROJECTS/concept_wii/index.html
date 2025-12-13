@@ -16,7 +16,6 @@
       width: 100%; height: 100%; overflow: hidden;
       background-color: #e0e0e0;
       font-family: 'Inter', sans-serif;
-      /* DEFAULT: Hide system cursor, use custom Wii hand */
       cursor: none; 
       user-select: none;
     }
@@ -35,6 +34,8 @@
       clip-path: url(#panel-mask);
       -webkit-clip-path: url(#panel-mask);
       filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.15));
+      /* Ensure panel is below clock */
+      z-index: 1; 
     }
 
     #canvas-wrapper { width: 100%; height: 100%; display: block; }
@@ -42,7 +43,9 @@
     #clock {
       position: absolute; bottom: 40px; right: 60px;
       font-family: 'Orbitron', sans-serif; font-size: 2.5rem;
-      color: #999; pointer-events: none; z-index: 20;
+      color: #999; pointer-events: none;
+      /* Bumped Z-Index to stay visible */
+      z-index: 30; 
     }
 
     #instructions {
@@ -56,33 +59,33 @@
       position: fixed; top: 0; left: 0;
       pointer-events: none; z-index: 9999;
       will-change: transform;
-      transform-origin: 0% 0%; /* Pivot from tip */
+      /* Pivot from top-left, but we will offset in JS/Transform */
+      transform-origin: 0% 0%; 
       transition: opacity 0.2s ease;
+    }
+    
+    /* Shift the image itself slightly if the tip isn't perfect corner */
+    #custom-cursor img {
+        display: block;
+        /* Optional: Scale image if it's too big */
+        /* width: 48px; */
     }
 
     #debug-hotspot {
-      display: none; /* Hidden by default */
+      display: none;
       position: absolute; top: -2px; left: -2px;
       width: 4px; height: 4px;
       background: red; border-radius: 50%;
     }
 
     /* --- DAT.GUI DEFAULTS --- */
-    .dg.ac { display: none !important; } /* Hidden by default */
+    .dg.ac { display: none !important; }
 
-    /* --- DEBUG MODE (Toggled via Tilde) --- */
-    body.debug-mode {
-      cursor: auto !important; /* Show System Mouse */
-    }
-    body.debug-mode .dg.ac {
-      display: block !important; /* Show GUI */
-    }
-    body.debug-mode #debug-hotspot {
-      display: block !important; /* Show Red Dot */
-    }
-    body.debug-mode #custom-cursor {
-      opacity: 0.5; /* Ghost the Wii hand */
-    }
+    /* --- DEBUG MODE --- */
+    body.debug-mode { cursor: auto !important; }
+    body.debug-mode .dg.ac { display: block !important; }
+    body.debug-mode #debug-hotspot { display: block !important; }
+    body.debug-mode #custom-cursor { opacity: 0.5; }
   </style>
 </head>
 
@@ -100,8 +103,8 @@
   <div id="scene-container">
     <div id="primary-panel">
       <div id="canvas-wrapper"></div>
-      <div id="clock">12:00</div>
     </div>
+    <div id="clock">12:00</div>
     <div id="instructions">[~] Toggle Debug Config</div>
   </div>
 
@@ -167,22 +170,20 @@
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
 
-    // --- BORDER LOGIC (Straight Line) ---
+    // --- BORDER LOGIC ---
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
         const splitY = h * PARAMS.splitHeight;
-        
-        // Mask: Box above the line
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
-        
-        // Border: Line across
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
 
-    // --- GRID ---
+    // --- GRID (20% Smaller) ---
     const COLS = 4; const ROWS = 3; const channelBlocks = [];
-    const BLOCK_WIDTH = 1.4; const BLOCK_HEIGHT = 0.9;
+    // Original: 1.4 / 0.9 -> New: 1.12 / 0.72 (20% reduction)
+    const BLOCK_WIDTH = 1.12; 
+    const BLOCK_HEIGHT = 0.72;
 
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
@@ -217,7 +218,6 @@
         updateBorders();
     });
 
-    // --- TILDE TOGGLE ---
     window.addEventListener('keydown', (e) => {
         if (e.key === '`' || e.key === '~') {
             document.body.classList.toggle('debug-mode');
@@ -225,9 +225,7 @@
     });
 
     window.addEventListener('mousedown', (e) => {
-        // If debug mode AND clicking on GUI, ignore "drag" logic
         if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
-
         if (INTERSECTED) { cursorState.targetScale = 0.85; return; }
         isDragging = true;
         previousMousePosition = { x: e.clientX, y: e.clientY };
@@ -261,11 +259,10 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Tween Logic
         if (cameraTween) {
             let t = (performance.now() - cameraTween.startTime) / cameraTween.duration;
             if (t >= 1) { t = 1; cameraTween = null; }
-            t = t === 1 ? 1 : 1 - Math.pow(2, -10 * t); // EaseOutExpo
+            t = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
             PARAMS.camX = THREE.MathUtils.lerp(cameraTween.start.camX, cameraTween.end.camX, t);
             PARAMS.camY = THREE.MathUtils.lerp(cameraTween.start.camY, cameraTween.end.camY, t);
             PARAMS.camZ = THREE.MathUtils.lerp(cameraTween.start.camZ, cameraTween.end.camZ, t);
@@ -298,7 +295,6 @@
     }
     animate();
 
-    // Cursor Physics
     const cursorEl = document.getElementById('custom-cursor');
     function animateCursor() {
         cursorState.x = cursorState.targetX;
@@ -313,13 +309,13 @@
         cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
 
         if (cursorEl) {
-            cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
+            // Added translateX(-15%) to shift image left relative to hotspot
+            cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) translateX(-15%) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
         }
         requestAnimationFrame(animateCursor);
     }
     animateCursor();
 
-    // Clock
     function updateClock() {
         const d = new Date();
         let h = d.getHours(); const m = d.getMinutes();
@@ -330,9 +326,8 @@
     }
     setInterval(updateClock, 1000);
     updateClock();
-    updateBorders(); // Init
+    updateBorders();
 
-    // --- GUI ---
     const gui = new GUI();
     const folder = gui.addFolder('Layout');
     folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateLayout);
