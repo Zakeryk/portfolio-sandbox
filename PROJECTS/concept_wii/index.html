@@ -160,7 +160,6 @@
         x: 0, y: 0, 
         prevX: 0, targetX: 0, targetY: 0, 
         angle: 0, 
-        targetAngleBase: -10, // Base rotation when idle/resting
         scale: 1, targetScale: 1 
     };
     
@@ -302,8 +301,6 @@
         const SPRING_TENSION = 0.2; 
         const SPRING_DAMPING = 0.75; 
         const LERP_CLICK = 0.2; 
-        const LERP_EXIT = 0.06;
-        const LERP_ENTER = 0.1;
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
@@ -323,25 +320,16 @@
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } 
-            else if (targetS === 1.0) {
-                // HOVER EXIT: Slower Eased Transition (Slow Lerp)
-                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
-                b.userData.velocity.set(0,0,0);
-            }
-            else if (targetS === 1.05) {
-                const isClickRelease = b.scale.x < 0.99; // Assume spring if coming from a compressed state
-
-                if (isClickRelease) {
-                    // CLICK RELEASE: Rubber Band Overshoot (Spring)
-                    const dist = 1.05 - b.scale.x;
-                    b.userData.velocity.x += dist * SPRING_TENSION;
-                    b.userData.velocity.x *= SPRING_DAMPING;
-                    const next = b.scale.x + b.userData.velocity.x;
-                    b.scale.set(next, next, next);
-                } else {
-                    // HOVER ENTER: Standard smooth ease (Lerp)
-                    b.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), LERP_ENTER);
-                }
+            else {
+                // HOVER/RELEASE/EXIT: Spring Physics for ALL transitions (including hover exit)
+                const current = b.scale.x;
+                const dist = targetS - current;
+                
+                b.userData.velocity.x += dist * SPRING_TENSION;
+                b.userData.velocity.x *= SPRING_DAMPING;
+                
+                const nextS = current + b.userData.velocity.x;
+                b.scale.set(nextS, nextS, nextS);
             }
         });
 
@@ -351,7 +339,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 1000; // 1 second timeout
+    const IDLE_TIMEOUT = 1000; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
@@ -371,17 +359,20 @@
         let targetBaseRotation;
 
         if (isClicking) {
-            targetBaseRotation = 0; // Straight when clicking
+            targetBaseRotation = 0;
         } else if (isMoving) {
-            targetBaseRotation = -10; // Tilted when moving
+            targetBaseRotation = -10;
         } else if (isIdle) {
-            targetBaseRotation = 0; // Slow return to straight when idle
+            targetBaseRotation = 0; 
         } else {
-             targetBaseRotation = -10; // Should maintain tilt until idle or click
+             targetBaseRotation = -10;
         }
         
-        // Decay the tilt towards the current targetBaseRotation if the cursor is not clicked
-        const decayFactor = isIdle ? 0.05 : 1; // Slower decay when truly idle
+        // Decay the tilt towards the current targetBaseRotation
+        // decayFactor = 0.1 is 10%, decayFactor = 0.2 is 20% (double the speed)
+        const decayFactor = isIdle ? 0.1 : 1; // 0.1 for slow decay when idle (half the time to return to 0)
+        
+        // Use LERP to apply the decay effect
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
 
 
