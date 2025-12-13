@@ -20,6 +20,35 @@
       user-select: none;
     }
 
+    /* --- BARBA SETUP (REQUIRED) --- */
+    [data-barba="wrapper"], [data-barba="container"] {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    /* --- BARBA LOADING SCREEN --- */
+    #loading-screen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-color: #7ec1d9; /* Wii blue/cyan */
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        opacity: 0; /* Hidden by default */
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 10000;
+    }
+    #loading-screen.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
     /* --- LAYOUT --- */
     #scene-container {
       position: relative;
@@ -57,7 +86,7 @@
       left: 50%;
       transform: translateX(-50%);
       font-family: 'Orbitron', sans-serif; 
-      font-size: 3rem;
+      font-size: 4.8rem;
       color: #000000; 
       pointer-events: none;
       z-index: 30; 
@@ -108,9 +137,9 @@
         color: rgba(0, 0, 0, 0.4);
         font-size: 18px;
         font-weight: 700;
-        z-index: 50; /* Above the canvas, below the cursor/GUI */
+        z-index: 50; 
         pointer-events: none;
-        display: none; /* Hidden by default */
+        display: none; 
         font-family: 'Orbitron', sans-serif;
         text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
     }
@@ -120,33 +149,39 @@
     body.debug-mode #gui-container { display: block; }
     body.debug-mode #debug-hotspot { display: block; }
     body.debug-mode #custom-cursor { opacity: 0.5; }
-    body.debug-mode .tile-index-label { display: block; } /* Show labels in debug */
+    body.debug-mode .tile-index-label { display: block; } 
 
   </style>
 </head>
 
 <body>
 
-  <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
-    <defs>
-      <clipPath id="panel-mask" clipPathUnits="userSpaceOnUse">
-        <path id="mask-path-el" d="" /> 
-      </clipPath>
-    </defs>
-    <path id="border-path-el" fill="none" stroke="#7ec1d9" stroke-width="2" stroke-linecap="square" />
-  </svg>
-
-  <div id="scene-container">
-    <div id="primary-panel">
-      <div id="canvas-wrapper"></div>
-    </div>
-    <div id="tile-label-container"></div> 
+  <div id="barba-wrapper" data-barba="wrapper">
+    <div data-barba="container" data-barba-namespace="home">
     
-    <div id="clock">12:00</div>
-    <div id="instructions">[~] Toggle Debug Config</div>
-  </div>
+      <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
+        <defs>
+          <clipPath id="panel-mask" clipPathUnits="userSpaceOnUse">
+            <path id="mask-path-el" d="" /> 
+          </clipPath>
+        </defs>
+        <path id="border-path-el" fill="none" stroke="#7ec1d9" stroke-width="2" stroke-linecap="square" />
+      </svg>
 
-  <div id="gui-container"></div>
+      <div id="scene-container">
+        <div id="primary-panel">
+          <div id="canvas-wrapper"></div>
+        </div>
+        <div id="tile-label-container"></div> 
+        
+        <div id="clock">12:00</div>
+        <div id="instructions">[~] Toggle Debug Config</div>
+      </div>
+      
+    </div>
+  </div>
+  
+  <div id="loading-screen">Loading...</div> <div id="gui-container"></div>
 
   <div id="custom-cursor">
     <img src="assets/wiicursor_sprite.png" alt="cursor">
@@ -158,7 +193,8 @@
       "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
         "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-        "dat.gui": "https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js"
+        "dat.gui": "https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js",
+        "barba": "https://cdn.jsdelivr.net/npm/@barba/core@2.9.7/dist/barba.umd.js"
       }
     }
   </script>
@@ -167,14 +203,14 @@
     import * as THREE from 'three';
     import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
     import { GUI } from 'dat.gui';
+    import barba from 'barba'; // Imported Barba
 
-    // --- ASSETS: TILE IMAGE MAPPING (UPDATED) ---
+    // --- ASSETS: TILE IMAGE MAPPING ---
     const ASSETS = {
-        // Mapped your 4 images to the first 4 slots (0-3)
         0: 'assets/channel_devil.jpg',
-        1: 'assets/channel_knot.jpg',
+        1: 'assets/channel_wii.jpg',
         2: 'assets/channel_grassball.jpg',
-        3: null,
+        3: 'assets/channel_knot.jpg',
         4: null, 
         5: null,
         6: null,
@@ -183,6 +219,15 @@
         9: null,
         10: null,
         11: null,
+    };
+    
+    // --- LINKS: TILE NAVIGATION MAPPING (NEW) ---
+    const LINKS = {
+        0: 'https://google.com', 
+        1: '/local/wii.html', // Target a local page for Barba transition
+        2: 'https://duckduckgo.com',
+        3: '/local/knot.html',
+        // Channels 4-11 have no link
     };
 
     // --- CONFIG ---
@@ -260,29 +305,23 @@
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
         
-        // Initial Material: set color to match background while texture loads
         let mat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0, specular: 0x555555, shininess: 40 });
-        const assetPath = ASSETS[i]; // Get the asset path for this index
+        const assetPath = ASSETS[i]; 
 
         if (assetPath) {
-            // Load the texture asynchronously
             textureLoader.load(assetPath, 
                 (tex) => {
-                    // Success callback
                     tex.colorSpace = THREE.SRGBColorSpace; 
                     tex.wrapS = THREE.RepeatWrapping; 
                     tex.wrapT = THREE.RepeatWrapping;
 
-                    // Calculate aspect ratio to prevent stretching (Cover effect)
                     const imageAspect = tex.image.width / tex.image.height;
                     const tileAspect = TILE_ASPECT;
                     
                     if (imageAspect / tileAspect > 1) {
-                        // Image is wider than the tile, fit height, crop width
                         tex.repeat.set(tileAspect / imageAspect, 1);
                         tex.offset.set((1 - (tileAspect / imageAspect)) / 2, 0);
                     } else {
-                        // Image is taller than the tile, fit width, crop height
                         tex.repeat.set(1, imageAspect / tileAspect);
                         tex.offset.set(0, (1 - (imageAspect / tileAspect)) / 2);
                     }
@@ -290,9 +329,8 @@
                     mat.map = tex;
                     mat.needsUpdate = true;
                 },
-                undefined, // Progress callback
+                undefined, 
                 (err) => {
-                    // Error callback: Fallback to background gray color
                     console.error('Error loading texture for tile', i, err);
                     mat.color.setHex(0xe0e0e0); 
                     mat.needsUpdate = true;
@@ -312,12 +350,11 @@
         channelBlocks.push(mesh);
         materials.push(mat); 
 
-        // --- Create Index Label Element (DOM) ---
         const labelDiv = document.createElement('div');
         labelDiv.className = 'tile-index-label';
         labelDiv.textContent = i;
         labelContainer.appendChild(labelDiv);
-        mesh.userData.label = labelDiv; // Store DOM reference for positioning
+        mesh.userData.label = labelDiv; 
     }
 
     function updateLayout() {
@@ -334,6 +371,29 @@
         });
     }
     updateLayout();
+
+    // --- BARBA TRANSITION LOGIC (NEW) ---
+    const loadingScreen = document.getElementById('loading-screen');
+
+    barba.init({
+        transitions: [{
+            name: 'tile-click-transition',
+            leave({ current }) {
+                // Show loading screen
+                loadingScreen.classList.add('is-visible');
+                
+                // Return a Promise that resolves after 1000ms (1s loading state)
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        loadingScreen.classList.remove('is-visible');
+                        resolve(); 
+                    }, 1000); 
+                });
+            },
+            // Since this is a simple cover transition, Barba handles the enter phase automatically.
+        }]
+    });
+
 
     // --- EVENTS ---
     window.addEventListener('resize', () => {
@@ -355,19 +415,24 @@
         
         isMouseDown = true; 
         lastMoveTime = performance.now(); 
-
-        // Universal cursor shrink
         cursorState.targetScale = 0.8; 
     });
 
     window.addEventListener('mouseup', () => {
         isMouseDown = false; 
         lastMoveTime = performance.now(); 
-        
-        // Universal cursor return to normal
         cursorState.targetScale = 1.0; 
         
         if (INTERSECTED) { 
+            const index = INTERSECTED.userData.index;
+            const targetLink = LINKS[index];
+
+            if (targetLink) {
+                // Use Barba to navigate and trigger the custom transition
+                barba.go(targetLink);
+            }
+            
+            // Always trigger the tile spring animation, regardless of link
             INTERSECTED.userData.wasClicked = true; 
         } 
     });
@@ -422,33 +487,26 @@
             // 1. Determine Target Scale and Spring Status
             if (currentlyHovered) {
                 if (isMouseDown) {
-                    // Click Down
                     targetS = 0.95; 
-                    // Stop spring/lerp, reset velocity on click
                     b.userData.isSpringing = false; 
                     b.userData.velocity.set(0,0,0);
                 } else {
-                    // Hover/Release
                     targetS = 1.05; 
                     
                     if (b.userData.wasClicked) {
-                        // Click was just released over this tile. Launch spring!
                         b.userData.isSpringing = true;
-                        // Launch force calculation is based on the desired overshoot scale (1.07)
                         const launchForce = OVERSHOOT_SCALE - b.scale.x;
                         b.userData.velocity.x += launchForce * 0.5; 
-                        b.userData.wasClicked = false; // Flag cleared
+                        b.userData.wasClicked = false; 
                     }
                 }
             } else {
-                // Normal/Exit
                 targetS = 1.0; 
-                b.userData.wasClicked = false; // Clear click flag if cursor leaves
+                b.userData.wasClicked = false; 
             }
             
             // 2. Apply Animation Logic
             if (b.userData.isSpringing) {
-                // Spring Physics
                 const tension = SPRING_TENSION; 
                 const damping = SPRING_DAMPING; 
                 const dist = targetS - b.scale.x;
@@ -456,7 +514,6 @@
                 b.userData.velocity.x += dist * tension;
                 b.userData.velocity.x *= damping;
                 
-                // If velocity is low and close to target, stop spring
                 if (Math.abs(b.userData.velocity.x) < 0.001 && Math.abs(dist) < 0.005) {
                     b.userData.isSpringing = false;
                     b.scale.set(targetS, targetS, targetS);
@@ -465,7 +522,6 @@
                     b.scale.set(next, next, next);
                 }
             } else {
-                // Lerp/Ease
                 let lerpFactor = currentlyHovered && isMouseDown ? LERP_CLICK : LERP_NORMAL;
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), lerpFactor);
             }
@@ -480,9 +536,7 @@
             const x = (screenPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
             const y = (-screenPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
             
-            // Position the label centered on the tile's 3D position
             if(b.userData.label) {
-                // Apply positioning using CSS transform translate3d for performance
                 b.userData.label.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${b.scale.x})`;
             }
 
@@ -494,7 +548,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 300; 
+    const IDLE_TIMEOUT = 200; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
@@ -508,20 +562,18 @@
 
         // --- ROTATION LOGIC (UPDATED) ---
         const isTrulyIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
-        // If mouse is down, it's never idle, keeping the tilt
         const isIdle = isTrulyIdle && !isMouseDown; 
         
-        let targetBaseRotation = -10; // Default tilt
+        let targetBaseRotation = -10; 
 
         if (isIdle) {
-            targetBaseRotation = 0; // Straight when idle
+            targetBaseRotation = 0; 
         }
         
         const decayFactor = isIdle ? 0.1 : 1; 
         
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
 
-        // Reduced velocity sensitivity and tighter follow
         const velocityTilt = dx * 1.5; 
         const targetAngle = baseRotation + velocityTilt;
         
