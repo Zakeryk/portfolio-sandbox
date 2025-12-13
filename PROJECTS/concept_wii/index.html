@@ -267,7 +267,7 @@
         // Universal cursor return to normal
         cursorState.targetScale = 1.0; 
         
-        // NEW FIX: Trigger spring on release if hovering a tile
+        // FIX: Trigger spring on release if hovering a tile
         if (INTERSECTED) { 
             INTERSECTED.userData.wasClicked = true; 
         } 
@@ -310,9 +310,9 @@
         }
 
         // --- HYBRID TILE PHYSICS (SPRING FIX & REDUCED INTENSITY) ---
-        const SPRING_TENSION = 0.14; // Reduced from 0.2
+        const SPRING_TENSION = 0.14; 
         const SPRING_DAMPING = 0.85; 
-        const OVERSHOOT_SCALE = 1.03; // Reduced from 1.1 
+        const OVERSHOOT_SCALE = 1.03; 
         const LERP_CLICK = 0.2; 
         const LERP_NORMAL = 0.08; 
 
@@ -390,8 +390,10 @@
         const dx = cursorState.x - cursorState.prevX;
         cursorState.prevX = cursorState.x;
 
-        // --- ROTATION LOGIC (TWEAKED) ---
-        const isIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
+        // --- ROTATION LOGIC (UPDATED) ---
+        const isTrulyIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
+        // If mouse is down, it's never idle, keeping the tilt
+        const isIdle = isTrulyIdle && !isMouseDown; 
         
         let targetBaseRotation = -10; // Default tilt
 
