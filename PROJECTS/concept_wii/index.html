@@ -71,7 +71,7 @@
     
     #custom-cursor img { 
         display: block;
-        width: 46px; 
+        width: 60px; /* 50% bigger than previous 46px */
         height: auto;
     }
 
@@ -253,15 +253,15 @@
         lastMoveTime = performance.now(); 
 
         if (INTERSECTED) { 
-            // SHRINK cursor only when clicking a tile
+            // Only shrink cursor when clicking a tile
             cursorState.targetScale = 0.8; 
         } 
-        // If not INTERSECTED, cursorState.targetScale remains 1.0 (no change)
+        // Background click does nothing to cursor size.
     });
 
     window.addEventListener('mouseup', () => {
         lastMoveTime = performance.now(); 
-        // Return cursor to its base size (1.0)
+        // Cursor snaps back to normal size (1.0) on release.
         cursorState.targetScale = 1.0; 
     });
 
@@ -312,8 +312,7 @@
             let isClickingThis = false;
 
             if (b === INTERSECTED) {
-                // Check if cursor is currently "shrunk" or is about to be released. 
-                // We use cursorState.targetScale to determine if a click is active on a tile.
+                // If cursor is shrunk (0.8), or transitioning to/from shrink (scale < 1.0), assume clicking
                 if (cursorState.targetScale === 0.8 || b.scale.x < 0.99) {
                     targetS = 0.95; // CLICKING
                     isClickingThis = true;
@@ -331,6 +330,7 @@
             } 
             else {
                 // Check if coming from compressed state (requires spring)
+                // True if scale is compressed AND target is hover size (1.05)
                 const isClickReleaseToHover = b.scale.x < 0.99 && targetS === 1.05; 
 
                 if (isClickReleaseToHover) {
@@ -362,7 +362,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 500; // Updated to 500ms per request
+    const IDLE_TIMEOUT = 500; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
@@ -378,10 +378,10 @@
         const isMoving = Math.abs(dx) > 0.001;
         const isIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
         
-        let targetBaseRotation = -10; 
+        let targetBaseRotation = -10; // Default tilt
 
         if (isIdle) {
-            targetBaseRotation = 0; 
+            targetBaseRotation = 0; // Straight when idle
         }
         
         const decayFactor = isIdle ? 0.1 : 1; 
