@@ -71,9 +71,13 @@ body {
     left: 0;
     pointer-events: none;
     z-index: 9999;
-    transform-origin: top left;
-    transform: scale(0.9) rotate(0deg);
-    transition: transform 0.1s ease;
+    will-change: transform;
+    
+    /* CRITICAL: Sets the pivot point to the finger tip (top-left) */
+    transform-origin: 0% 0%; 
+    
+    /* Optional: If your PNG has transparency padding above the finger, 
+       tweak this, e.g., 10px 5px */
 }
 
 #custom-cursor.hovering {

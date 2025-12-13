@@ -24,7 +24,7 @@ const PARAMS = {
 // --- STATE MANAGEMENT ---
 const cursorState = {
     x: 0, y: 0,
-    prevX: 0, // Used for velocity calculation since position is instant
+    prevX: 0, 
     targetX: 0, targetY: 0,
     angle: 0,
     scale: 1, targetScale: 1
@@ -54,7 +54,7 @@ camera.updateProjectionMatrix();
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(container.clientWidth, container.clientHeight);
-renderer.setPixelRatio(window.devicePixelRatio); // Crucial for crisp edges
+renderer.setPixelRatio(window.devicePixelRatio); 
 container.appendChild(renderer.domElement);
 
 // Lighting
@@ -68,37 +68,44 @@ scene.add(directionalLight);
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 
-// --- CURVED BORDER LOGIC (Unified Path) ---
+// --- BORDER LOGIC (Straight Line Fix) ---
 function updateCurvedBorder() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // We target both the mask path (inside <defs>) and the visible border path
     const borderPath = document.getElementById('border-path');
     const maskPath = document.getElementById('mask-path');
     
-    const baselineY = height * 0.75;
-    const tabBottomY = height * 0.96; 
-    const inset = 1.5; // Half of stroke width (3px)
+    // Adjust this value to move the line up/down
+    const baselineY = height * 0.85; 
+    const inset = 0; // Set to 0 for full width
 
-    // Quadratic Bezier curves for smooth "Nintendo" style geometry
+    // STRAIGHT LINE PATH
+    // Moves to left, draws straight line to right, then closes box for mask
     const d = `
         M ${inset},${baselineY}
-        L ${width * 0.12},${baselineY}
-        Q ${width * 0.22},${baselineY} ${width * 0.28},${height * 0.88}
-        L ${width * 0.32},${tabBottomY}
-        Q ${width * 0.38},${height} ${width * 0.5},${height}
-        Q ${width * 0.62},${height} ${width * 0.68},${tabBottomY}
-        L ${width * 0.72},${height * 0.88}
-        Q ${width * 0.78},${baselineY} ${width * 0.88},${baselineY}
         L ${width - inset},${baselineY}
         L ${width - inset},0
         L ${inset},0
         Z
     `;
 
-    if (borderPath) borderPath.setAttribute('d', d);
-    if (maskPath) maskPath.setAttribute('d', d);
+    if (borderPath) {
+        borderPath.setAttribute('d', d);
+        // We only want to stroke the bottom line, not the whole box
+        // But SVG paths stroke the whole perimeter.
+        // VISUAL TRICK: We draw the line separately for the border stroke
+        // and the box for the mask.
+        
+        // For the visible blue line (just a single line across):
+        const lineOnly = `M 0,${baselineY} L ${width},${baselineY}`;
+        borderPath.setAttribute('d', lineOnly);
+    }
+    
+    if (maskPath) {
+        // The mask needs to be a closed shape (the white area above the line)
+        maskPath.setAttribute('d', d);
+    }
 }
 
 // --- GRID GENERATION ---
@@ -158,26 +165,22 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('mousedown', (e) => {
-    // If we are hovering a tile, do NOT start dragging the camera
     if (INTERSECTED) {
-        cursorState.targetScale = 0.85; // Click Shrink on tile
+        cursorState.targetScale = 0.85; 
         return; 
     }
-
-    // Otherwise, drag the background
     isDragging = true;
     previousMousePosition = { x: e.clientX, y: e.clientY };
-    cursorState.targetScale = 0.85; // Click Shrink on BG
+    cursorState.targetScale = 0.85; 
 });
 
 window.addEventListener('mouseup', () => {
     isDragging = false;
-    // If hovering a tile, return to "hover" size (1.3), otherwise normal (1.0)
     cursorState.targetScale = INTERSECTED ? 1.3 : 1.0; 
 });
 
 window.addEventListener('mousemove', (e) => {
-    // 1. Instant Cursor Tracking (No delay)
+    // 1. Instant Cursor Tracking
     cursorState.targetX = e.clientX;
     cursorState.targetY = e.clientY;
     
@@ -215,14 +218,13 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
-updateCurvedBorder(); // Init border
+updateCurvedBorder();
 
-// --- KEYFRAMES / TWEENING ---
+// --- KEYFRAMES ---
 const keyframes = {
     1: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
     2: { camX: 1.5, camY: -0.5, camZ: 10, aimX: 1.5, aimY: -0.5, aimZ: 0 },
     3: { camX: 0, camY: 0, camZ: 15, aimX: 0, aimY: 0, aimZ: 0 }
-    // Add more if needed
 };
 
 function easeOutExpo(x) { return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
@@ -250,7 +252,6 @@ window.addEventListener('keydown', (e) => {
 function animate() {
     requestAnimationFrame(animate);
 
-    // 1. Handle Camera Tween
     if (cameraTween) {
         let t = (performance.now() - cameraTween.startTime) / cameraTween.duration;
         if (t >= 1) { t = 1; cameraTween = null; }
@@ -267,37 +268,27 @@ function animate() {
     camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
     camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
 
-    // 2. Raycasting (Hover Effects)
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(channelBlocks, false);
 
     if (intersects.length > 0) {
         const closestBlock = intersects[0].object;
         if (INTERSECTED !== closestBlock) {
-            // Restore previous block
             if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-            
-            // Set new block
             INTERSECTED = closestBlock;
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
             INTERSECTED.material.emissive.setHex(0x444444);
-            
-            // Mouse Interaction: If not currently clicking/dragging, expand cursor
             if (!isDragging) cursorState.targetScale = 1.3;
         }
-        // Animate block scale up
         closestBlock.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), 0.15);
     } else {
         if (INTERSECTED) {
             INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
             INTERSECTED = null;
-            
-            // Mouse Interaction: If not clicking, return to normal cursor
             if (!isDragging) cursorState.targetScale = 1.0;
         }
     }
     
-    // Animate blocks scaling back down
     channelBlocks.forEach(block => { 
         if (block !== INTERSECTED) block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), 0.1); 
     });
@@ -306,28 +297,30 @@ function animate() {
 }
 animate();
 
-// --- CURSOR PHYSICS LOOP ---
+// --- CURSOR PHYSICS LOOP (FIXED ALIGNMENT) ---
 const cursorEl = document.getElementById('custom-cursor');
 
 function animateCursor() {
-    // 1. Instant Position
+    // 1. Instant Position (Hotspot Fixed)
+    // We apply the coordinates directly. Ensure CSS 'transform-origin' is '0 0' (top-left).
     cursorState.x = cursorState.targetX;
     cursorState.y = cursorState.targetY;
 
-    // 2. Rubber Band Scale (Lerp for smoothness)
+    // 2. Rubber Band Scale
     cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
 
     // 3. Velocity Tilt 
-    // Calculate velocity based on instant change from last frame
     if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
     
     const dx = cursorState.x - cursorState.prevX;
     cursorState.prevX = cursorState.x;
 
-    const targetAngle = dx * 2.5; // Multiplier for tilt intensity
-    cursorState.angle += (targetAngle - cursorState.angle) * 0.1; // Smooth out the tilt
+    const targetAngle = dx * 2.5; 
+    cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
 
     if(cursorEl) {
+        // No centering offset here. We assume top-left of image is the pointer tip.
+        // Rotation naturally pivots around that top-left tip because of CSS transform-origin: 0 0;
         cursorEl.style.transform = `
             translate3d(${cursorState.x}px, ${cursorState.y}px, 0) 
             rotate(${cursorState.angle}deg) 
@@ -338,9 +331,9 @@ function animateCursor() {
 }
 animateCursor();
 
-// --- DEBUG GUI (Optional) ---
+// --- GUI ---
 const gui = new GUI({ closed: true });
-gui.hide(); // Hidden by default, toggle with ` key
+gui.hide();
 const folder = gui.addFolder('Grid');
 folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateLayout);
 folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateLayout);
