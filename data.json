@@ -11,14 +11,14 @@
     "date": "2025-12-13T04:37:55.475Z"
   },
   {
-    "id": "concept_dark",
-    "path": "./projects/concept_dark/",
-    "title": "CONCEPT_DARK",
+    "id": "concept_dark-ecom",
+    "path": "./projects/concept_dark-ecom/",
+    "title": "CONCEPT_DARK ECOM",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_dark/thumb.jpg",
+    "image": "./projects/concept_dark-ecom/thumb.jpg",
     "date": "2025-12-12T23:29:17.428Z"
   },
   {
