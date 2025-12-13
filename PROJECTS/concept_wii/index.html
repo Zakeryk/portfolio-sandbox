@@ -1,53 +1,424 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wii Concept OS</title>
-  <link rel="stylesheet" href="styles/style.css">
   <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* --- CSS RESET & BASE --- */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html {
+      width: 100%; height: 100%; overflow: hidden;
+      background-color: #e0e0e0;
+      font-family: 'Inter', sans-serif;
+      /* Default: Hide system cursor, use custom */
+      cursor: none; 
+    }
+
+    /* --- DEBUG MODE (Toggled via ~) --- */
+    body.debug-mode {
+      cursor: auto !important; /* Show system mouse for GUI controls */
+    }
+    body.debug-mode #custom-cursor {
+      opacity: 0.5; /* Fade custom cursor slightly */
+    }
+    body.debug-mode #debug-hotspot {
+      display: block !important; /* Show where the click registers */
+    }
+
+    /* --- LAYOUT --- */
+    #scene-container {
+      position: relative;
+      width: 100%; height: 100%;
+      z-index: 10;
+    }
+
+    #primary-panel {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+      /* This clip-path cuts the bottom shape */
+      clip-path: url(#panel-mask);
+      -webkit-clip-path: url(#panel-mask);
+      /* The shadow logic */
+      filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.15));
+    }
+
+    #canvas-wrapper {
+      width: 100%; height: 100%;
+      display: block;
+    }
+
+    /* --- CLOCK --- */
+    #clock {
+      position: absolute;
+      bottom: 40px; right: 60px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.5rem;
+      color: #999;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* --- INSTRUCTIONS --- */
+    #instructions {
+      position: fixed; bottom: 20px; left: 20px;
+      color: #aaa; font-size: 12px; z-index: 100;
+      pointer-events: none;
+      font-family: sans-serif;
+    }
+
+    /* --- CUSTOM CURSOR --- */
+    #custom-cursor {
+      position: fixed; top: 0; left: 0;
+      pointer-events: none; z-index: 9999;
+      will-change: transform;
+      transform-origin: 0% 0%; /* Key: Pivot from top-left tip */
+    }
+
+    /* Red dot to show exact click point in debug mode */
+    #debug-hotspot {
+      display: none;
+      position: absolute; top: -3px; left: -3px;
+      width: 6px; height: 6px;
+      background: red; border-radius: 50%;
+    }
+  </style>
 </head>
 
 <body>
-  <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15;">
+
+  <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
     <defs>
-      <clipPath id="curved-bottom" clipPathUnits="userSpaceOnUse">
-        <path id="mask-path" d="" /> </clipPath>
+      <clipPath id="panel-mask" clipPathUnits="userSpaceOnUse">
+        <path id="mask-path-el" d="" /> 
+      </clipPath>
     </defs>
     
-    <path id="border-path" fill="none" stroke="#7ec1d9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <path id="border-path-el" fill="none" stroke="#7ec1d9" stroke-width="2" stroke-linecap="square" />
   </svg>
 
   <div id="scene-container">
-    <div id="primary-panel" style="clip-path: url(#curved-bottom); -webkit-clip-path: url(#curved-bottom);">
+    <div id="primary-panel">
       <div id="canvas-wrapper"></div>
-      <div id="clock"></div>
+      <div id="clock">12:00</div>
     </div>
-
-    <div id="instructions"
-      style="position: fixed; bottom: 20px; left: 20px; color: white; font-size: 12px; z-index: 100;">
-      [~] Toggle Controls
-    </div>
+    
+    <div id="instructions">[~] Toggle Debug & Controls</div>
   </div>
-  
-  <img id="custom-cursor" src="assets/wiicursor_sprite.png" alt="cursor" style="position: fixed; pointer-events: none; z-index: 9999; top:0; left:0; will-change: transform;">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+  <div id="custom-cursor">
+    <img src="assets/wiicursor_sprite.png" alt="cursor" style="display: block;">
+    <div id="debug-hotspot"></div>
+  </div>
 
   <script type="importmap">
-        {
-          "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-          }
-        }
-    </script>
-  <script type="module" src="scripts/main.js"></script>
-</body>
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "dat.gui": "https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js"
+      }
+    }
+  </script>
 
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+    import { GUI } from 'dat.gui';
+
+    // --- CONFIGURATION ---
+    const PARAMS = {
+        transitionDuration: 1000,
+        camX: 0, camY: -1.5, camZ: 10,
+        aimX: 0, aimY: -1.5, aimZ: 0,
+        camZoom: 2.7,
+        gridSpacing: 1.5,
+        gridOffsetX: 0.0,
+        gridOffsetY: -1.5,
+        borderRadius: 0.018,
+        activeSlot: 1,
+        // Visuals
+        splitHeight: 0.85 // 0.85 = 85% down the screen
+    };
+
+    // --- STATE ---
+    const cursorState = {
+        x: 0, y: 0, prevX: 0,
+        targetX: 0, targetY: 0,
+        angle: 0, scale: 1, targetScale: 1
+    };
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let INTERSECTED = null;
+    let cameraTween = null;
+    let isDebug = false;
+
+    // --- SCENE SETUP ---
+    const container = document.getElementById('canvas-wrapper');
+    const scene = new THREE.Scene();
+    
+    // Ortho Camera
+    const baseSize = 5;
+    const aspect = container.clientWidth / container.clientHeight;
+    const camera = new THREE.OrthographicCamera(
+        -aspect * baseSize, aspect * baseSize,
+        baseSize, -baseSize,
+        0.1, 1000
+    );
+    camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
+    camera.zoom = PARAMS.camZoom;
+    camera.updateProjectionMatrix();
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    dirLight.position.set(5, 10, 10);
+    scene.add(dirLight);
+
+    // Raycaster
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+
+    // --- BORDER & MASK LOGIC (The "Straight Line" Fix) ---
+    function updateBorders() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        
+        // The split point (where the white panel ends and shadow begins)
+        const splitY = h * PARAMS.splitHeight;
+
+        // 1. MASK (Closed Loop)
+        // Goes: Top-Left -> Top-Right -> Split-Right -> Split-Left -> Close
+        const maskPath = `
+            M 0,0 
+            L ${w},0 
+            L ${w},${splitY} 
+            L 0,${splitY} 
+            Z
+        `;
+        document.getElementById('mask-path-el').setAttribute('d', maskPath);
+
+        // 2. BLUE LINE (Open Stroke)
+        // Just a single line at the split point
+        const borderPath = `
+            M 0,${splitY} 
+            L ${w},${splitY}
+        `;
+        document.getElementById('border-path-el').setAttribute('d', borderPath);
+    }
+
+    // --- GRID SETUP ---
+    const COLS = 4; const ROWS = 3;
+    const TOTAL_BLOCKS = COLS * ROWS;
+    const BLOCK_WIDTH = 1.4; const BLOCK_HEIGHT = 0.9;
+    const channelBlocks = [];
+
+    function createBlock(index) {
+        const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
+        const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.userData.index = index;
+        return mesh;
+    }
+
+    for(let i=0; i<TOTAL_BLOCKS; i++) {
+        const b = createBlock(i);
+        scene.add(b);
+        channelBlocks.push(b);
+    }
+
+    function updateLayout() {
+        const gap = PARAMS.gridSpacing - BLOCK_WIDTH;
+        const spacingY = gap + BLOCK_HEIGHT;
+        const totalW = (COLS - 1) * PARAMS.gridSpacing;
+        const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
+        const yOffset = ((ROWS - 1) * spacingY) / 2 + PARAMS.gridOffsetY; // Center vertically somewhat
+
+        channelBlocks.forEach((b, i) => {
+            const col = i % COLS;
+            const row = Math.floor(i / COLS);
+            b.position.set(
+                xOffset + col * PARAMS.gridSpacing,
+                yOffset - row * spacingY,
+                0
+            );
+        });
+    }
+    updateLayout();
+
+    // --- INPUTS ---
+    window.addEventListener('resize', () => {
+        const asp = container.clientWidth / container.clientHeight;
+        camera.left = -asp * baseSize; camera.right = asp * baseSize;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        updateBorders();
+    });
+
+    // Toggle Debug (~)
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '`' || e.key === '~') {
+            isDebug = !isDebug;
+            
+            // 1. Toggle Controls
+            if (gui && gui.domElement && gui.domElement.parentElement) {
+                gui.domElement.parentElement.style.display = isDebug ? 'block' : 'none';
+            }
+            
+            // 2. Toggle System Cursor & Debug Dot
+            if (isDebug) {
+                document.body.classList.add('debug-mode');
+            } else {
+                document.body.classList.remove('debug-mode');
+            }
+        }
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        if (INTERSECTED) {
+            cursorState.targetScale = 0.85; 
+            return; 
+        }
+        isDragging = true;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+        cursorState.targetScale = 0.85;
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        cursorState.targetScale = INTERSECTED ? 1.3 : 1.0;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        // Instant cursor
+        cursorState.targetX = e.clientX;
+        cursorState.targetY = e.clientY;
+
+        // Panning
+        if (isDragging) {
+            const dx = e.clientX - previousMousePosition.x;
+            const dy = e.clientY - previousMousePosition.y;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            const sens = 0.002 * PARAMS.camZoom;
+            PARAMS.camX -= dx * sens;
+            PARAMS.camY += dy * sens;
+        }
+
+        // Raycasting Pointer
+        const rect = container.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
+    });
+
+    // --- ANIMATION LOOP ---
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Tweening
+        if (cameraTween) { /* ... (implied standard tween logic) ... */ }
+
+        // Update Camera
+        camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
+        camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
+
+        // Raycasting
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(channelBlocks, false);
+
+        if (intersects.length > 0) {
+            const target = intersects[0].object;
+            if (INTERSECTED !== target) {
+                if(INTERSECTED) INTERSECTED.material.emissive.setHex(0x000000);
+                INTERSECTED = target;
+                INTERSECTED.material.emissive.setHex(0x444444);
+                if (!isDragging) cursorState.targetScale = 1.3;
+            }
+            target.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), 0.15);
+        } else {
+            if (INTERSECTED) {
+                INTERSECTED.material.emissive.setHex(0x000000);
+                INTERSECTED = null;
+                if (!isDragging) cursorState.targetScale = 1.0;
+            }
+        }
+        
+        channelBlocks.forEach(b => {
+            if (b !== INTERSECTED) b.scale.lerp(new THREE.Vector3(1,1,1), 0.1);
+        });
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // --- CURSOR PHYSICS LOOP ---
+    const cursorEl = document.getElementById('custom-cursor');
+    function animateCursor() {
+        // Instant Position
+        cursorState.x = cursorState.targetX;
+        cursorState.y = cursorState.targetY;
+
+        // Physics
+        cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
+        
+        if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
+        const dx = cursorState.x - cursorState.prevX;
+        cursorState.prevX = cursorState.x;
+
+        const targetAngle = dx * 2.5;
+        cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
+
+        if (cursorEl) {
+            // No offset needed because transform-origin is 0 0
+            cursorEl.style.transform = `
+                translate3d(${cursorState.x}px, ${cursorState.y}px, 0) 
+                rotate(${cursorState.angle}deg) 
+                scale(${cursorState.scale})
+            `;
+        }
+        requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    // --- CLOCK ---
+    function updateClock() {
+        const d = new Date();
+        let h = d.getHours(); const m = d.getMinutes();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        const mStr = m < 10 ? '0'+m : m;
+        document.getElementById('clock').innerHTML = `${h}:${mStr} <span style="font-size:0.6em">${ampm}</span>`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- GUI SETUP ---
+    const gui = new GUI({ autoPlace: false }); // Manual placement to control visibility
+    document.body.appendChild(gui.domElement);
+    gui.domElement.style.position = 'absolute';
+    gui.domElement.style.top = '10px';
+    gui.domElement.style.right = '10px';
+    gui.domElement.parentElement.style.display = 'none'; // Hidden by default
+
+    const folder = gui.addFolder('Layout');
+    folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateLayout);
+    folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateLayout);
+    folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
+    
+    // Initial Border Draw
+    updateBorders();
+  </script>
+</body>
 </html>
