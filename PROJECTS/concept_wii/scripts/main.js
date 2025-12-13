@@ -10,10 +10,10 @@ const PARAMS = {
     bgColor: 0xe0e0e0,
 
     // Layout Defaults
-    gridSpacing: 1.42, // Horizontal Center-to-Center
+    gridSpacing: 1.5, // Horizontal Center-to-Center
     gridOffsetX: 0.0,
-    gridOffsetY: -1.2,
-    borderRadius: 0.02, // Tighter corners
+    gridOffsetY: -1.5,
+    borderRadius: 0.018, // Tighter corners
     camZoom: 2.7 // Closer default
 };
 
@@ -74,13 +74,16 @@ function updateCurvedBorder() {
     const strokeWidth = 3;
     const inset = strokeWidth / 2;
 
-    // Create tab path with gradual transitions
+    // Create tab path with gradual transitions (Quadratic Bezier)
     const d = `
         M ${inset},${baselineY}
-        L ${width * 0.1},${baselineY}
-        C ${width * 0.13},${baselineY} ${width * 0.18},${height * 0.82} ${width * 0.25},${tabBottomY - inset}
-        L ${width * 0.75},${tabBottomY - inset}
-        C ${width * 0.82},${height * 0.82} ${width * 0.87},${baselineY} ${width * 0.9},${baselineY}
+        L ${width * 0.15},${baselineY}
+        Q ${width * 0.25},${baselineY} ${width * 0.30},${height * 0.90}
+        L ${width * 0.33},${tabBottomY}
+        Q ${width * 0.38},${height} ${width * 0.5},${height}
+        Q ${width * 0.62},${height} ${width * 0.67},${tabBottomY}
+        L ${width * 0.70},${height * 0.90}
+        Q ${width * 0.75},${baselineY} ${width * 0.85},${baselineY}
         L ${width - inset},${baselineY}
     `;
 
@@ -143,18 +146,10 @@ for (let i = 0; i < TOTAL_BLOCKS; i++) {
 }
 
 function updateLayout() {
-    // GAP LOGIC:
-    // GapX = SpacingX - Width
-    // We want GapY = GapX
-    // SpacingY = GapX + Height
-
     const gap = PARAMS.gridSpacing - BLOCK_WIDTH;
     const spacingY = gap + BLOCK_HEIGHT;
-
-    // Recalculate offsets to keep centered
     const totalWidth = (COLS - 1) * PARAMS.gridSpacing;
     const totalHeight = (ROWS - 1) * spacingY;
-
     const xOffset = -totalWidth / 2 + PARAMS.gridOffsetX;
     const yOffset = totalHeight / 2 + PARAMS.gridOffsetY;
 
@@ -199,7 +194,7 @@ const addSmartInput = (ctrl) => {
     const input = ctrl.domElement.querySelector('input');
     if (input) {
         input.addEventListener('keydown', (e) => {
-            e.stopPropagation(); // Prevent triggering global hotkeys (like '1') while typing
+            e.stopPropagation(); 
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 const val = ctrl.getValue();
@@ -211,12 +206,20 @@ const addSmartInput = (ctrl) => {
     return ctrl;
 };
 
-// Note: "Grid Spacing" now controls horizontal spacing; vertical is auto-matched
 addSmartInput(visFolder.add(PARAMS, 'gridSpacing', 1.0, 3.0).name('Grid Spacing').onChange(updateLayout));
 addSmartInput(visFolder.add(PARAMS, 'gridOffsetX', -5.0, 5.0, 0.01).name('Grid Offset X').onChange(updateLayout));
 addSmartInput(visFolder.add(PARAMS, 'gridOffsetY', -5.0, 5.0, 0.01).name('Grid Offset Y').onChange(updateLayout));
 visFolder.add(PARAMS, 'borderRadius', 0.0, 0.3).name('Border Radius').onChange(updateGeometry);
 visFolder.open();
+
+// --- Cursor Physics & State ---
+const cursorEl = document.getElementById('custom-cursor');
+const cursorState = {
+    x: 0, y: 0,
+    targetX: 0, targetY: 0,
+    angle: 0,
+    scale: 1, targetScale: 1
+};
 
 // --- Events ---
 window.addEventListener('keydown', (e) => {
@@ -224,44 +227,39 @@ window.addEventListener('keydown', (e) => {
     if (e.key >= '1' && e.key <= '9') loadKeyframe(parseInt(e.key));
 });
 
-// --- Panning ---
 let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 
 window.addEventListener('mousedown', (e) => {
-    // Only pan if not clicking on the GUI or an interactive element (optional refinement)
-    // For now, simple global pan
     isDragging = true;
     previousMousePosition = { x: e.clientX, y: e.clientY };
+    cursorState.targetScale = 0.85; // Click Shrink
 });
 
 window.addEventListener('mouseup', () => {
     isDragging = false;
+    cursorState.targetScale = 1.0; // Release Bounce
 });
 
 window.addEventListener('mousemove', (e) => {
+    // 1. Update Physics Targets
+    cursorState.targetX = e.clientX;
+    cursorState.targetY = e.clientY;
+
+    // 2. Handle Panning
     if (isDragging) {
         const deltaX = e.clientX - previousMousePosition.x;
         const deltaY = e.clientY - previousMousePosition.y;
         previousMousePosition = { x: e.clientX, y: e.clientY };
-
-        // Adjust sensitivity based on zoom or fixed
         const sensitivity = 0.002 * PARAMS.camZoom;
-        // Dragging moves the camera opposite to the drag direction to create "pan" effect
         PARAMS.camX -= deltaX * sensitivity;
         PARAMS.camY += deltaY * sensitivity;
     }
 
-    // Update pointer for raycasting relative to the container
+    // 3. Update pointer for ThreeJS Raycasting
     const rect = container.getBoundingClientRect();
     pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
     pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
-
-    const cursor = document.getElementById('custom-cursor');
-    if (cursor) {
-        cursor.style.left = `${e.clientX}px`;
-        cursor.style.top = `${e.clientY}px`;
-    }
 });
 
 window.addEventListener('resize', () => {
@@ -282,7 +280,7 @@ function updateClock() {
     const minutes = now.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
+    hours = hours ? hours : 12; 
     const strMinutes = minutes < 10 ? '0' + minutes : minutes;
     const timeStr = hours + ':' + strMinutes + ' <span style="font-size: 0.6em;">' + ampm + '</span>';
 
@@ -291,12 +289,9 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
-
-// Initialize curved border
 updateCurvedBorder();
 
-
-// --- Loop ---
+// --- Animation Loop (ThreeJS) ---
 function animate() {
     requestAnimationFrame(animate);
 
@@ -328,11 +323,7 @@ function animate() {
             INTERSECTED.material.emissive.setHex(0x444444);
         }
         closestBlock.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), 0.15);
-        const cursor = document.getElementById('custom-cursor');
-        if (cursor) cursor.classList.add('hovering');
     } else {
-        const cursor = document.getElementById('custom-cursor');
-        if (cursor) cursor.classList.remove('hovering');
         if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
         INTERSECTED = null;
     }
@@ -341,3 +332,34 @@ function animate() {
     renderer.render(scene, camera);
 }
 animate();
+
+// --- Cursor Physics Loop ---
+function animateCursor() {
+    // Lerp factor (0.15 = snappy but smooth)
+    const lerpFactor = 0.15;
+    
+    const dx = cursorState.targetX - cursorState.x;
+    const dy = cursorState.targetY - cursorState.y;
+    
+    cursorState.x += dx * lerpFactor;
+    cursorState.y += dy * lerpFactor;
+
+    // Rubber band scale
+    cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
+
+    // Velocity Tilt
+    const targetAngle = dx * 2.5; 
+    cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
+
+    // Apply
+    if(cursorEl) {
+        cursorEl.style.transform = `
+            translate3d(${cursorState.x}px, ${cursorState.y}px, 0) 
+            rotate(${cursorState.angle}deg) 
+            scale(${cursorState.scale})
+        `;
+    }
+
+    requestAnimationFrame(animateCursor);
+}
+animateCursor();
