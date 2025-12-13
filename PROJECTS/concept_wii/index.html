@@ -166,7 +166,7 @@
     let INTERSECTED = null;
     let cameraTween = null;
     let lastMoveTime = performance.now(); 
-    let isMouseDown = false; // Track raw mouse state
+    let isMouseDown = false; 
 
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
@@ -213,7 +213,7 @@
         
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-        mesh.userData.wasClicked = false; // Flag for click release overshoot
+        mesh.userData.wasClicked = false; 
         
         scene.add(mesh);
         channelBlocks.push(mesh);
@@ -309,11 +309,11 @@
         }
 
         // --- HYBRID TILE PHYSICS ---
-        const SPRING_TENSION = 0.2; 
-        const SPRING_DAMPING = 0.75; 
+        // Aggressive Spring for Hover and Click Release
+        const AGGRESSIVE_TENSION = 0.4; 
+        const AGGRESSIVE_DAMPING = 0.7; 
         const LERP_CLICK = 0.2; 
-        const LERP_ENTER_HOVER = 0.1;
-        const LERP_EXIT_HOVER = 0.06; // Slow ease factor
+        const LERP_NORMAL_RETURN = 0.06; // Slow ease factor for un-hovering
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
@@ -337,28 +337,29 @@
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } 
-            else if (wasClicked && targetS === 1.05) {
-                // 2. CLICK RELEASE: Rubber Band Overshoot (Spring)
-                // This condition guarantees spring runs exactly when the mouse is released over the tile.
-                
-                const tension = SPRING_TENSION; 
-                const damping = SPRING_DAMPING; 
+            else if (currentlyHovered && !isMouseDown) {
+                // 2. HOVER/RELEASE: AGGRESSIVE SPRING
+                // This covers: A) Hover enter, B) Hover stay, C) Click release (since wasClicked is checked outside)
+
+                const tension = AGGRESSIVE_TENSION; 
+                const damping = AGGRESSIVE_DAMPING; 
                 const dist = targetS - b.scale.x;
                 b.userData.velocity.x += dist * tension;
                 b.userData.velocity.x *= damping;
                 const next = b.scale.x + b.userData.velocity.x;
                 b.scale.set(next, next, next);
                 
-                // Clear the flag immediately after starting the spring
-                b.userData.wasClicked = false;
+                // We clear the flag immediately after the spring starts on release
+                if (wasClicked) b.userData.wasClicked = false;
+
             }
             else if (targetS === 1.0 && b.scale.x > 1.0) {
                 // 3. HOVER EXIT: Slow Lerp (Smooth Ease)
-                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT_HOVER);
+                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_NORMAL_RETURN);
                 b.userData.velocity.set(0,0,0);
             }
             else {
-                // 4. HOVER ENTER/General Lerp
+                // 4. NORMAL STATE: Maintain 1.0
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_ENTER_HOVER);
                 b.userData.velocity.set(0,0,0);
             }
