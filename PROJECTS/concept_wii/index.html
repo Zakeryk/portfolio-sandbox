@@ -71,7 +71,7 @@
     
     #custom-cursor img { 
         display: block;
-        width: 60px; /* 50% bigger than previous 46px */
+        width: 60px; 
         height: auto;
     }
 
@@ -166,6 +166,7 @@
     let INTERSECTED = null;
     let cameraTween = null;
     let lastMoveTime = performance.now(); 
+    let isMouseDown = false; // Track raw mouse state
 
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
@@ -212,6 +213,7 @@
         
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
+        mesh.userData.wasClicked = false; // New state property
         
         scene.add(mesh);
         channelBlocks.push(mesh);
@@ -250,17 +252,21 @@
     window.addEventListener('mousedown', (e) => {
         if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
         
+        isMouseDown = true; // Set general mouse state
         lastMoveTime = performance.now(); 
 
         if (INTERSECTED) { 
-            // Only shrink cursor when clicking a tile
+            // Shrink cursor when clicking a tile
             cursorState.targetScale = 0.8; 
+            INTERSECTED.userData.wasClicked = true; // Mark block as clicked
         } 
-        // Background click does nothing to cursor size.
+        // Background click: cursorState.targetScale remains 1.0
     });
 
     window.addEventListener('mouseup', () => {
+        isMouseDown = false; // Clear general mouse state
         lastMoveTime = performance.now(); 
+        
         // Cursor snaps back to normal size (1.0) on release.
         cursorState.targetScale = 1.0; 
     });
@@ -305,54 +311,55 @@
         const SPRING_TENSION = 0.2; 
         const SPRING_DAMPING = 0.75; 
         const LERP_CLICK = 0.2; 
+        const LERP_ENTER = 0.1;
         const LERP_EXIT = 0.06; // Slow ease factor
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
-            let isClickingThis = false;
-
-            if (b === INTERSECTED) {
-                // If cursor is shrunk (0.8), or transitioning to/from shrink (scale < 1.0), assume clicking
-                if (cursorState.targetScale === 0.8 || b.scale.x < 0.99) {
+            const currentlyHovered = b === INTERSECTED;
+            const wasClicked = b.userData.wasClicked;
+            
+            if (currentlyHovered) {
+                if (isMouseDown) {
                     targetS = 0.95; // CLICKING
-                    isClickingThis = true;
                 } else {
                     targetS = 1.05; // HOVERING/RELEASE
                 }
             } else {
                 targetS = 1.0; // NORMAL/EXIT
+                b.userData.wasClicked = false; // Clear click state on exit
             }
 
-            if (isClickingThis) {
+            if (targetS === 0.95) {
                 // 1. CLICK DOWN: Sync with cursor (Fast Lerp)
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } 
-            else {
-                // Check if coming from compressed state (requires spring)
-                // True if scale is compressed AND target is hover size (1.05)
-                const isClickReleaseToHover = b.scale.x < 0.99 && targetS === 1.05; 
+            else if (targetS === 1.05 && wasClicked && !isMouseDown) {
+                // 2. CLICK RELEASE: Rubber Band Overshoot (Spring)
+                // This state only lasts 1 frame if wasClicked is immediately reset, but the spring takes over.
+                // Resetting wasClicked will be handled by mouseup/mouseleave logic below.
 
-                if (isClickReleaseToHover) {
-                    // CLICK RELEASE: Rubber Band Overshoot (Spring)
-                    const tension = SPRING_TENSION; 
-                    const damping = SPRING_DAMPING; 
-                    const dist = targetS - b.scale.x;
-                    b.userData.velocity.x += dist * tension;
-                    b.userData.velocity.x *= damping;
-                    const next = b.scale.x + b.userData.velocity.x;
-                    b.scale.set(next, next, next);
-                }
-                else if (targetS === 1.0 && b.scale.x > 1.0) {
-                    // HOVER EXIT: Slow Lerp (Smooth Ease)
-                    b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
-                    b.userData.velocity.set(0,0,0);
-                }
-                else {
-                    // HOVER ENTER/General Lerp
-                    b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), 0.1);
-                    b.userData.velocity.set(0,0,0);
-                }
+                const tension = SPRING_TENSION; 
+                const damping = SPRING_DAMPING; 
+                const dist = targetS - b.scale.x;
+                b.userData.velocity.x += dist * tension;
+                b.userData.velocity.x *= damping;
+                const next = b.scale.x + b.userData.velocity.x;
+                b.scale.set(next, next, next);
+                
+                // Clear the state flag after spring starts
+                b.userData.wasClicked = false;
+            }
+            else if (targetS === 1.0 && b.scale.x > 1.0) {
+                // 3. HOVER EXIT: Slow Lerp (Smooth Ease)
+                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT);
+                b.userData.velocity.set(0,0,0);
+            }
+            else {
+                // 4. HOVER ENTER/General Lerp (Standard Snappy Ease)
+                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_ENTER);
+                b.userData.velocity.set(0,0,0);
             }
         });
 
@@ -368,6 +375,7 @@
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
         
+        // Cursor scale logic (0.2 factor)
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
         
         if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
