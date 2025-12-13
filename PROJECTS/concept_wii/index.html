@@ -256,7 +256,7 @@
             // Only shrink cursor when clicking a tile
             cursorState.targetScale = 1.0; 
         } 
-        // DO NOT change cursor scale if clicking background (targetScale remains 1.0)
+        // NOTE: No else block here means clicking background DOES NOT change cursor size.
     });
 
     window.addEventListener('mouseup', () => {
@@ -312,8 +312,7 @@
 
             if (b === INTERSECTED) {
                 if (cursorState.targetScale <= 1.0 && cursorState.targetScale > 0.8) {
-                    // Clicking on Tile (Cursor targetScale is 1.0)
-                    targetS = 0.95; 
+                    targetS = 0.95; // CLICKING
                     isClickingThis = true;
                 } else {
                     targetS = 1.05; // HOVERING/RELEASE
@@ -329,7 +328,6 @@
             } 
             else {
                 // Check if coming from compressed state (requires spring)
-                // If current scale is compressed AND target is hover size (1.05)
                 const isClickReleaseToHover = b.scale.x < 0.99 && targetS === 1.05; 
 
                 if (isClickReleaseToHover) {
@@ -361,7 +359,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 500; 
+    const IDLE_TIMEOUT = 1000; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
@@ -377,10 +375,10 @@
         const isMoving = Math.abs(dx) > 0.001;
         const isIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
         
-        let targetBaseRotation = -10; // Default tilt
+        let targetBaseRotation = -10; 
 
         if (isIdle) {
-            targetBaseRotation = 0; // Straight when idle
+            targetBaseRotation = 0; 
         }
         
         const decayFactor = isIdle ? 0.1 : 1; 
