@@ -39,24 +39,24 @@
 
     #canvas-wrapper { width: 100%; height: 100%; display: block; }
 
-    /* --- CLOCK (Big & Centered) --- */
+    /* --- CLOCK (Black, Smaller, Bottom) --- */
     #clock {
       position: absolute; 
-      bottom: 15%; /* Adjusted vertical position */
+      bottom: 30px; 
       left: 50%;
-      transform: translateX(-50%); /* Perfectly centered */
+      transform: translateX(-50%);
       font-family: 'Orbitron', sans-serif; 
-      font-size: 8rem; /* Massive size */
-      color: #ccc; 
+      font-size: 6rem; /* 20% smaller than 8rem */
+      color: #000000; /* Black */
       pointer-events: none;
       z-index: 30; 
       white-space: nowrap;
-      text-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+      opacity: 0.8;
     }
 
     #instructions {
       position: fixed; bottom: 20px; left: 20px;
-      color: #aaa; font-size: 12px; z-index: 100;
+      color: #888; font-size: 12px; z-index: 100;
       pointer-events: none; font-family: sans-serif;
     }
 
@@ -188,7 +188,8 @@
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
 
-    // --- GRID (Small) ---
+    // --- GRID ---
+    // Reverted Grid logic to standard spacing (prevents overlap)
     const COLS = 4; const ROWS = 3; const channelBlocks = [];
     const BLOCK_WIDTH = 1.12; 
     const BLOCK_HEIGHT = 0.72;
@@ -319,8 +320,8 @@
         cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
 
         if (cursorEl) {
-            // Updated to -60% shift
-            cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) translateX(-60%) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
+            // translateX changed from -60% to -45% (Moving Right)
+            cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) translateX(-45%) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
         }
         requestAnimationFrame(animateCursor);
     }
