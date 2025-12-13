@@ -143,12 +143,9 @@
         camX: 0, camY: -1.5, camZ: 10,
         aimX: 0, aimY: -1.5, aimZ: 0,
         camZoom: 2.7,
-        
-        // UPDATED DEFAULTS: 1.2 spacing, -1.2 offsetY
         gridSpacing: 1.2, 
         gridOffsetX: 0.0, 
         gridOffsetY: -1.2,
-        
         borderRadius: 0.018,
         activeSlot: 1,
         splitHeight: 0.85
@@ -203,28 +200,20 @@
         const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
         const mesh = new THREE.Mesh(geo, mat);
         mesh.userData.index = i;
+        
+        // Physics props for spring animation
+        mesh.userData.velocity = new THREE.Vector3();
+        mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
+        
         scene.add(mesh);
         channelBlocks.push(mesh);
     }
 
     function updateLayout() {
-        // Gap Logic is implicit here by positioning centers
-        const spacingY = (PARAMS.gridSpacing - BLOCK_WIDTH) + BLOCK_HEIGHT; 
-        
-        // NOTE: We are just using gridSpacing for X, and calculating Y based on gap uniformity or separate param.
-        // For simplicity and matching previous logic:
-        // If we want square grid logic, we use gridSpacing for both, but since blocks are rects:
-        // Let's rely on the previous logic where Y spacing was derived.
-        // Or if you want strict control, we can just use the spacing value.
-        // Using derived spacingY to keep the "gap" uniform:
         const gap = PARAMS.gridSpacing - BLOCK_WIDTH;
         const autoSpacingY = gap + BLOCK_HEIGHT;
-
-        // Recalculate offsets
         const totalW = (COLS - 1) * PARAMS.gridSpacing;
         const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-        
-        // We use the derived Y spacing for rows
         const yOffset = ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
 
         channelBlocks.forEach((b, i) => {
@@ -255,6 +244,7 @@
         
         if (INTERSECTED) { 
             cursorState.targetScale = 1.0; 
+            // We return here so we don't drag the background
             return; 
         }
         
@@ -305,29 +295,65 @@
         raycaster.setFromCamera(pointer, camera);
         const intersects = raycaster.intersectObjects(channelBlocks, false);
 
+        // Update INTERSECTED state
         if (intersects.length > 0) {
             const target = intersects[0].object;
             if (INTERSECTED !== target) {
                 if(INTERSECTED) INTERSECTED.material.emissive.setHex(0x000000);
                 INTERSECTED = target;
                 INTERSECTED.material.emissive.setHex(0x444444);
-                if (!isDragging) cursorState.targetScale = 1.3;
+                // Hover effect logic handled in loop below
             }
         } else {
             if (INTERSECTED) {
                 INTERSECTED.material.emissive.setHex(0x000000);
                 INTERSECTED = null;
-                if (!isDragging) cursorState.targetScale = 1.0;
             }
         }
 
-        // Snappy Lerp Tile Scale
-        const HOVER_SCALE = 1.05;
-        const LERP_FACTOR = 0.25;
+        // --- BLOCK PHYSICS ---
+        const SPRING_TENSION = 0.2;
+        const SPRING_DAMPING = 0.65; // Lower = more wiggle/overshoot
+        const LERP_CLICK = 0.2; // Matches cursor lerp exactly
 
         channelBlocks.forEach(b => {
-            const targetS = (b === INTERSECTED) ? HOVER_SCALE : 1.0;
-            b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_FACTOR);
+            let targetS = 1.0;
+            let isClickingThis = false;
+
+            if (b === INTERSECTED) {
+                // If cursor says scale is 1.0 (hovering) -> Tile is 1.05
+                // If cursor says scale is 0.8 (clicking background, shouldn't happen here) -> 
+                // We check standard JS mouse state via isDragging/mousedown logic implicitly:
+                // Actually easier: check if INTERSECTED and mouse is down.
+                // We don't have global mouseDown bool here, but we know cursorState.targetScale
+                
+                if (cursorState.targetScale <= 1.0) {
+                    // MOUSE DOWN on tile
+                    targetS = 0.95; // Shrink
+                    isClickingThis = true;
+                } else {
+                    // HOVER only
+                    targetS = 1.05; // Grow
+                }
+            }
+
+            if (isClickingThis) {
+                // 1. CLICK SYNC: Use simple Lerp to match cursor physics exactly
+                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
+                // Reset velocity so it doesn't explode when we release
+                b.userData.velocity.set(0,0,0);
+            } else {
+                // 2. RELEASE / HOVER: Use Spring Physics for overshoot
+                const current = b.scale.x;
+                const dist = targetS - current;
+                
+                // Spring Force
+                b.userData.velocity.x += dist * SPRING_TENSION;
+                b.userData.velocity.x *= SPRING_DAMPING;
+                
+                const nextS = current + b.userData.velocity.x;
+                b.scale.set(nextS, nextS, nextS);
+            }
         });
 
         renderer.render(scene, camera);
@@ -339,17 +365,15 @@
     function animateCursor() {
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
+        
+        // This is the 0.2 factor we match in the block click logic
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
         
         if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
         const dx = cursorState.x - cursorState.prevX;
         cursorState.prevX = cursorState.x;
 
-        // Rotation Logic:
-        // isDragging (Clicking) = 0deg (Straight)
-        // Resting/Hovering = -10deg (Tilted)
         const baseRotation = isDragging ? 0 : -10;
-
         const velocityTilt = dx * 2.5; 
         const targetAngle = baseRotation + velocityTilt;
         
