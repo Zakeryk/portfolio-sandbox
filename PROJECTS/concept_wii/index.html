@@ -90,12 +90,29 @@
         z-index: 10001;
         display: none; 
     }
+    
+    /* --- TILE INDEX LABEL --- */
+    .tile-index-label {
+        position: absolute;
+        color: rgba(0, 0, 0, 0.4);
+        font-size: 18px;
+        font-weight: 700;
+        z-index: 50; /* Above the canvas, below the cursor/GUI */
+        pointer-events: none;
+        display: none; /* Hidden by default */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
 
     /* --- DEBUG MODE --- */
     body.debug-mode { cursor: auto !important; }
     body.debug-mode #gui-container { display: block; }
     body.debug-mode #debug-hotspot { display: block; }
     body.debug-mode #custom-cursor { opacity: 0.5; }
+    body.debug-mode .tile-index-label { display: block; } /* Show labels in debug */
 
   </style>
 </head>
@@ -115,6 +132,8 @@
     <div id="primary-panel">
       <div id="canvas-wrapper"></div>
     </div>
+    <div id="tile-label-container"></div> 
+    
     <div id="clock">12:00</div>
     <div id="instructions">[~] Toggle Debug Config</div>
   </div>
@@ -140,6 +159,23 @@
     import * as THREE from 'three';
     import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
     import { GUI } from 'dat.gui';
+
+    // --- ASSETS: TILE IMAGE MAPPING ---
+    const ASSETS = {
+        0: 'assets/channel_00.jpg', // Top Left
+        1: 'assets/channel_01.jpg',
+        2: 'assets/channel_02.jpg',
+        3: 'assets/channel_03.jpg',
+        4: 'assets/channel_04.jpg',
+        5: 'assets/channel_05.jpg',
+        6: 'assets/channel_06.jpg',
+        7: 'assets/channel_07.jpg',
+        8: 'assets/channel_08.jpg',
+        9: 'assets/channel_09.jpg',
+        10: 'assets/channel_10.jpg',
+        11: 'assets/channel_11.jpg', // Bottom Right
+        // Add more indices and URLs as needed
+    };
 
     // --- CONFIG ---
     const PARAMS = {
@@ -170,6 +206,7 @@
 
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
+    const labelContainer = document.getElementById('tile-label-container');
     const scene = new THREE.Scene();
     const aspect = container.clientWidth / container.clientHeight;
     const baseSize = 5;
@@ -190,6 +227,8 @@
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+    
+    const worldPosition = new THREE.Vector3(); // Used for label positioning
 
     // --- BORDERS ---
     function updateBorders() {
@@ -200,6 +239,11 @@
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
 
+    // --- TEXTURE LOADER SETUP (Placeholder for real images) ---
+    // You'll need to use a THREE.TextureLoader().load(ASSETS[i]) here.
+    const textureLoader = new THREE.TextureLoader();
+    const materials = [];
+    
     // --- GRID ---
     const COLS = 4; const ROWS = 3; const channelBlocks = [];
     const BLOCK_WIDTH = 1.12; 
@@ -207,17 +251,35 @@
 
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-        const mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
+        
+        let mat;
+        if (ASSETS[i]) {
+            // Placeholder: Use a solid color for now. Loading texture is complex setup.
+            // When you implement real textures, the material should be:
+            // mat = new THREE.MeshPhongMaterial({ map: textureLoader.load(ASSETS[i]), specular: 0x555555, shininess: 40 });
+            mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
+        } else {
+            mat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, specular: 0x555555, shininess: 40 });
+        }
+
         const mesh = new THREE.Mesh(geo, mat);
         mesh.userData.index = i;
         
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-        mesh.userData.wasClicked = false; // Flag for initial spring launch
-        mesh.userData.isSpringing = false; // Flag to indicate active spring animation
+        mesh.userData.wasClicked = false; 
+        mesh.userData.isSpringing = false; 
         
         scene.add(mesh);
         channelBlocks.push(mesh);
+        materials.push(mat); // Store material reference
+
+        // --- Create Index Label Element (DOM) ---
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'tile-index-label';
+        labelDiv.textContent = i;
+        labelContainer.appendChild(labelDiv);
+        mesh.userData.label = labelDiv; // Store DOM reference for positioning
     }
 
     function updateLayout() {
@@ -370,15 +432,31 @@
                 let lerpFactor = currentlyHovered && isMouseDown ? LERP_CLICK : LERP_NORMAL;
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), lerpFactor);
             }
+            
+            // 3. Update HTML Label Position
+            b.updateWorldMatrix(true, false);
+            b.getWorldPosition(worldPosition);
+            
+            const screenPosition = worldPosition.clone();
+            screenPosition.project(camera);
+            
+            const x = (screenPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = (-screenPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+            
+            // Position the label centered on the tile's 3D position
+            if(b.userData.label) {
+                b.userData.label.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${b.scale.x})`;
+            }
+
         });
 
         renderer.render(scene, camera);
     }
     animate();
 
-    // --- CURSOR PHYSICS LOOP (TWEAKED) ---
+    // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 300; 
+    const IDLE_TIMEOUT = 400; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
