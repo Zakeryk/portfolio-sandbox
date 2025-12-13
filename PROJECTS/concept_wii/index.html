@@ -213,7 +213,8 @@
         
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-        mesh.userData.wasClicked = false; // Flag for click release overshoot
+        mesh.userData.wasClicked = false; // Flag for initial spring launch
+        mesh.userData.isSpringing = false; // Flag to indicate active spring animation
         
         scene.add(mesh);
         channelBlocks.push(mesh);
@@ -259,7 +260,7 @@
         cursorState.targetScale = 0.8; 
         
         if (INTERSECTED) { 
-            // Mark tile for overshoot on release
+            // Mark tile for initial spring launch on release
             INTERSECTED.userData.wasClicked = true; 
         } 
     });
@@ -308,59 +309,67 @@
             }
         }
 
-        // --- HYBRID TILE PHYSICS ---
+        // --- HYBRID TILE PHYSICS (SPRING FIX APPLIED) ---
         const SPRING_TENSION = 0.2; 
-        const SPRING_DAMPING = 0.75; 
+        const SPRING_DAMPING = 0.85; 
+        const OVERSHOOT_SCALE = 1.1; 
         const LERP_CLICK = 0.2; 
-        const LERP_ENTER_HOVER = 0.1;
-        const LERP_EXIT_HOVER = 0.06; // Slow ease factor
+        const LERP_NORMAL = 0.08; 
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
             const currentlyHovered = b === INTERSECTED;
-            const wasClicked = b.userData.wasClicked;
-            
+
+            // 1. Determine Target Scale and Spring Status
             if (currentlyHovered) {
                 if (isMouseDown) {
-                    targetS = 0.95; // CLICK DOWN
+                    // Click Down
+                    targetS = 0.95; 
+                    // Stop spring/lerp, reset velocity on click
+                    b.userData.isSpringing = false; 
+                    b.userData.velocity.set(0,0,0);
                 } else {
-                    targetS = 1.05; // HOVERING/RELEASE
+                    // Hover/Release
+                    targetS = 1.05; 
+                    
+                    if (b.userData.wasClicked) {
+                        // Click was just released over this tile. Launch spring!
+                        b.userData.isSpringing = true;
+                        // Set velocity for an initial launch (overshoot)
+                        // Launch force calculation is based on the desired overshoot scale (1.1)
+                        const launchForce = OVERSHOOT_SCALE - b.scale.x;
+                        b.userData.velocity.x += launchForce * 0.5; 
+                        b.userData.wasClicked = false; // Flag cleared
+                    }
                 }
             } else {
-                targetS = 1.0; // NORMAL/EXIT
-                // Clear click flag if cursor leaves the block
-                if (b.userData.wasClicked) b.userData.wasClicked = false; 
+                // Normal/Exit
+                targetS = 1.0; 
+                b.userData.wasClicked = false; // Clear click flag if cursor leaves
             }
-
-            if (targetS === 0.95) {
-                // 1. CLICK DOWN: Sync with cursor (Fast Lerp)
-                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
-                b.userData.velocity.set(0,0,0);
-            } 
-            else if (wasClicked && targetS === 1.05) {
-                // 2. CLICK RELEASE: Rubber Band Overshoot (Spring)
-                // This condition guarantees spring runs exactly when the mouse is released over the tile.
-                
+            
+            // 2. Apply Animation Logic
+            if (b.userData.isSpringing) {
+                // Spring Physics
                 const tension = SPRING_TENSION; 
                 const damping = SPRING_DAMPING; 
                 const dist = targetS - b.scale.x;
+                
                 b.userData.velocity.x += dist * tension;
                 b.userData.velocity.x *= damping;
-                const next = b.scale.x + b.userData.velocity.x;
-                b.scale.set(next, next, next);
                 
-                // Clear the flag immediately after starting the spring
-                b.userData.wasClicked = false;
-            }
-            else if (targetS === 1.0 && b.scale.x > 1.0) {
-                // 3. HOVER EXIT: Slow Lerp (Smooth Ease)
-                b.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), LERP_EXIT_HOVER);
-                b.userData.velocity.set(0,0,0);
-            }
-            else {
-                // 4. HOVER ENTER/General Lerp
-                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_ENTER_HOVER);
-                b.userData.velocity.set(0,0,0);
+                // If velocity is low and close to target, stop spring
+                if (Math.abs(b.userData.velocity.x) < 0.001 && Math.abs(dist) < 0.005) {
+                    b.userData.isSpringing = false;
+                    b.scale.set(targetS, targetS, targetS);
+                } else {
+                    const next = b.scale.x + b.userData.velocity.x;
+                    b.scale.set(next, next, next);
+                }
+            } else {
+                // Lerp/Ease
+                let lerpFactor = currentlyHovered && isMouseDown ? LERP_CLICK : LERP_NORMAL;
+                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), lerpFactor);
             }
         });
 
@@ -368,7 +377,7 @@
     }
     animate();
 
-    // --- CURSOR PHYSICS LOOP ---
+    // --- CURSOR PHYSICS LOOP (TWEAKED) ---
     const cursorEl = document.getElementById('custom-cursor');
     const IDLE_TIMEOUT = 500; 
 
@@ -382,8 +391,7 @@
         const dx = cursorState.x - cursorState.prevX;
         cursorState.prevX = cursorState.x;
 
-        // --- ROTATION LOGIC ---
-        const isMoving = Math.abs(dx) > 0.001;
+        // --- ROTATION LOGIC (TWEAKED) ---
         const isIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
         
         let targetBaseRotation = -10; // Default tilt
@@ -396,10 +404,11 @@
         
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
 
-        const velocityTilt = dx * 2.5; 
+        // Reduced velocity sensitivity (1.5 vs 2.5) and increased lerp (0.2 vs 0.1)
+        const velocityTilt = dx * 1.5; 
         const targetAngle = baseRotation + velocityTilt;
         
-        cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
+        cursorState.angle += (targetAngle - cursorState.angle) * 0.2; // Tighter rotation follow
 
 
         if (cursorEl) {
