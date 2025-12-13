@@ -168,22 +168,22 @@
     import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
     import { GUI } from 'dat.gui';
 
-    // --- ASSETS: TILE IMAGE MAPPING ---
+    // --- ASSETS: TILE IMAGE MAPPING (UPDATED) ---
     const ASSETS = {
-        // NOTE: If you are seeing red tiles, check these paths carefully. 
-        // Index 0 uses an absolute URL, 1-11 use relative paths ('assets/...')
-        0: 'https://sandbox.zakknowlton.com/projects/concept_grassball/thumb.jpg',
-        1: 'assets/channel_01.jpg',
-        2: 'assets/channel_02.jpg',
-        3: 'assets/channel_03.jpg',
-        4: 'assets/channel_04.jpg',
-        5: 'assets/channel_05.jpg',
-        6: 'assets/channel_06.jpg',
-        7: 'assets/channel_07.jpg',
-        8: 'assets/channel_08.jpg',
-        9: 'assets/channel_09.jpg',
-        10: 'assets/channel_10.jpg',
-        11: 'assets/channel_11.jpg', // Bottom Right
+        // Mapped your 4 images to the first 4 slots (0-3)
+        0: 'assets/channel_devil.jpg',
+        1: 'assets/channel_wii.jpg',
+        2: 'assets/channel_grassball.jpg',
+        3: 'assets/channel_knot.jpg',
+        // Remaining slots 4-11 are left empty and will default to #e0e0e0
+        4: null, 
+        5: null,
+        6: null,
+        7: null,
+        8: null,
+        9: null,
+        10: null,
+        11: null,
     };
 
     // --- CONFIG ---
@@ -261,12 +261,13 @@
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
         
-        // Initial Material: set color to match background while texture loads (CONFIRMED FIX)
+        // Initial Material: set color to match background while texture loads
         let mat = new THREE.MeshPhongMaterial({ color: 0xe0e0e0, specular: 0x555555, shininess: 40 });
+        const assetPath = ASSETS[i]; // Get the asset path for this index
 
-        if (ASSETS[i]) {
+        if (assetPath) {
             // Load the texture asynchronously
-            textureLoader.load(ASSETS[i], 
+            textureLoader.load(assetPath, 
                 (tex) => {
                     // Success callback
                     tex.colorSpace = THREE.SRGBColorSpace; 
@@ -292,7 +293,7 @@
                 },
                 undefined, // Progress callback
                 (err) => {
-                    // Error callback: Fallback to background gray color (CONFIRMED FIX)
+                    // Error callback: Fallback to background gray color
                     console.error('Error loading texture for tile', i, err);
                     mat.color.setHex(0xe0e0e0); 
                     mat.needsUpdate = true;
@@ -494,7 +495,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 200; 
+    const IDLE_TIMEOUT = 300; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
