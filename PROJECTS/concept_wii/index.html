@@ -69,7 +69,11 @@
       transition: opacity 0.2s ease;
     }
     
-    #custom-cursor img { display: block; }
+    #custom-cursor img { 
+        display: block;
+        width: 35px; /* ~20% smaller than standard 48px icons */
+        height: auto;
+    }
 
     #debug-hotspot {
       display: none;
@@ -201,7 +205,7 @@
         const mesh = new THREE.Mesh(geo, mat);
         mesh.userData.index = i;
         
-        // Physics props for spring animation
+        // Physics props
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
         
@@ -244,7 +248,6 @@
         
         if (INTERSECTED) { 
             cursorState.targetScale = 1.0; 
-            // We return here so we don't drag the background
             return; 
         }
         
@@ -295,14 +298,12 @@
         raycaster.setFromCamera(pointer, camera);
         const intersects = raycaster.intersectObjects(channelBlocks, false);
 
-        // Update INTERSECTED state
         if (intersects.length > 0) {
             const target = intersects[0].object;
             if (INTERSECTED !== target) {
                 if(INTERSECTED) INTERSECTED.material.emissive.setHex(0x000000);
                 INTERSECTED = target;
                 INTERSECTED.material.emissive.setHex(0x444444);
-                // Hover effect logic handled in loop below
             }
         } else {
             if (INTERSECTED) {
@@ -312,42 +313,35 @@
         }
 
         // --- BLOCK PHYSICS ---
-        const SPRING_TENSION = 0.2;
-        const SPRING_DAMPING = 0.65; // Lower = more wiggle/overshoot
-        const LERP_CLICK = 0.2; // Matches cursor lerp exactly
+        // Lower tension = Slower start. Higher damping = Slower/Smoother settle.
+        const SPRING_TENSION = 0.08; 
+        const SPRING_DAMPING = 0.85; 
+        const LERP_CLICK = 0.2; 
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
             let isClickingThis = false;
 
             if (b === INTERSECTED) {
-                // If cursor says scale is 1.0 (hovering) -> Tile is 1.05
-                // If cursor says scale is 0.8 (clicking background, shouldn't happen here) -> 
-                // We check standard JS mouse state via isDragging/mousedown logic implicitly:
-                // Actually easier: check if INTERSECTED and mouse is down.
-                // We don't have global mouseDown bool here, but we know cursorState.targetScale
-                
                 if (cursorState.targetScale <= 1.0) {
-                    // MOUSE DOWN on tile
-                    targetS = 0.95; // Shrink
+                    // Clicking on Tile
+                    targetS = 0.95; 
                     isClickingThis = true;
                 } else {
-                    // HOVER only
-                    targetS = 1.05; // Grow
+                    // Just Hovering
+                    targetS = 1.05; 
                 }
             }
 
             if (isClickingThis) {
-                // 1. CLICK SYNC: Use simple Lerp to match cursor physics exactly
+                // Click: Sync with cursor (Linear)
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
-                // Reset velocity so it doesn't explode when we release
                 b.userData.velocity.set(0,0,0);
             } else {
-                // 2. RELEASE / HOVER: Use Spring Physics for overshoot
+                // Release/Hover: Soft Spring Physics
                 const current = b.scale.x;
                 const dist = targetS - current;
                 
-                // Spring Force
                 b.userData.velocity.x += dist * SPRING_TENSION;
                 b.userData.velocity.x *= SPRING_DAMPING;
                 
@@ -366,7 +360,6 @@
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
         
-        // This is the 0.2 factor we match in the block click logic
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
         
         if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
@@ -398,7 +391,6 @@
     updateClock();
     updateBorders();
 
-    // --- GUI ---
     const gui = new GUI({ autoPlace: false });
     document.getElementById('gui-container').appendChild(gui.domElement);
     const folder = gui.addFolder('Layout');
