@@ -38,6 +38,17 @@
     }
 
     #canvas-wrapper { width: 100%; height: 100%; display: block; }
+    
+    /* --- NEW TILE LABEL CONTAINER STYLE (FIX) --- */
+    #tile-label-container {
+        position: absolute;
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%;
+        pointer-events: none; /* Crucial to let mouse events pass to the canvas */
+        z-index: 40; 
+    }
 
     /* --- CLOCK --- */
     #clock {
@@ -100,9 +111,7 @@
         z-index: 50; /* Above the canvas, below the cursor/GUI */
         pointer-events: none;
         display: none; /* Hidden by default */
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        /* top/left/transform removed here, handled by JS positioning logic */
         font-family: 'Orbitron', sans-serif;
         text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
     }
@@ -162,6 +171,7 @@
 
     // --- ASSETS: TILE IMAGE MAPPING ---
     const ASSETS = {
+        // NOTE: Make sure paths are correct. Using a full URL for '0' as an example.
         0: 'https://sandbox.zakknowlton.com/projects/concept_grassball/thumb.jpg',
         1: 'assets/channel_01.jpg',
         2: 'assets/channel_02.jpg',
@@ -239,8 +249,7 @@
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
 
-    // --- TEXTURE LOADER SETUP (Placeholder for real images) ---
-    // You'll need to use a THREE.TextureLoader().load(ASSETS[i]) here.
+    // --- TEXTURE LOADER SETUP ---
     const textureLoader = new THREE.TextureLoader();
     const materials = [];
     
@@ -252,14 +261,28 @@
     for(let i=0; i<COLS*ROWS; i++) {
         const geo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
         
-        let mat;
+        // Initial Material: set color to white so we can see it before texture loads
+        let mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
+
         if (ASSETS[i]) {
-            // Placeholder: Use a solid color for now. Loading texture is complex setup.
-            // When you implement real textures, the material should be:
-            // mat = new THREE.MeshPhongMaterial({ map: textureLoader.load(ASSETS[i]), specular: 0x555555, shininess: 40 });
-            mat = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
-        } else {
-            mat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, specular: 0x555555, shininess: 40 });
+            // Load the texture asynchronously
+            textureLoader.load(ASSETS[i], 
+                (tex) => {
+                    // Success callback
+                    tex.colorSpace = THREE.SRGBColorSpace; 
+                    tex.wrapS = THREE.RepeatWrapping; 
+                    tex.wrapT = THREE.RepeatWrapping;
+                    mat.map = tex;
+                    mat.needsUpdate = true;
+                },
+                undefined, // Progress callback
+                (err) => {
+                    // Error callback
+                    console.error('Error loading texture for tile', i, err);
+                    mat.color.setHex(0xaa0000); // Fallback to red on error
+                    mat.needsUpdate = true;
+                }
+            );
         }
 
         const mesh = new THREE.Mesh(geo, mat);
@@ -272,7 +295,7 @@
         
         scene.add(mesh);
         channelBlocks.push(mesh);
-        materials.push(mat); // Store material reference
+        materials.push(mat); 
 
         // --- Create Index Label Element (DOM) ---
         const labelDiv = document.createElement('div');
@@ -329,7 +352,6 @@
         // Universal cursor return to normal
         cursorState.targetScale = 1.0; 
         
-        // FIX: Trigger spring on release if hovering a tile
         if (INTERSECTED) { 
             INTERSECTED.userData.wasClicked = true; 
         } 
@@ -445,7 +467,8 @@
             
             // Position the label centered on the tile's 3D position
             if(b.userData.label) {
-                b.userData.label.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${b.scale.x})`;
+                // Apply positioning using CSS transform translate3d for performance
+                b.userData.label.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${b.scale.x})`;
             }
 
         });
@@ -456,7 +479,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 400; 
+    const IDLE_TIMEOUT = 300; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
