@@ -258,11 +258,6 @@
 
         // Universal cursor shrink
         cursorState.targetScale = 0.8; 
-        
-        if (INTERSECTED) { 
-            // Mark tile for initial spring launch on release
-            INTERSECTED.userData.wasClicked = true; 
-        } 
     });
 
     window.addEventListener('mouseup', () => {
@@ -271,6 +266,11 @@
         
         // Universal cursor return to normal
         cursorState.targetScale = 1.0; 
+        
+        // NEW FIX: Trigger spring on release if hovering a tile
+        if (INTERSECTED) { 
+            INTERSECTED.userData.wasClicked = true; 
+        } 
     });
 
     window.addEventListener('mousemove', (e) => {
@@ -309,10 +309,10 @@
             }
         }
 
-        // --- HYBRID TILE PHYSICS (SPRING FIX APPLIED) ---
-        const SPRING_TENSION = 0.2; 
+        // --- HYBRID TILE PHYSICS (SPRING FIX & REDUCED INTENSITY) ---
+        const SPRING_TENSION = 0.14; // Reduced from 0.2
         const SPRING_DAMPING = 0.85; 
-        const OVERSHOOT_SCALE = 1.1; 
+        const OVERSHOOT_SCALE = 1.07; // Reduced from 1.1 
         const LERP_CLICK = 0.2; 
         const LERP_NORMAL = 0.08; 
 
@@ -335,8 +335,7 @@
                     if (b.userData.wasClicked) {
                         // Click was just released over this tile. Launch spring!
                         b.userData.isSpringing = true;
-                        // Set velocity for an initial launch (overshoot)
-                        // Launch force calculation is based on the desired overshoot scale (1.1)
+                        // Launch force calculation is based on the desired overshoot scale (1.07)
                         const launchForce = OVERSHOOT_SCALE - b.scale.x;
                         b.userData.velocity.x += launchForce * 0.5; 
                         b.userData.wasClicked = false; // Flag cleared
@@ -404,11 +403,11 @@
         
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
 
-        // Reduced velocity sensitivity (1.5 vs 2.5) and increased lerp (0.2 vs 0.1)
+        // Reduced velocity sensitivity and tighter follow
         const velocityTilt = dx * 1.5; 
         const targetAngle = baseRotation + velocityTilt;
         
-        cursorState.angle += (targetAngle - cursorState.angle) * 0.2; // Tighter rotation follow
+        cursorState.angle += (targetAngle - cursorState.angle) * 0.2; 
 
 
         if (cursorEl) {
