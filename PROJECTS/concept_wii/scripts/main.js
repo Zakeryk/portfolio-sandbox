@@ -1,97 +1,107 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
+import { GUI } from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
 
-// --- CONFIGURATION BLOCK ---
+// --- CONFIGURATION ---
 const PARAMS = {
+    // Camera / Transition
     transitionDuration: 1000,
-    easeIntensity: 1.0,
-    camX: 0, camY: -1.5, camZ: 10, aimX: 0, aimY: -1.5, aimZ: 0,
-    activeSlot: 1,
-    bgColor: 0xe0e0e0,
-
-    // Layout Defaults
-    gridSpacing: 1.5, // Horizontal Center-to-Center
+    camX: 0, camY: -1.5, camZ: 10,
+    aimX: 0, aimY: -1.5, aimZ: 0,
+    camZoom: 2.7,
+    
+    // Grid Layout
+    gridSpacing: 1.5,
     gridOffsetX: 0.0,
     gridOffsetY: -1.5,
-    borderRadius: 0.018, // Tighter corners
-    camZoom: 2.7 // Closer default
+    
+    // Visuals
+    borderRadius: 0.018,
+    bgColor: 0xe0e0e0,
+    activeSlot: 1
 };
 
-const keyframes = {
-    1: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    2: { camX: 1.5, camY: -0.5, camZ: 10, aimX: 1.5, aimY: -0.5, aimZ: 0 },
-    3: { camX: 0, camY: 0, camZ: 15, aimX: 0, aimY: 0, aimZ: 0 },
-    4: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    5: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    6: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    7: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    8: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
-    9: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 }
+// --- STATE MANAGEMENT ---
+const cursorState = {
+    x: 0, y: 0,
+    prevX: 0, // Used for velocity calculation since position is instant
+    targetX: 0, targetY: 0,
+    angle: 0,
+    scale: 1, targetScale: 1
 };
 
-// --- Tweening ---
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+let INTERSECTED = null;
 let cameraTween = null;
 
-function saveKeyframe() {
-    const s = PARAMS.activeSlot;
-    keyframes[s] = {
-        camX: parseFloat(camera.position.x.toFixed(2)),
-        camY: parseFloat(camera.position.y.toFixed(2)),
-        camZ: parseFloat(camera.position.z.toFixed(2)),
-        aimX: PARAMS.aimX, aimY: PARAMS.aimY, aimZ: PARAMS.aimZ
-    };
-    console.log(`Saved View to Slot ${s}`);
-}
+// --- SCENE SETUP ---
+const container = document.getElementById('canvas-wrapper');
+const scene = new THREE.Scene();
 
-function loadKeyframe(slot) {
-    const target = keyframes[slot];
-    if (!target) return;
-    PARAMS.activeSlot = slot;
-    cameraTween = {
-        start: { camX: PARAMS.camX, camY: PARAMS.camY, camZ: PARAMS.camZ, aimX: PARAMS.aimX, aimY: PARAMS.aimY, aimZ: PARAMS.aimZ },
-        end: target, startTime: performance.now(), duration: PARAMS.transitionDuration
-    };
-}
+// Camera
+const baseSize = 5;
+const aspect = container.clientWidth / container.clientHeight;
+const camera = new THREE.OrthographicCamera(
+    -aspect * baseSize, aspect * baseSize,
+    baseSize, -baseSize,
+    0.1, 1000
+);
+camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
+camera.zoom = PARAMS.camZoom;
+camera.updateProjectionMatrix();
 
-function easeOutExpo(x) { return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
-function updateBackgroundColor(color) { renderer.setClearColor(color); }
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(window.devicePixelRatio); // Crucial for crisp edges
+container.appendChild(renderer.domElement);
 
-// --- Curved Border Drawing ---
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
+directionalLight.position.set(5, 10, 10);
+scene.add(directionalLight);
+
+// Raycasting
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+
+// --- CURVED BORDER LOGIC (Unified Path) ---
 function updateCurvedBorder() {
-    const panel = document.getElementById('primary-panel');
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // We target both the mask path (inside <defs>) and the visible border path
     const borderPath = document.getElementById('border-path');
-    if (!panel || !borderPath) return;
-
-    const rect = panel.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-
-    // Calculate tab shape with more gradual curves
+    const maskPath = document.getElementById('mask-path');
+    
     const baselineY = height * 0.75;
-    const tabBottomY = height * 0.95;
+    const tabBottomY = height * 0.96; 
+    const inset = 1.5; // Half of stroke width (3px)
 
-    // Inset by half stroke width to keep border within panel bounds
-    const strokeWidth = 3;
-    const inset = strokeWidth / 2;
-
-    // Create tab path with gradual transitions (Quadratic Bezier)
+    // Quadratic Bezier curves for smooth "Nintendo" style geometry
     const d = `
         M ${inset},${baselineY}
-        L ${width * 0.15},${baselineY}
-        Q ${width * 0.25},${baselineY} ${width * 0.30},${height * 0.90}
-        L ${width * 0.33},${tabBottomY}
+        L ${width * 0.12},${baselineY}
+        Q ${width * 0.22},${baselineY} ${width * 0.28},${height * 0.88}
+        L ${width * 0.32},${tabBottomY}
         Q ${width * 0.38},${height} ${width * 0.5},${height}
-        Q ${width * 0.62},${height} ${width * 0.67},${tabBottomY}
-        L ${width * 0.70},${height * 0.90}
-        Q ${width * 0.75},${baselineY} ${width * 0.85},${baselineY}
+        Q ${width * 0.62},${height} ${width * 0.68},${tabBottomY}
+        L ${width * 0.72},${height * 0.88}
+        Q ${width * 0.78},${baselineY} ${width * 0.88},${baselineY}
         L ${width - inset},${baselineY}
+        L ${width - inset},0
+        L ${inset},0
+        Z
     `;
 
-    borderPath.setAttribute('d', d);
+    if (borderPath) borderPath.setAttribute('d', d);
+    if (maskPath) maskPath.setAttribute('d', d);
 }
 
-
-// --- Grid Constants ---
+// --- GRID GENERATION ---
 const COLS = 4;
 const ROWS = 3;
 const TOTAL_BLOCKS = COLS * ROWS;
@@ -99,41 +109,13 @@ const BLOCK_WIDTH = 1.4;
 const BLOCK_HEIGHT = 0.9;
 const channelBlocks = [];
 
-// --- Setup ---
-const scene = new THREE.Scene();
-const baseSize = 5;
-const container = document.getElementById('canvas-wrapper');
-const aspect = container.clientWidth / container.clientHeight;
-
-const camera = new THREE.OrthographicCamera(
-    -aspect * baseSize, aspect * baseSize,
-    baseSize, -baseSize,
-    0.1, 1000
-);
-
-camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
-camera.zoom = PARAMS.camZoom;
-camera.updateProjectionMatrix();
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(container.clientWidth, container.clientHeight);
-// updateBackgroundColor(PARAMS.bgColor); // Let CSS handle bg
-container.appendChild(renderer.domElement);
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.8);
-directionalLight.position.set(5, 10, 10);
-scene.add(directionalLight);
-
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-let INTERSECTED = null;
-
-// --- Logic ---
 function createChannelBlock(index) {
     const geometry = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-    const material = new THREE.MeshPhongMaterial({ color: 0xffffff, specular: 0x555555, shininess: 40 });
+    const material = new THREE.MeshPhongMaterial({ 
+        color: 0xffffff, 
+        specular: 0x555555, 
+        shininess: 40 
+    });
     const block = new THREE.Mesh(geometry, material);
     block.userData.index = index;
     return block;
@@ -161,107 +143,9 @@ function updateLayout() {
         block.position.z = 0;
     });
 }
-
-function updateGeometry() {
-    const newGeo = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-    channelBlocks.forEach(block => {
-        block.geometry.dispose();
-        block.geometry = newGeo;
-    });
-}
-
 updateLayout();
 
-// --- GUI ---
-const gui = new dat.GUI({ closed: true });
-gui.domElement.parentElement.style.display = 'none';
-setTimeout(() => { const b = document.querySelector('.dg .close-button'); if (b) b.innerHTML = 'Controls'; }, 1000);
-
-const camFolder = gui.addFolder('Camera View');
-camFolder.add(PARAMS, 'camX', -10, 10).listen();
-camFolder.add(PARAMS, 'camY', -5, 5).listen();
-camFolder.add(PARAMS, 'camZoom', 0.5, 5.0).name('Zoom').onChange(v => { camera.zoom = v; camera.updateProjectionMatrix(); }).listen();
-
-const keyFolder = gui.addFolder('Keyframes');
-keyFolder.add(PARAMS, 'activeSlot', [1, 2, 3, 4, 5, 6, 7, 8, 9]).listen();
-keyFolder.add({ save: saveKeyframe }, 'save').name('Save View');
-keyFolder.add(PARAMS, 'transitionDuration', 100, 3000).name('Duration (ms)');
-
-const visFolder = gui.addFolder('Visuals');
-visFolder.addColor(PARAMS, 'bgColor').name('Background').onChange(updateBackgroundColor);
-
-const addSmartInput = (ctrl) => {
-    const input = ctrl.domElement.querySelector('input');
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            e.stopPropagation(); 
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                e.preventDefault();
-                const val = ctrl.getValue();
-                const step = 0.1;
-                ctrl.setValue(parseFloat((e.key === 'ArrowUp' ? val + step : val - step).toFixed(2)));
-            }
-        });
-    }
-    return ctrl;
-};
-
-addSmartInput(visFolder.add(PARAMS, 'gridSpacing', 1.0, 3.0).name('Grid Spacing').onChange(updateLayout));
-addSmartInput(visFolder.add(PARAMS, 'gridOffsetX', -5.0, 5.0, 0.01).name('Grid Offset X').onChange(updateLayout));
-addSmartInput(visFolder.add(PARAMS, 'gridOffsetY', -5.0, 5.0, 0.01).name('Grid Offset Y').onChange(updateLayout));
-visFolder.add(PARAMS, 'borderRadius', 0.0, 0.3).name('Border Radius').onChange(updateGeometry);
-visFolder.open();
-
-// --- Cursor Physics & State ---
-const cursorEl = document.getElementById('custom-cursor');
-const cursorState = {
-    x: 0, y: 0,
-    targetX: 0, targetY: 0,
-    angle: 0,
-    scale: 1, targetScale: 1
-};
-
-// --- Events ---
-window.addEventListener('keydown', (e) => {
-    if (e.key === '`' || e.key === '~') { const g = document.querySelector('.dg.ac'); if (g) g.style.display = g.style.display === 'none' ? 'block' : 'none'; }
-    if (e.key >= '1' && e.key <= '9') loadKeyframe(parseInt(e.key));
-});
-
-let isDragging = false;
-let previousMousePosition = { x: 0, y: 0 };
-
-window.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    previousMousePosition = { x: e.clientX, y: e.clientY };
-    cursorState.targetScale = 0.85; // Click Shrink
-});
-
-window.addEventListener('mouseup', () => {
-    isDragging = false;
-    cursorState.targetScale = 1.0; // Release Bounce
-});
-
-window.addEventListener('mousemove', (e) => {
-    // 1. Update Physics Targets
-    cursorState.targetX = e.clientX;
-    cursorState.targetY = e.clientY;
-
-    // 2. Handle Panning
-    if (isDragging) {
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-        const sensitivity = 0.002 * PARAMS.camZoom;
-        PARAMS.camX -= deltaX * sensitivity;
-        PARAMS.camY += deltaY * sensitivity;
-    }
-
-    // 3. Update pointer for ThreeJS Raycasting
-    const rect = container.getBoundingClientRect();
-    pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
-    pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
-});
-
+// --- INPUT HANDLING ---
 window.addEventListener('resize', () => {
     const aspect = container.clientWidth / container.clientHeight;
     camera.left = -aspect * baseSize;
@@ -273,7 +157,48 @@ window.addEventListener('resize', () => {
     updateCurvedBorder();
 });
 
-// --- Clock ---
+window.addEventListener('mousedown', (e) => {
+    // If we are hovering a tile, do NOT start dragging the camera
+    if (INTERSECTED) {
+        cursorState.targetScale = 0.85; // Click Shrink on tile
+        return; 
+    }
+
+    // Otherwise, drag the background
+    isDragging = true;
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+    cursorState.targetScale = 0.85; // Click Shrink on BG
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+    // If hovering a tile, return to "hover" size (1.3), otherwise normal (1.0)
+    cursorState.targetScale = INTERSECTED ? 1.3 : 1.0; 
+});
+
+window.addEventListener('mousemove', (e) => {
+    // 1. Instant Cursor Tracking (No delay)
+    cursorState.targetX = e.clientX;
+    cursorState.targetY = e.clientY;
+    
+    // 2. Camera Panning
+    if (isDragging) {
+        const deltaX = e.clientX - previousMousePosition.x;
+        const deltaY = e.clientY - previousMousePosition.y;
+        previousMousePosition = { x: e.clientX, y: e.clientY };
+        
+        const sensitivity = 0.002 * PARAMS.camZoom;
+        PARAMS.camX -= deltaX * sensitivity;
+        PARAMS.camY += deltaY * sensitivity;
+    }
+
+    // 3. Raycaster Pointer Update
+    const rect = container.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
+});
+
+// --- CLOCK ---
 function updateClock() {
     const now = new Date();
     let hours = now.getHours();
@@ -282,76 +207,126 @@ function updateClock() {
     hours = hours % 12;
     hours = hours ? hours : 12; 
     const strMinutes = minutes < 10 ? '0' + minutes : minutes;
-    const timeStr = hours + ':' + strMinutes + ' <span style="font-size: 0.6em;">' + ampm + '</span>';
-
+    
     const clockEl = document.getElementById('clock');
-    if (clockEl) clockEl.innerHTML = timeStr;
+    if (clockEl) {
+        clockEl.innerHTML = `${hours}:${strMinutes} <span style="font-size: 0.6em;">${ampm}</span>`;
+    }
 }
 setInterval(updateClock, 1000);
 updateClock();
-updateCurvedBorder();
+updateCurvedBorder(); // Init border
 
-// --- Animation Loop (ThreeJS) ---
+// --- KEYFRAMES / TWEENING ---
+const keyframes = {
+    1: { camX: 0, camY: 0, camZ: 10, aimX: 0, aimY: 0, aimZ: 0 },
+    2: { camX: 1.5, camY: -0.5, camZ: 10, aimX: 1.5, aimY: -0.5, aimZ: 0 },
+    3: { camX: 0, camY: 0, camZ: 15, aimX: 0, aimY: 0, aimZ: 0 }
+    // Add more if needed
+};
+
+function easeOutExpo(x) { return x === 1 ? 1 : 1 - Math.pow(2, -10 * x); }
+
+function loadKeyframe(slot) {
+    const target = keyframes[slot];
+    if (!target) return;
+    cameraTween = {
+        start: { camX: PARAMS.camX, camY: PARAMS.camY, camZ: PARAMS.camZ, aimX: PARAMS.aimX, aimY: PARAMS.aimY, aimZ: PARAMS.aimZ },
+        end: target, 
+        startTime: performance.now(), 
+        duration: PARAMS.transitionDuration
+    };
+}
+
+window.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '9') loadKeyframe(parseInt(e.key));
+    if (e.key === '`') { 
+        const g = document.querySelector('.dg.ac'); 
+        if (g) g.style.display = g.style.display === 'none' ? 'block' : 'none'; 
+    }
+});
+
+// --- RENDER LOOP ---
 function animate() {
     requestAnimationFrame(animate);
 
+    // 1. Handle Camera Tween
     if (cameraTween) {
         let t = (performance.now() - cameraTween.startTime) / cameraTween.duration;
         if (t >= 1) { t = 1; cameraTween = null; }
         const eT = easeOutExpo(t);
+        
         PARAMS.camX = THREE.MathUtils.lerp(cameraTween.start.camX, cameraTween.end.camX, eT);
         PARAMS.camY = THREE.MathUtils.lerp(cameraTween.start.camY, cameraTween.end.camY, eT);
         PARAMS.camZ = THREE.MathUtils.lerp(cameraTween.start.camZ, cameraTween.end.camZ, eT);
         PARAMS.aimX = THREE.MathUtils.lerp(cameraTween.start.aimX, cameraTween.end.aimX, eT);
         PARAMS.aimY = THREE.MathUtils.lerp(cameraTween.start.aimY, cameraTween.end.aimY, eT);
         PARAMS.aimZ = THREE.MathUtils.lerp(cameraTween.start.aimZ, cameraTween.end.aimZ, eT);
-        for (var i in camFolder.__controllers) camFolder.__controllers[i].updateDisplay();
     }
 
     camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
     camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
 
+    // 2. Raycasting (Hover Effects)
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(channelBlocks, false);
 
     if (intersects.length > 0) {
         const closestBlock = intersects[0].object;
-        if (INTERSECTED != closestBlock) {
+        if (INTERSECTED !== closestBlock) {
+            // Restore previous block
             if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+            
+            // Set new block
             INTERSECTED = closestBlock;
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
             INTERSECTED.material.emissive.setHex(0x444444);
+            
+            // Mouse Interaction: If not currently clicking/dragging, expand cursor
+            if (!isDragging) cursorState.targetScale = 1.3;
         }
+        // Animate block scale up
         closestBlock.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), 0.15);
     } else {
-        if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-        INTERSECTED = null;
+        if (INTERSECTED) {
+            INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+            INTERSECTED = null;
+            
+            // Mouse Interaction: If not clicking, return to normal cursor
+            if (!isDragging) cursorState.targetScale = 1.0;
+        }
     }
-    channelBlocks.forEach(block => { if (block !== INTERSECTED) block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), 0.1); });
+    
+    // Animate blocks scaling back down
+    channelBlocks.forEach(block => { 
+        if (block !== INTERSECTED) block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), 0.1); 
+    });
 
     renderer.render(scene, camera);
 }
 animate();
 
-// --- Cursor Physics Loop ---
-function animateCursor() {
-    // Lerp factor (0.15 = snappy but smooth)
-    const lerpFactor = 0.15;
-    
-    const dx = cursorState.targetX - cursorState.x;
-    const dy = cursorState.targetY - cursorState.y;
-    
-    cursorState.x += dx * lerpFactor;
-    cursorState.y += dy * lerpFactor;
+// --- CURSOR PHYSICS LOOP ---
+const cursorEl = document.getElementById('custom-cursor');
 
-    // Rubber band scale
+function animateCursor() {
+    // 1. Instant Position
+    cursorState.x = cursorState.targetX;
+    cursorState.y = cursorState.targetY;
+
+    // 2. Rubber Band Scale (Lerp for smoothness)
     cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
 
-    // Velocity Tilt
-    const targetAngle = dx * 2.5; 
-    cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
+    // 3. Velocity Tilt 
+    // Calculate velocity based on instant change from last frame
+    if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
+    
+    const dx = cursorState.x - cursorState.prevX;
+    cursorState.prevX = cursorState.x;
 
-    // Apply
+    const targetAngle = dx * 2.5; // Multiplier for tilt intensity
+    cursorState.angle += (targetAngle - cursorState.angle) * 0.1; // Smooth out the tilt
+
     if(cursorEl) {
         cursorEl.style.transform = `
             translate3d(${cursorState.x}px, ${cursorState.y}px, 0) 
@@ -359,7 +334,14 @@ function animateCursor() {
             scale(${cursorState.scale})
         `;
     }
-
     requestAnimationFrame(animateCursor);
 }
 animateCursor();
+
+// --- DEBUG GUI (Optional) ---
+const gui = new GUI({ closed: true });
+gui.hide(); // Hidden by default, toggle with ` key
+const folder = gui.addFolder('Grid');
+folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateLayout);
+folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateLayout);
+folder.add(PARAMS, 'camZoom', 0.1, 5).onChange(v => { camera.zoom = v; camera.updateProjectionMatrix(); });
