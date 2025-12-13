@@ -143,7 +143,12 @@
         camX: 0, camY: -1.5, camZ: 10,
         aimX: 0, aimY: -1.5, aimZ: 0,
         camZoom: 2.7,
-        gridSpacing: 1.5, gridOffsetX: 0.0, gridOffsetY: -1.5,
+        
+        // UPDATED DEFAULTS: 1.2 spacing, -1.2 offsetY
+        gridSpacing: 1.2, 
+        gridOffsetX: 0.0, 
+        gridOffsetY: -1.2,
+        
         borderRadius: 0.018,
         activeSlot: 1,
         splitHeight: 0.85
@@ -203,16 +208,29 @@
     }
 
     function updateLayout() {
+        // Gap Logic is implicit here by positioning centers
+        const spacingY = (PARAMS.gridSpacing - BLOCK_WIDTH) + BLOCK_HEIGHT; 
+        
+        // NOTE: We are just using gridSpacing for X, and calculating Y based on gap uniformity or separate param.
+        // For simplicity and matching previous logic:
+        // If we want square grid logic, we use gridSpacing for both, but since blocks are rects:
+        // Let's rely on the previous logic where Y spacing was derived.
+        // Or if you want strict control, we can just use the spacing value.
+        // Using derived spacingY to keep the "gap" uniform:
         const gap = PARAMS.gridSpacing - BLOCK_WIDTH;
-        const spacingY = gap + BLOCK_HEIGHT;
+        const autoSpacingY = gap + BLOCK_HEIGHT;
+
+        // Recalculate offsets
         const totalW = (COLS - 1) * PARAMS.gridSpacing;
         const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-        const yOffset = ((ROWS - 1) * spacingY) / 2 + PARAMS.gridOffsetY;
+        
+        // We use the derived Y spacing for rows
+        const yOffset = ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
 
         channelBlocks.forEach((b, i) => {
             const col = i % COLS;
             const row = Math.floor(i / COLS);
-            b.position.set(xOffset + col * PARAMS.gridSpacing, yOffset - row * spacingY, 0);
+            b.position.set(xOffset + col * PARAMS.gridSpacing, yOffset - row * autoSpacingY, 0);
         });
     }
     updateLayout();
@@ -272,7 +290,6 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Camera Tweening
         if (cameraTween) {
             let t = (performance.now() - cameraTween.startTime) / cameraTween.duration;
             if (t >= 1) { t = 1; cameraTween = null; }
@@ -285,7 +302,6 @@
         camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
         camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
 
-        // Raycasting & Interaction State
         raycaster.setFromCamera(pointer, camera);
         const intersects = raycaster.intersectObjects(channelBlocks, false);
 
@@ -305,15 +321,12 @@
             }
         }
 
-        // --- SNAPPY LERP TILE ANIMATION ---
+        // Snappy Lerp Tile Scale
         const HOVER_SCALE = 1.05;
-        const LERP_FACTOR = 0.25; // Snappy: covers 25% of remaining distance per frame
+        const LERP_FACTOR = 0.25;
 
         channelBlocks.forEach(b => {
-            // Determine target
             const targetS = (b === INTERSECTED) ? HOVER_SCALE : 1.0;
-            
-            // Standard Lerp: Fast start, exponential decay (no overshoot)
             b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_FACTOR);
         });
 
@@ -332,12 +345,11 @@
         const dx = cursorState.x - cursorState.prevX;
         cursorState.prevX = cursorState.x;
 
-        // Base rotation logic: 
-        // If not hovering (INTERSECTED is null), tilt -10deg. 
-        // If hovering, tilt 0deg (straight).
-        const baseRotation = INTERSECTED ? 0 : -10;
+        // Rotation Logic:
+        // isDragging (Clicking) = 0deg (Straight)
+        // Resting/Hovering = -10deg (Tilted)
+        const baseRotation = isDragging ? 0 : -10;
 
-        // Add velocity tilt on top of base rotation
         const velocityTilt = dx * 2.5; 
         const targetAngle = baseRotation + velocityTilt;
         
