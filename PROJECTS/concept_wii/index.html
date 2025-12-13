@@ -71,7 +71,7 @@
     
     #custom-cursor img { 
         display: block;
-        width: 35px; /* ~20% smaller than standard 48px icons */
+        width: 46px; /* Increased size (~30% bigger than 35px) */
         height: auto;
     }
 
@@ -157,8 +157,8 @@
 
     // --- STATE ---
     const cursorState = { x: 0, y: 0, prevX: 0, targetX: 0, targetY: 0, angle: 0, scale: 1, targetScale: 1 };
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
+    
+    // Note: isDragging removed since we disabled background pan
     let INTERSECTED = null;
     let cameraTween = null;
 
@@ -205,7 +205,6 @@
         const mesh = new THREE.Mesh(geo, mat);
         mesh.userData.index = i;
         
-        // Physics props
         mesh.userData.velocity = new THREE.Vector3();
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
         
@@ -246,33 +245,27 @@
     window.addEventListener('mousedown', (e) => {
         if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
         
+        // --- CLICK LOGIC ---
+        // If clicking a tile: Shrink to 1.0 (relative to 1.3 hover)
+        // If clicking BG: Shrink to 0.8 (relative to 1.0 normal)
+        // NO DRAGGING/PANNING LOGIC HERE
+        
         if (INTERSECTED) { 
             cursorState.targetScale = 1.0; 
-            return; 
+        } else {
+            cursorState.targetScale = 0.8; 
         }
-        
-        isDragging = true;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-        cursorState.targetScale = 0.8; 
     });
 
     window.addEventListener('mouseup', () => {
-        isDragging = false;
         cursorState.targetScale = INTERSECTED ? 1.3 : 1.0;
     });
 
     window.addEventListener('mousemove', (e) => {
         cursorState.targetX = e.clientX;
         cursorState.targetY = e.clientY;
-
-        if (isDragging) {
-            const dx = e.clientX - previousMousePosition.x;
-            const dy = e.clientY - previousMousePosition.y;
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-            const sens = 0.002 * PARAMS.camZoom;
-            PARAMS.camX -= dx * sens;
-            PARAMS.camY += dy * sens;
-        }
+        
+        // Removed panning logic (camX/camY updates)
         
         const rect = container.getBoundingClientRect();
         pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
@@ -313,7 +306,6 @@
         }
 
         // --- BLOCK PHYSICS ---
-        // Lower tension = Slower start. Higher damping = Slower/Smoother settle.
         const SPRING_TENSION = 0.08; 
         const SPRING_DAMPING = 0.85; 
         const LERP_CLICK = 0.2; 
@@ -328,23 +320,19 @@
                     targetS = 0.95; 
                     isClickingThis = true;
                 } else {
-                    // Just Hovering
+                    // Hovering
                     targetS = 1.05; 
                 }
             }
 
             if (isClickingThis) {
-                // Click: Sync with cursor (Linear)
                 b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), LERP_CLICK);
                 b.userData.velocity.set(0,0,0);
             } else {
-                // Release/Hover: Soft Spring Physics
                 const current = b.scale.x;
                 const dist = targetS - current;
-                
                 b.userData.velocity.x += dist * SPRING_TENSION;
                 b.userData.velocity.x *= SPRING_DAMPING;
-                
                 const nextS = current + b.userData.velocity.x;
                 b.scale.set(nextS, nextS, nextS);
             }
@@ -366,7 +354,11 @@
         const dx = cursorState.x - cursorState.prevX;
         cursorState.prevX = cursorState.x;
 
-        const baseRotation = isDragging ? 0 : -10;
+        // Rotation: 0 if clicking (scale <= 0.8 implies click state roughly), else -10
+        // We can infer click state from targetScale
+        const isClicking = cursorState.targetScale <= 1.0; 
+        const baseRotation = isClicking ? 0 : -10;
+        
         const velocityTilt = dx * 2.5; 
         const targetAngle = baseRotation + velocityTilt;
         
