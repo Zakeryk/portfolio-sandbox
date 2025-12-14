@@ -61,6 +61,7 @@
         color: #888;
         font-size: 0.8rem;
         margin-top: 10px;
+        letter-spacing: 1px;
     }
 
     /* --- LAYOUT --- */
@@ -177,7 +178,7 @@
   <div id="preloader">
       <div id="preloader-spinner"></div>
       LOADING OS
-      <div id="preloader-text">ZAKKNOWLTON.COM</div>
+      <div id="preloader-text">ZAK KNOWLTON &copy; 2026</div>
   </div>
 
   <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
@@ -309,7 +310,7 @@
     // --- GRID MANAGEMENT ---
     const BASE_BLOCK_WIDTH = 1.12; 
     const BASE_BLOCK_HEIGHT = 0.72;
-    const MOBILE_SCALE_FACTOR = 0.55; // FIX: Much smaller on mobile
+    const MOBILE_SCALE_FACTOR = 0.55; 
     const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
     const MAX_TILES = 12;
     
@@ -365,19 +366,8 @@
         channelBlocks.push(mesh);
         materials.push(mat); 
 
-        // --- Cel-Shade Hover Plane ---
-        const planeGeo = new THREE.PlaneGeometry(BASE_BLOCK_WIDTH * 0.9, BASE_BLOCK_HEIGHT * 0.9);
-        const planeMat = new THREE.MeshBasicMaterial({ 
-            color: 0xffffff, 
-            transparent: true, 
-            opacity: 0.0, // FIX: Start invisible to avoid white box issue
-            side: THREE.FrontSide 
-        });
-        const hoverPlane = new THREE.Mesh(planeGeo, planeMat);
-        hoverPlane.position.z = 0.11; 
-        
-        mesh.add(hoverPlane); 
-        mesh.userData.hoverPlane = hoverPlane;
+        // Removed the extra Hover Plane to prevent white box artifact
+        // We will control glare via Material properties now.
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'tile-index-label';
@@ -496,42 +486,38 @@
         const intersects = raycaster.intersectObjects(visibleChannels, false);
         
         const DEFAULT_SHININESS = 10;
-        const HOVER_SHININESS = 100;
-        const HOVER_OPACITY = 0.4; // FIX: White glare visible on hover
-        const INITIAL_OPACITY = 0.0; // FIX: Invisible by default
-        const OPACITY_LERP = 0.2;
+        const HOVER_SHININESS = 90;
+        const DEFAULT_EMISSIVE = 0x000000;
+        const HOVER_EMISSIVE = 0x555555; // Brighter gray/white pop on hover
+        const LERP_FACTOR = 0.15;
 
         if (intersects.length > 0) {
             const target = intersects[0].object;
             if (INTERSECTED !== target) {
-                if(INTERSECTED) {
-                    INTERSECTED.userData.hoverPlane.material.opacity = INITIAL_OPACITY; 
-                }
                 INTERSECTED = target;
             }
         } else {
-            if (INTERSECTED) {
-                INTERSECTED.userData.hoverPlane.material.opacity = INITIAL_OPACITY; 
-                INTERSECTED = null;
-            }
+            INTERSECTED = null;
         }
 
-        // Apply Cel-Shade Hover and Physics
+        // --- RENDER LOOP: MATERIAL & PHYSICS ---
         channelBlocks.forEach(b => {
             if (!b.visible) return;
 
             const currentlyHovered = b === INTERSECTED;
             
-            // Glare Fade Logic (Fades IN on hover)
-            const targetOpacity = currentlyHovered ? HOVER_OPACITY : INITIAL_OPACITY;
-            if (b.userData.hoverPlane) {
-                b.userData.hoverPlane.material.opacity += (targetOpacity - b.userData.hoverPlane.material.opacity) * OPACITY_LERP;
-            }
-
-            // Also manage Phong shininess for realism
-            const targetShininess = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
-            b.material.shininess += (targetShininess - b.material.shininess) * OPACITY_LERP;
-            b.material.emissive.setHex(currentlyHovered ? 0x222222 : 0x000000); 
+            // --- MATERIAL LERP (Anime Glare) ---
+            // Instead of a separate plane, we Lerp properties of the main material
+            const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
+            // Manual lerp for float
+            b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
+            
+            // Lerp Emissive Color (Cheat for 'glare')
+            const currentEmissive = b.material.emissive;
+            const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
+            const targetColor = new THREE.Color(targetHex);
+            currentEmissive.lerp(targetColor, LERP_FACTOR);
+            
             b.material.needsUpdate = true;
 
 
@@ -604,9 +590,9 @@
     }
     animate();
 
-    // --- CURSOR PHYSICS LOOP (Unchanged) ---
+    // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 200; 
+    const IDLE_TIMEOUT = 300; // FIX: Updated to 300
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
