@@ -28,7 +28,7 @@
         pointer-events: none; /* Lets clicks pass through */
         z-index: 9000;
         /* Main overlay opacity control */
-        opacity: 0.1; 
+        opacity: 1.0; 
     }
 
     #scanlines {
@@ -52,7 +52,7 @@
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
         
         /* FIX: Subtlety and Slow Roll */
-        opacity: 0.1; /* Reduced opacity from 0.4 for subtlety */
+        opacity: 0.1; /* Reduced opacity for subtlety */
         mix-blend-mode: overlay;
         /* Changed duration to 2.5s and added 'linear' for slow roll */
         animation: noiseAnimation 2.5s linear infinite; 
@@ -153,7 +153,7 @@
       left: 50%;
       transform: translateX(-50%);
       font-family: 'Orbitron', sans-serif; 
-      font-size: 2rem;
+      font-size: 3rem;
       color: #000000; 
       pointer-events: none;
       z-index: 30; 
@@ -279,7 +279,7 @@
     import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
     import { GUI } from 'dat.gui';
     
-    // --- ASSETS ---
+    // --- ASSETS: TILE IMAGE MAPPING ---
     const ASSETS = {
         0: 'assets/channel_devil.jpg',
         1: 'assets/channel_wii.jpg',
@@ -288,13 +288,15 @@
         4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
     };
     
-    // --- LINKS ---
-    const BASE_TARGET = '/projects/concept_wii'; 
+    // --- LINKS: TILE NAVIGATION MAPPING (HARD LINKS) ---
+    // Edit these individual strings to change destinations quickly
     const LINKS = {
-        0: BASE_TARGET, 
-        1: BASE_TARGET, 
-        2: BASE_TARGET,
-        3: BASE_TARGET,
+        0: 'https://sandbox.zakknowlton.com/projects/concept_devil', 
+        1: 'https://sandbox.zakknowlton.com/projects/concept_wii', 
+        2: 'https://sandbox.zakknowlton.com/projects/concept_grassball',
+        3: 'https://sandbox.zakknowlton.com/projects/concept_knot',
+        // 4-11 are null (no link)
+        4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
     };
 
     // --- CONFIG ---
