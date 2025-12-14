@@ -20,6 +20,55 @@
       user-select: none;
     }
 
+    /* --- CRT / GRAIN OVERLAY (THE ANALOG FIX) --- */
+    #analog-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        pointer-events: none; /* Lets clicks pass through */
+        z-index: 9000;
+        opacity: 0.6; /* Adjust intensity of grain here */
+    }
+
+    #scanlines {
+        width: 100%; height: 100%;
+        background: linear-gradient(
+            to bottom,
+            rgba(255,255,255,0),
+            rgba(255,255,255,0) 50%,
+            rgba(0,0,0,0.05) 50%,
+            rgba(0,0,0,0.05)
+        );
+        background-size: 100% 4px;
+        position: absolute;
+        top: 0; left: 0;
+    }
+
+    #noise {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        /* Data URI for noise texture to avoid external asset dependency */
+        background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
+        opacity: 0.4;
+        mix-blend-mode: overlay;
+        animation: noiseAnimation 0.2s infinite;
+    }
+
+    @keyframes noiseAnimation {
+        0% { transform: translate(0,0); }
+        10% { transform: translate(-1%,-1%); }
+        20% { transform: translate(-2%,1%); }
+        30% { transform: translate(1%,-2%); }
+        40% { transform: translate(2%,1%); }
+        50% { transform: translate(-1%,2%); }
+        60% { transform: translate(1%,1%); }
+        70% { transform: translate(2%,-2%); }
+        80% { transform: translate(-2%,-1%); }
+        90% { transform: translate(1%,2%); }
+        100% { transform: translate(0,0); }
+    }
+
     /* --- PRELOADER --- */
     @keyframes spin {
         0% { transform: rotate(0deg); }
@@ -179,6 +228,11 @@
       <div id="preloader-spinner"></div>
       LOADING OS
       <div id="preloader-text">ZAK KNOWLTON &copy; 2026</div>
+  </div>
+
+  <div id="analog-overlay">
+      <div id="scanlines"></div>
+      <div id="noise"></div>
   </div>
 
   <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
@@ -366,9 +420,6 @@
         channelBlocks.push(mesh);
         materials.push(mat); 
 
-        // Removed the extra Hover Plane to prevent white box artifact
-        // We will control glare via Material properties now.
-
         const labelDiv = document.createElement('div');
         labelDiv.className = 'tile-index-label';
         labelDiv.textContent = i;
@@ -451,10 +502,10 @@
             const targetLink = LINKS[index];
 
             if (targetLink) {
-                // 0.5s DELAY FOR NAVIGATION
+                // 0.3s DELAY FOR NAVIGATION
                 setTimeout(() => {
                     window.location.href = targetLink;
-                }, 500); 
+                }, 300); 
             }
             
             INTERSECTED.userData.wasClicked = true; 
@@ -488,7 +539,7 @@
         const DEFAULT_SHININESS = 10;
         const HOVER_SHININESS = 90;
         const DEFAULT_EMISSIVE = 0x000000;
-        const HOVER_EMISSIVE = 0x555555; // Brighter gray/white pop on hover
+        const HOVER_EMISSIVE = 0x555555; // Bright glare
         const LERP_FACTOR = 0.15;
 
         if (intersects.length > 0) {
@@ -507,12 +558,9 @@
             const currentlyHovered = b === INTERSECTED;
             
             // --- MATERIAL LERP (Anime Glare) ---
-            // Instead of a separate plane, we Lerp properties of the main material
             const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
-            // Manual lerp for float
             b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
             
-            // Lerp Emissive Color (Cheat for 'glare')
             const currentEmissive = b.material.emissive;
             const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
             const targetColor = new THREE.Color(targetHex);
@@ -521,7 +569,7 @@
             b.material.needsUpdate = true;
 
 
-            // --- HYBRID TILE PHYSICS (Unchanged) ---
+            // --- HYBRID TILE PHYSICS ---
             let targetS = 1.0;
             const SPRING_TENSION = 0.14; 
             const SPRING_DAMPING = 0.85; 
@@ -592,7 +640,7 @@
 
     // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 300; // FIX: Updated to 300
+    const IDLE_TIMEOUT = 300; 
 
     function animateCursor() {
         cursorState.x = cursorState.targetX;
