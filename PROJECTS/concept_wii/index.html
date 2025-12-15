@@ -66,7 +66,7 @@
         100% { transform: translate(0,0); }
     }
 
-    /* --- VERTICAL SCROLL HINT (NEW DESIGN) --- */
+    /* --- VERTICAL SCROLL HINT --- */
     @keyframes bobVertical {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(10px); }
@@ -74,8 +74,8 @@
     
     #scroll-hint {
         position: fixed;
-        top: 50%; /* Center Vertically */
-        right: -60px; /* Start off screen */
+        top: 50%; 
+        right: -60px; 
         transform: translateY(-50%);
         color: #7ec1d9; 
         font-family: 'Orbitron', sans-serif;
@@ -84,7 +84,7 @@
         z-index: 8000;
         pointer-events: none;
         display: flex;
-        flex-direction: column; /* Stack vertical */
+        flex-direction: column; 
         align-items: center;
         gap: 12px;
         opacity: 0;
@@ -103,11 +103,10 @@
         animation: bobVertical 2s ease-in-out infinite;
     }
     
-    /* Vertical Text Mode */
     #scroll-hint span {
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        transform: rotate(180deg); /* Read bottom to top or tweak as desired */
+        transform: rotate(180deg); 
     }
     
     #scroll-hint svg {
@@ -255,7 +254,7 @@
         
         #clock {
             font-size: 1.5rem; 
-            bottom: 20px;
+            bottom: 15px; /* Moved down slightly */
         }
         
         #instructions {
@@ -342,10 +341,10 @@
     };
     
     const LINKS = {
-        0: 'https://sandbox.zakknowlton.com/projects/concept_devil', 
+        0: 'https://sandbox.zakknowlton.com', 
         1: 'https://sandbox.zakknowlton.com/projects/concept_wii', 
-        2: 'https://sandbox.zakknowlton.com/projects/concept_grassball',
-        3: 'https://sandbox.zakknowlton.com/projects/concept_knot',
+        2: 'https://sandbox.zakknowlton.com/projects/concept_wii',
+        3: 'https://sandbox.zakknowlton.com/projects/concept_wii',
         4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
     };
 
@@ -412,7 +411,10 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const splitY = h * PARAMS.splitHeight;
+        // FIX: Push blue line down on mobile (0.92) vs desktop (0.85)
+        const splitFactor = isMobile ? 0.92 : PARAMS.splitHeight;
+        const splitY = h * splitFactor;
+        
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
@@ -496,10 +498,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            
-            // FIX: Start Y on mobile set to roughly camera center (offset from -1.5)
-            // On desktop startY is dynamic, on mobile we hardcode to ensure first tile visibility
-            const startY = isMobile ? -0.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // Align start at top on mobile
+            const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -569,7 +569,6 @@
         }
     });
 
-    // --- MOBILE TAP & SCROLL LOGIC ---
     window.addEventListener('touchstart', (e) => {
         if (!isMobile) return;
         
@@ -614,17 +613,15 @@
             // TAP ACTION
             isMouseDown = false;
             
-            // 1. Force Spring
             INTERSECTED.userData.isSpringing = true;
-            const popForce = 0.15; 
+            // FIX: Reduced force for snappier/tighter feel on mobile
+            const popForce = 0.05; 
             INTERSECTED.userData.velocity.x += popForce;
             
-            // 2. Navigate
             const targetLink = LINKS[INTERSECTED.userData.index];
             if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
         }
         
-        // Reset state but keep INTERSECTED valid briefly for spring physics
         isMouseDown = false;
         setTimeout(() => { INTERSECTED = null; }, 300); 
     });
@@ -673,8 +670,9 @@
             });
         }
 
-        const SPRING_TENSION = 0.14; 
-        const SPRING_DAMPING = 0.85; 
+        // FIX: Increased Tension (0.25) and Damping (0.8) for snappy spring
+        const SPRING_TENSION = 0.25; 
+        const SPRING_DAMPING = 0.80; 
         const OVERSHOOT_SCALE = 1.03; 
         const LERP_CLICK = 0.2; 
         const LERP_NORMAL = 0.08; 
