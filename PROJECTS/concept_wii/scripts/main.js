@@ -280,7 +280,7 @@ function animate() {
             INTERSECTED.material.emissive.setHex(0x444444);
             if (!isDragging) cursorState.targetScale = 1.3;
         }
-        closestBlock.scale.lerp(new THREE.Vector3(1.05, 1.05, 1.05), 0.15);
+        closestBlock.scale.lerp(new THREE.Vector3(1.02, 1.02, 1.02), 0.12);
     } else {
         if (INTERSECTED) {
             INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
