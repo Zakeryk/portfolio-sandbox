@@ -116,7 +116,7 @@
         margin-top: 5px;
     }
 
-    /* --- RADIO PLAYER (MINIMAL LOOP) --- */
+    /* --- RADIO PLAYER --- */
     #radio-player {
         position: fixed;
         bottom: 30px;
@@ -498,11 +498,11 @@
         isScrolling: false
     };
 
-    // --- RADIO LOGIC (Single Track Loop) ---
-    // NOTE: You must download "do_ya_shopping.mp3" to your assets folder!
+    // --- RADIO LOGIC ---
+    // Make sure 'assets/do_ya_shopping.mp3' exists!
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
-    audio.volume = 0.5; // FIXED: Default 50%
+    audio.volume = 0.15; // FIXED: Default 15%
     
     const radioEl = document.getElementById('radio-player');
     const btnToggle = document.getElementById('btn-toggle');
@@ -523,6 +523,17 @@
         }
         isPlaying = !isPlaying;
     }
+    
+    // Attempt Auto-Play on Load
+    window.addEventListener('load', () => {
+        audio.play().then(() => {
+            isPlaying = true;
+            radioEl.classList.remove('player-stopped');
+        }).catch(() => {
+            // Autoplay blocked, UI stays in stopped state
+            console.log("Autoplay blocked - waiting for interaction");
+        });
+    });
 
 
     // --- SETUP ---
@@ -765,7 +776,6 @@
             isMouseDown = false;
             
             INTERSECTED.userData.isSpringing = true;
-            // FIXED: Snappy spring force (0.05)
             const popForce = 0.05; 
             INTERSECTED.userData.velocity.x += popForce;
             
@@ -821,7 +831,6 @@
             });
         }
 
-        // --- SNAPPY PHYSICS CONFIG ---
         const SPRING_TENSION = 0.25; 
         const SPRING_DAMPING = 0.80; 
         const OVERSHOOT_SCALE = 1.03; 
