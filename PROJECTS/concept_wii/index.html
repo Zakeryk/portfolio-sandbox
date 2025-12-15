@@ -43,7 +43,7 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.02) 50%,  /* FIXED: 0.02 Opacity */
+            rgba(0,0,0,0.02) 50%,  /* LOCKED: 0.02 Opacity */
             rgba(0,0,0,0.02)
         );
         background-size: 100% 4px;
@@ -56,7 +56,7 @@
         top: 0; left: 0;
         width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.02; /* FIXED: 0.02 Opacity */
+        opacity: 0.02; /* LOCKED: 0.02 Opacity */
         mix-blend-mode: overlay;
         animation: noiseAnimation 2.5s linear infinite; 
     }
@@ -518,7 +518,7 @@
     // --- RADIO LOGIC ---
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
-    audio.volume = 0.15; 
+    audio.volume = 0.15; // 15% Volume
     
     const radioEl = document.getElementById('radio-player');
     const btnToggle = document.getElementById('btn-toggle');
@@ -549,6 +549,8 @@
         setTimeout(() => {
             document.getElementById('radio-player').classList.add('slide-in');
         }, 1200);
+
+        // No autoplay
     });
 
 
@@ -581,8 +583,8 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        // FIXED: Mobile split UP to 0.78
-        const splitFactor = isMobile ? 0.78 : PARAMS.splitHeight;
+        // FIXED: Mobile split set to 0.82 (Middle Ground)
+        const splitFactor = isMobile ? 0.82 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
@@ -678,8 +680,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // FIXED: Mobile Start Y lowered to -0.6 to push content down
-            const startY = isMobile ? -0.6 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIXED: Mobile Start Y set to -0.25 (Middle Ground)
+            const startY = isMobile ? -0.25 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -703,6 +705,7 @@
         updateGrid(); 
     });
 
+    // FIXED: Toggle Debug Mode Listener
     window.addEventListener('keydown', (e) => {
         if (e.key === '`' || e.key === '~') {
             document.body.classList.toggle('debug-mode');
@@ -827,13 +830,14 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
-            // MAGNETIC LOGIC
+            // MAGNETIC LOGIC (FIXED: Subtle 0.02 intensity)
             let hoveredTile = null;
             if (intersects.length > 0) {
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
-                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.05;
-                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.05;
+                // Magnet strength reduced to 0.02
+                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.02;
+                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.02;
                 
                 hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
                 
@@ -842,11 +846,13 @@
                 INTERSECTED = null;
             }
             
+            // Return tiles to base if not hovered
             channelBlocks.forEach(b => {
                 if(b !== hoveredTile) {
                     b.position.lerp(new THREE.Vector3(b.userData.baseX, b.userData.baseY, 0), 0.1);
                 }
                 
+                // Hover Visuals
                 const currentlyHovered = b === INTERSECTED;
                 const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
                 b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
