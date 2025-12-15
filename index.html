@@ -549,7 +549,8 @@
             display: block;
         }
 
-        .work-links a:active {
+        .work-links a:active,
+        .work-links a:hover {
             color: #fff !important;
             text-shadow: 0 0 8px #fff;
             animation: blink 0.05s steps(2) infinite;
@@ -679,7 +680,16 @@
 
         accordions.forEach(accHeader => {
             accHeader.addEventListener('click', () => {
-                // Toggle active state for header
+                // Close all other accordions
+                accordions.forEach(otherHeader => {
+                    if (otherHeader !== accHeader && otherHeader.classList.contains('active')) {
+                        otherHeader.classList.remove('active');
+                        otherHeader.nextElementSibling.classList.remove('active');
+                        otherHeader.querySelector('.acc-icon').innerText = "[+]";
+                    }
+                });
+
+                // Toggle active state for clicked header
                 accHeader.classList.toggle('active');
 
                 // Find associated content (sibling)

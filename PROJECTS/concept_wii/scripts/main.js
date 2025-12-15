@@ -294,7 +294,8 @@ function animate() {
             INTERSECTED = closestBlock;
             // Trigger Flash via Uniform
             if (INTERSECTED.material.userData.uFlashTime) {
-                INTERSECTED.material.userData.uFlashTime.value = performance.now() / 1000; // Seconds
+                // Light flash disabled
+                // INTERSECTED.userData.triggerFlash = performance.now(); / 1000; // Seconds
             }
 
             if (!isDragging) cursorState.targetScale = 1.3;
