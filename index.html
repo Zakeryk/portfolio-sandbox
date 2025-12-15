@@ -233,13 +233,23 @@
 
         .card-img {
             background-color: #050505;
-            background-repeat: no-repeat;
-            background-position: center;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            overflow: hidden;
+        }
+
+        .card-img-inner {
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: scale(1.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .card-img::after {
@@ -284,10 +294,11 @@
             width: 40px;
             height: 100%;
             border-right: 1px solid #1a1a1a;
-            background-size: cover;
         }
 
-
+        .grid.list-mode .card-img-inner {
+            background-size: cover;
+        }
 
         .grid.list-mode .card-info {
             flex: 1;
@@ -314,12 +325,15 @@
             width: 100%;
             height: 140px;
             border-bottom: 1px solid #151515;
+        }
+
+        .grid.tile-mode .card-img-inner {
             background-size: contain;
             opacity: 0.8;
             transition: opacity 0.2s;
         }
 
-        .grid.tile-mode .card:hover .card-img {
+        .grid.tile-mode .card:hover .card-img-inner {
             opacity: 1;
         }
 
@@ -575,7 +589,7 @@
                     const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">NO_SIGNAL</span>';
                     const noImgClass = imgUrl ? '' : 'background-color: #e0e0e0;';
 
-                    const imgDiv = `<div class="card-img" style="${imgStyle}; ${noImgClass}">${imgContent}</div>`;
+                    const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
 
                     const dateObj = new Date(p.date);
                     const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');

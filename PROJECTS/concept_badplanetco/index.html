@@ -331,19 +331,24 @@
                 line-height: 0.8;
                 text-align: center;
                 word-break: break-word;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
                 letter-spacing: -2px;
+                width: 100%;
+                /* Edge to edge */
+                padding: 0;
             }
 
             h2 {
                 font-size: 1.8rem;
                 font-weight: 700;
                 text-align: center;
-                margin: 0 0 40px 0;
-                padding: 0 20px;
+                margin: 0 0 30px 0;
+                padding: 0;
+                /* Remove padding for edge-to-edge */
                 opacity: 0.9;
                 text-transform: uppercase;
                 letter-spacing: 1px;
+                width: 100%;
             }
 
             .content-box {
@@ -355,6 +360,9 @@
                 justify-content: center;
                 align-items: center;
                 pointer-events: none;
+                padding: 0 10px;
+                /* Tiny safety padding */
+                box-sizing: border-box;
             }
 
             .content-box>* {
@@ -367,83 +375,90 @@
                 justify-content: center;
             }
 
-            /* Mobile Project Panel - HUGE BLOCK POPUP */
+            /* Mobile Project Panel - EDGE TO EDGE POPUP */
             #side-panel {
-                top: 50%;
-                left: 50%;
-                right: auto;
-                bottom: auto;
-                width: 90%;
-                max-width: 400px;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                max-width: 100%;
+                /* Full width */
                 height: auto;
                 max-height: 85vh;
-                transform: translate(-50%, -50%) scale(0.9);
-                /* Center and scale down start */
-                border-radius: 40px;
-                /* Curved borders */
-                border: 2px solid rgba(255, 255, 255, 0.2);
-                padding: 40px 30px;
-                background: rgba(10, 10, 10, 0.95);
-                /* Deep dark background */
+                transform: translateY(100%);
+                /* Slide up from bottom */
+                border-radius: 30px 30px 0 0;
+                /* Curved top only */
+                border: none;
+                border-top: 1px solid rgba(255, 255, 255, 0.2);
+                padding: 30px 20px;
+                background: rgba(10, 10, 10, 0.98);
                 backdrop-filter: blur(40px);
                 display: flex;
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
                 align-items: center;
                 z-index: 100;
-                opacity: 0;
-                pointer-events: none;
-                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                /* Snappy spring */
-                box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+                opacity: 1;
+                pointer-events: auto;
+                transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
+                box-sizing: border-box;
             }
 
             #side-panel.active {
                 opacity: 1;
-                pointer-events: auto;
-                transform: translate(-50%, -50%) scale(1);
+                transform: translateY(0);
             }
 
             #side-panel h3 {
                 font-size: 18px;
                 font-weight: 900;
-                margin-bottom: 30px;
+                margin-bottom: 20px;
                 letter-spacing: 4px;
                 text-align: center;
                 color: #fff;
             }
 
+            /* 2-COLUMN GRID FOR LINKS */
             .link-list {
                 width: 100%;
-                text-align: center;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                /* 2 Column */
+                gap: 10px;
                 margin-bottom: 20px;
             }
 
             .link-list li {
-                margin-bottom: 12px;
+                margin-bottom: 0;
                 width: 100%;
             }
 
             .link-list a {
-                font-size: 20px;
+                font-size: 16px;
+                /* Slightly smaller for grid */
                 font-weight: 700;
                 justify-content: center;
-                padding: 18px 0;
+                padding: 20px 10px;
                 background: rgba(255, 255, 255, 0.05);
-                border-radius: 12px;
-                /* Inner curvature */
+                border-radius: 16px;
                 border: 1px solid rgba(255, 255, 255, 0.05);
                 width: 100%;
+                height: 100%;
                 flex-direction: column;
                 gap: 5px;
+                box-sizing: border-box;
+                text-align: center;
             }
 
             .link-list a span {
                 display: block;
-                font-size: 11px;
+                font-size: 10px;
                 opacity: 0.6;
                 font-weight: 400;
-                letter-spacing: 2px;
+                letter-spacing: 1px;
             }
 
             /* Close Button for Mobile Menu */
@@ -453,7 +468,7 @@
                 background: #fff;
                 color: #000;
                 border: none;
-                padding: 18px 0;
+                padding: 20px 0;
                 width: 100%;
                 border-radius: 50px;
                 font-weight: 900;
@@ -463,28 +478,29 @@
                 cursor: pointer;
             }
 
-            /* Mobile Tooltip - Fixed Bottom Card */
+            /* Mobile Tooltip - FULL WIDTH BOTTOM EDGE-TO-EDGE */
             #tooltip {
                 position: fixed !important;
                 top: auto !important;
-                bottom: 30px !important;
-                left: 20px !important;
-                right: 20px !important;
-                width: auto;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
                 background: #fff;
                 color: #000;
-                padding: 25px;
-                transform: translateY(110%);
+                padding: 30px 20px 40px 20px;
+                /* Extra bottom pad for safety */
+                transform: translateY(100%);
                 opacity: 0;
                 pointer-events: auto;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-                border-radius: 30px;
-                /* Match curve */
+                box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+                border-radius: 30px 30px 0 0;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 text-align: center;
                 z-index: 200;
+                box-sizing: border-box;
             }
 
             #tooltip.visible {
@@ -492,35 +508,30 @@
                 opacity: 1;
             }
 
-            #tooltip .color-strip {
-                width: 50px;
-                height: 6px;
-                margin-bottom: 15px;
-                border-radius: 10px;
-            }
-
-            #tooltip h2 {
-                font-size: 28px;
-                margin-bottom: 5px;
-            }
-
-            /* Big & Centered Buttons */
+            /* Big & Side-by-Side Buttons */
             .btn-group {
-                flex-direction: column;
-                gap: 15px;
+                flex-direction: row;
+                /* Side by side */
+                gap: 10px;
                 width: 100%;
-                max-width: 340px;
+                max-width: 100%;
+                /* Edge to edge parent */
+                padding: 0 15px;
+                /* Small pad from screen edge */
+                box-sizing: border-box;
                 margin: 0;
             }
 
             .btn {
                 width: 100%;
+                /* Shared width */
+                flex: 1;
                 text-align: center;
-                padding: 25px 0;
-                font-size: 18px;
+                padding: 20px 0;
+                font-size: 15px;
                 font-weight: 900;
-                border-radius: 60px;
-                /* Huge curves */
+                border-radius: 16px;
+                /* Slightly less round for rugged feel */
             }
         }
 
