@@ -79,8 +79,8 @@ function updateCurvedBorder() {
 
     // Adjust this value to move the line up/down
     const isMobile = window.innerWidth <= 768;
-    // Just above the clock (approx 55px from bottom on mobile to sit right above clock)
-    const baselineY = isMobile ? height - 55 : height * 0.85;
+    // Just above the clock (approx 40px from bottom on mobile to sit right above clock)
+    const baselineY = isMobile ? height - 40 : height * 0.85;
     const inset = 0; // Set to 0 for full width
 
     // Store for raycaster
@@ -290,7 +290,7 @@ function animate() {
             if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
             INTERSECTED = closestBlock;
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-            INTERSECTED.material.emissive.setHex(0x444444);
+            INTERSECTED.material.emissive.setHex(0x151515);
             if (!isDragging) cursorState.targetScale = 1.3;
         }
 
@@ -298,9 +298,9 @@ function animate() {
         if (isMobile) {
             // Mobile: Snappy Shrink on Tap
             if (isDragging) { // Simulate "Active" state
-                closestBlock.scale.lerp(new THREE.Vector3(0.92, 0.92, 1), 0.4);
+                closestBlock.scale.lerp(new THREE.Vector3(0.85, 0.85, 1), 0.5);
             } else {
-                closestBlock.scale.lerp(new THREE.Vector3(1, 1, 1), 0.4);
+                closestBlock.scale.lerp(new THREE.Vector3(1, 1, 1), 0.5);
             }
         } else {
             // Desktop: Gentle Grow on Hover
@@ -317,9 +317,9 @@ function animate() {
 
     channelBlocks.forEach(block => {
         if (block !== INTERSECTED) {
-            // Mobile: Snap back fast (0.4)
+            // Mobile: Snap back fast (0.5)
             // Desktop: Smooth return (0.1)
-            const speed = isMobile ? 0.4 : 0.1;
+            const speed = isMobile ? 0.5 : 0.1;
             block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), speed);
         }
     });
