@@ -991,10 +991,14 @@
                     }
 
                     const currentlyHovered = b === INTERSECTED;
-                    const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
+                    const hasImage = !!b.material.map;
+                    // FIXED: Only glow if hovered AND no image
+                    const shouldGlow = currentlyHovered && !hasImage;
+
+                    const targetShin = shouldGlow ? HOVER_SHININESS : DEFAULT_SHININESS;
                     b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
                     const currentEmissive = b.material.emissive;
-                    const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
+                    const targetHex = shouldGlow ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
                     const targetColor = new THREE.Color(targetHex);
                     currentEmissive.lerp(targetColor, LERP_FACTOR);
                     b.material.needsUpdate = true;
