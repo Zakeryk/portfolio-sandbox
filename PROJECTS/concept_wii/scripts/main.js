@@ -293,9 +293,9 @@ function animate() {
         if (INTERSECTED !== closestBlock) {
             INTERSECTED = closestBlock;
             // Trigger Flash via Uniform
-            if (INTERSECTED.material.userData.uFlashTime) {
-                // Light flash disabled
-                // INTERSECTED.userData.triggerFlash = performance.now(); / 1000; // Seconds
+            // Trigger Flash (Only if no image)
+            if (!INTERSECTED.material.map) {
+                INTERSECTED.userData.triggerFlash = performance.now();
             }
 
             if (!isDragging) cursorState.targetScale = 1.3;
@@ -327,6 +327,25 @@ function animate() {
         // Update Shader Time
         if (block.material.userData.uTime) {
             block.material.userData.uTime.value = timeSeconds;
+        }
+
+        // Handle Flash Decay (Only if no image)
+        if (!block.material.map && block.userData.triggerFlash > 0) {
+            const elapsed = performance.now() - block.userData.triggerFlash; // usage of 'now' var or perf.now()
+            // Note: 'now' variable isn't defined in this scope in the snippet provided in view_file, 
+            // but 'timeSeconds' is. Let's use performance.now() to be safe or check if 'now' exists. 
+            // Looking at line 325: const timeSeconds = performance.now() / 1000;
+            // Let's use performance.now() directly.
+
+            if (elapsed < 200) {
+                // Decay from 1.0 to 0.0 over 200ms
+                const t = 1.0 - (elapsed / 200);
+                const intensity = THREE.MathUtils.lerp(0, 0.2, t);
+                block.material.emissive.setScalar(intensity);
+            } else {
+                block.material.emissive.setHex(0x000000);
+                block.userData.triggerFlash = 0;
+            }
         }
 
         if (block !== INTERSECTED) {
