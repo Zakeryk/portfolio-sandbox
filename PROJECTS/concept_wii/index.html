@@ -34,7 +34,7 @@
         width: 100%; height: 100%;
         pointer-events: none; 
         z-index: 9000;
-        opacity: 0.1; 
+        opacity: 1.0; 
     }
 
     #scanlines {
@@ -66,7 +66,7 @@
         100% { transform: translate(0,0); }
     }
 
-    /* --- VERTICAL SCROLL HINT (NEW DESIGN) --- */
+    /* --- VERTICAL SCROLL HINT --- */
     @keyframes bobVertical {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(10px); }
@@ -74,8 +74,8 @@
     
     #scroll-hint {
         position: fixed;
-        top: 50%; /* Center Vertically */
-        right: -60px; /* Start off screen */
+        top: 50%; 
+        right: -60px; 
         transform: translateY(-50%);
         color: #7ec1d9; 
         font-family: 'Orbitron', sans-serif;
@@ -84,7 +84,7 @@
         z-index: 8000;
         pointer-events: none;
         display: flex;
-        flex-direction: column; /* Stack vertical */
+        flex-direction: column; 
         align-items: center;
         gap: 12px;
         opacity: 0;
@@ -103,11 +103,10 @@
         animation: bobVertical 2s ease-in-out infinite;
     }
     
-    /* Vertical Text Mode */
     #scroll-hint span {
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        transform: rotate(180deg); /* Read bottom to top or tweak as desired */
+        transform: rotate(180deg); 
     }
     
     #scroll-hint svg {
@@ -115,6 +114,73 @@
         height: 18px;
         fill: currentColor;
         margin-top: 5px;
+    }
+
+    /* --- RADIO PLAYER (NEW) --- */
+    #radio-player {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background-color: #f0f0f0;
+        border: 2px solid #ffffff;
+        padding: 10px 15px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        z-index: 8500;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        font-family: 'Orbitron', sans-serif;
+        /* Start hidden on mobile if space is tight, or scale down */
+        transform-origin: bottom right;
+        transition: opacity 0.3s;
+        cursor: pointer; /* Click to toggle */
+    }
+
+    /* Equalizer Animation */
+    .eq-bar {
+        width: 3px;
+        background-color: #7ec1d9;
+        animation: eq 0.8s ease-in-out infinite;
+    }
+    .eq-bar:nth-child(1) { height: 10px; animation-duration: 0.6s; }
+    .eq-bar:nth-child(2) { height: 16px; animation-duration: 0.9s; }
+    .eq-bar:nth-child(3) { height: 8px; animation-duration: 0.7s; }
+
+    @keyframes eq {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.5); }
+    }
+    
+    .player-stopped .eq-bar {
+        animation: none;
+        height: 4px; /* Flatline when stopped */
+    }
+
+    #radio-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #radio-label {
+        font-size: 0.7rem;
+        color: #888;
+        letter-spacing: 1px;
+    }
+
+    #radio-status {
+        font-size: 0.9rem;
+        color: #000;
+        font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+        #radio-player {
+            bottom: 15px;
+            right: 15px;
+            padding: 8px 12px;
+            transform: scale(0.8);
+        }
     }
 
     /* --- PRELOADER --- */
@@ -255,7 +321,7 @@
         
         #clock {
             font-size: 1.5rem; 
-            bottom: 20px;
+            bottom: 15px; 
         }
         
         #instructions {
@@ -289,6 +355,18 @@
       <div id="scroll-hint-content">
           <span>SCROLL</span>
           <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>
+      </div>
+  </div>
+
+  <div id="radio-player" class="player-stopped">
+      <div style="display:flex; gap:3px; align-items:flex-end; height:20px;">
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+          <div class="eq-bar"></div>
+      </div>
+      <div id="radio-info">
+          <span id="radio-label">LOFI RADIO</span>
+          <span id="radio-status">PAUSED</span>
       </div>
   </div>
 
@@ -342,7 +420,7 @@
     };
     
     const LINKS = {
-        0: 'https://sandbox.zakknowlton.com/', 
+        0: 'https://sandbox.zakknowlton.com', 
         1: 'https://sandbox.zakknowlton.com/projects/concept_wii', 
         2: 'https://sandbox.zakknowlton.com/projects/concept_wii',
         3: 'https://sandbox.zakknowlton.com/projects/concept_wii',
@@ -358,7 +436,7 @@
         gridOffsetY: -1.2,
         borderRadius: 0.018,
         activeSlot: 1,
-        splitHeight: 0.85,
+        splitHeight: 0.92, // MOBILE TWEAK: Lowered to 0.92
     };
 
     const cursorState = { 
@@ -382,6 +460,42 @@
         lastTouchY: 0,
         isScrolling: false
     };
+
+    // --- RADIO LOGIC ---
+    const playlist = [
+        'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Elipsis.mp3',
+        'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Lobo_Loco/Vagabond/Lobo_Loco_-_06_-_Window_Smasher_-_Vagabond.mp3'
+    ];
+    let currentTrackIdx = 0;
+    const audio = new Audio();
+    audio.volume = 0.2; // Quiet volume
+    audio.src = playlist[0];
+    
+    const radioEl = document.getElementById('radio-player');
+    const radioStatus = document.getElementById('radio-status');
+    let isPlaying = false;
+
+    // Auto-cycle logic
+    audio.addEventListener('ended', () => {
+        currentTrackIdx = (currentTrackIdx + 1) % playlist.length;
+        audio.src = playlist[currentTrackIdx];
+        audio.play();
+    });
+
+    // Toggle Play/Pause
+    radioEl.addEventListener('click', () => {
+        if(isPlaying) {
+            audio.pause();
+            radioStatus.innerText = "PAUSED";
+            radioEl.classList.add('player-stopped');
+        } else {
+            audio.play().catch(e => console.log("Audio autoplay blocked:", e));
+            radioStatus.innerText = "ON AIR";
+            radioEl.classList.remove('player-stopped');
+        }
+        isPlaying = !isPlaying;
+    });
+
 
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
@@ -412,7 +526,10 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const splitY = h * PARAMS.splitHeight;
+        // Desktop uses config, Mobile forced to 0.92
+        const splitFactor = isMobile ? 0.92 : PARAMS.splitHeight;
+        const splitY = h * splitFactor;
+        
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
@@ -437,15 +554,36 @@
                 tex.colorSpace = THREE.SRGBColorSpace; 
                 tex.wrapS = THREE.RepeatWrapping; 
                 tex.wrapT = THREE.RepeatWrapping;
+                
+                // ZOOM LOGIC: Show only 90% of texture (Zoom 10%)
+                const ZOOM_FACTOR = 0.9;
+                
                 const imageAspect = tex.image.width / tex.image.height;
                 const tileAspect = TILE_ASPECT;
+                
+                // Calculate base repeat to cover the tile
+                let rX = 1, rY = 1;
+                let offX = 0, offY = 0;
+
                 if (imageAspect / tileAspect > 1) {
-                    tex.repeat.set(tileAspect / imageAspect, 1);
-                    tex.offset.set((1 - (tileAspect / imageAspect)) / 2, 0);
+                    rX = tileAspect / imageAspect;
+                    offX = (1 - rX) / 2;
                 } else {
-                    tex.repeat.set(1, imageAspect / tileAspect);
-                    tex.offset.set(0, (1 - (imageAspect / tileAspect)) / 2);
+                    rY = imageAspect / tileAspect;
+                    offY = (1 - rY) / 2;
                 }
+                
+                // Apply Zoom: reduce repeat window, adjust offset to center
+                tex.repeat.set(rX * ZOOM_FACTOR, rY * ZOOM_FACTOR);
+                
+                // Recalculate offset to center the zoomed window
+                // Center of the texture is 0.5. We want center of visible window to be 0.5.
+                // New Width = rX * Z. Start = 0.5 - (NewWidth/2).
+                tex.offset.set(
+                    0.5 - (rX * ZOOM_FACTOR) / 2,
+                    0.5 - (rY * ZOOM_FACTOR) / 2
+                );
+
                 mat.map = tex;
                 mat.needsUpdate = true;
             }, undefined, (err) => { mat.color.setHex(0xe0e0e0); mat.needsUpdate = true; });
@@ -496,10 +634,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            
-            // FIX: Start Y on mobile set to roughly camera center (offset from -1.5)
-            // On desktop startY is dynamic, on mobile we hardcode to ensure first tile visibility
-            const startY = isMobile ? -0.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // Mobile Start Y adjusted
+            const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -569,7 +705,6 @@
         }
     });
 
-    // --- MOBILE TAP & SCROLL LOGIC ---
     window.addEventListener('touchstart', (e) => {
         if (!isMobile) return;
         
@@ -611,20 +746,17 @@
         if (!isMobile) return;
         
         if (!scrollState.isScrolling && INTERSECTED) {
-            // TAP ACTION
             isMouseDown = false;
             
-            // 1. Force Spring
             INTERSECTED.userData.isSpringing = true;
-            const popForce = 0.15; 
+            // Snappy Spring Force (0.05)
+            const popForce = 0.05; 
             INTERSECTED.userData.velocity.x += popForce;
             
-            // 2. Navigate
             const targetLink = LINKS[INTERSECTED.userData.index];
             if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
         }
         
-        // Reset state but keep INTERSECTED valid briefly for spring physics
         isMouseDown = false;
         setTimeout(() => { INTERSECTED = null; }, 300); 
     });
@@ -673,8 +805,9 @@
             });
         }
 
-        const SPRING_TENSION = 0.14; 
-        const SPRING_DAMPING = 0.85; 
+        // --- SNAPPY PHYSICS CONFIG ---
+        const SPRING_TENSION = 0.25; 
+        const SPRING_DAMPING = 0.80; 
         const OVERSHOOT_SCALE = 1.03; 
         const LERP_CLICK = 0.2; 
         const LERP_NORMAL = 0.08; 
