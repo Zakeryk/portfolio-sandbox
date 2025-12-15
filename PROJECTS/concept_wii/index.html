@@ -34,7 +34,7 @@
         width: 100%; height: 100%;
         pointer-events: none; 
         z-index: 9000;
-        opacity: 0.02; 
+        opacity: 1.0; /* Container is 1.0, children control specific opacity */
     }
 
     #scanlines {
@@ -43,8 +43,8 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.2) 50%,  /* FIXED: 0.2 Opacity */
-            rgba(0,0,0,0.2)
+            rgba(0,0,0,0.1) 50%,  /* FIXED: 0.1 Opacity (Subtle) */
+            rgba(0,0,0,0.1)
         );
         background-size: 100% 4px;
         position: absolute;
@@ -56,7 +56,7 @@
         top: 0; left: 0;
         width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.1; 
+        opacity: 0.02; /* Extremely subtle grain */
         mix-blend-mode: overlay;
         animation: noiseAnimation 2.5s linear infinite; 
     }
@@ -334,12 +334,12 @@
       background: red; border-radius: 50%;
     }
 
-    /* --- GUI CONTAINER (FIXED Z-INDEX) --- */
+    /* --- GUI CONTAINER --- */
     #gui-container {
         position: absolute;
         top: 0; 
         right: 0; 
-        z-index: 20000; /* FIXED: Top Priority */
+        z-index: 20000; 
         display: none; 
     }
     
@@ -374,7 +374,7 @@
 
     /* DEBUG MODE TOGGLE */
     body.debug-mode { cursor: auto !important; }
-    body.debug-mode #gui-container { display: block !important; } /* Force block */
+    body.debug-mode #gui-container { display: block !important; }
     body.debug-mode #debug-hotspot { display: block; }
     body.debug-mode #custom-cursor { opacity: 0.5; }
     body.debug-mode .tile-index-label { display: block; } 
@@ -516,7 +516,7 @@
     // --- RADIO LOGIC ---
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
-    audio.volume = 0.5; 
+    audio.volume = 0.15; // FIXED: 15% Volume
     
     const radioEl = document.getElementById('radio-player');
     const btnToggle = document.getElementById('btn-toggle');
@@ -524,7 +524,7 @@
 
     radioEl.addEventListener('click', () => { togglePlay(); });
 
-    /*function togglePlay() {
+    function togglePlay() {
         if(isPlaying) {
             audio.pause();
             radioEl.classList.add('player-stopped');
@@ -533,7 +533,7 @@
             radioEl.classList.remove('player-stopped');
         }
         isPlaying = !isPlaying;
-    }*/
+    }
     
     window.addEventListener('load', () => {
         document.getElementById('preloader').classList.add('fade-out');
@@ -548,12 +548,7 @@
             document.getElementById('radio-player').classList.add('slide-in');
         }, 1200);
 
-        audio.play().then(() => {
-            isPlaying = true;
-            radioEl.classList.remove('player-stopped');
-        }).catch(() => {
-            console.log("Autoplay blocked - waiting for interaction");
-        });
+        // FIXED: Removed autoplay on load
     });
 
 
@@ -831,14 +826,14 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
-            // MAGNETIC LOGIC (FIXED: Subtle 0.05 intensity)
+            // MAGNETIC LOGIC (FIXED: Subtle 0.02 intensity)
             let hoveredTile = null;
             if (intersects.length > 0) {
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
-                // Magnet strength reduced to 0.05
-                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.03;
-                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.03;
+                // Magnet strength reduced to 0.02
+                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.02;
+                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.02;
                 
                 hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
                 
