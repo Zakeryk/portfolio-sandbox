@@ -11,25 +11,25 @@
     "date": "2025-12-15T05:35:22.801Z"
   },
   {
-    "id": "concept_grassball",
-    "path": "./projects/concept_grassball/",
-    "title": "CONCEPT_GRASSBALL",
+    "id": "concept_badplanetco",
+    "path": "./projects/concept_badplanetco/",
+    "title": "CONCEPT_BADPLANETCO",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_grassball/thumb.jpg",
+    "image": "./projects/concept_badplanetco/thumb.jpg",
     "date": "2025-12-15T05:30:49.238Z"
   },
   {
-    "id": "concept_dark_ecom",
-    "path": "./projects/concept_dark_ecom/",
-    "title": "CONCEPT_DARK_ECOM",
+    "id": "concept_sadboi",
+    "path": "./projects/concept_sadboi/",
+    "title": "CONCEPT_SADBOI",
     "tags": [
       "Experiment"
     ],
     "active": true,
-    "image": "./projects/concept_dark_ecom/thumb.jpg",
+    "image": "./projects/concept_sadboi/thumb.jpg",
     "date": "2025-12-15T05:06:10.656Z"
   }
 ]
