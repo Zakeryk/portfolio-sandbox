@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Wii OS Concept</title> <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
+  <title>Wii OS Concept</title>
+  <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
@@ -42,8 +43,8 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.1) 50%,
-            rgba(0,0,0,0.1)
+            rgba(0,0,0,0.2) 50%,  /* FIXED: 0.2 Opacity */
+            rgba(0,0,0,0.2)
         );
         background-size: 100% 4px;
         position: absolute;
@@ -132,8 +133,7 @@
         font-family: 'Orbitron', sans-serif;
         cursor: pointer;
         
-        /* SLIDE IN ANIMATION */
-        transform: translateY(100px); /* Start off screen */
+        transform: translateY(100px); 
         opacity: 0;
         transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
     }
@@ -150,7 +150,7 @@
     }
 
     .radio-btn {
-        width: 20px; /* Slightly smaller */
+        width: 20px;
         height: 20px;
         fill: #000;
         opacity: 0.6;
@@ -198,7 +198,7 @@
     }
     
     #radio-label {
-        font-size: 0.55rem; /* SMALLER */
+        font-size: 0.55rem;
         color: #888;
         letter-spacing: 1px;
         line-height: 1;
@@ -206,7 +206,7 @@
     }
     
     #radio-track {
-        font-size: 0.7rem; /* SMALLER */
+        font-size: 0.7rem;
         font-weight: 700;
         line-height: 1;
     }
@@ -215,7 +215,7 @@
         #radio-player {
             bottom: 15px;
             right: 15px;
-            transform: scale(0.9) translateY(100px); /* Maintain scale logic with slide */
+            transform: scale(0.9) translateY(100px); 
         }
         #radio-player.slide-in {
             transform: scale(0.9) translateY(0);
@@ -334,9 +334,13 @@
       background: red; border-radius: 50%;
     }
 
+    /* --- GUI CONTAINER (FIXED Z-INDEX) --- */
     #gui-container {
         position: absolute;
-        top: 0; right: 0; z-index: 10001; display: none; 
+        top: 0; 
+        right: 0; 
+        z-index: 20000; /* FIXED: Top Priority */
+        display: none; 
     }
     
     .tile-index-label {
@@ -368,8 +372,9 @@
         }
     }
 
+    /* DEBUG MODE TOGGLE */
     body.debug-mode { cursor: auto !important; }
-    body.debug-mode #gui-container { display: block; }
+    body.debug-mode #gui-container { display: block !important; } /* Force block */
     body.debug-mode #debug-hotspot { display: block; }
     body.debug-mode #custom-cursor { opacity: 0.5; }
     body.debug-mode .tile-index-label { display: block; } 
@@ -509,7 +514,6 @@
     };
 
     // --- RADIO LOGIC ---
-    // Ensure 'assets/do_ya_shopping.mp3' exists
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
     audio.volume = 0.5; 
@@ -518,10 +522,7 @@
     const btnToggle = document.getElementById('btn-toggle');
     let isPlaying = false;
 
-    // Toggle Play/Pause
-    radioEl.addEventListener('click', () => {
-        togglePlay();
-    });
+    radioEl.addEventListener('click', () => { togglePlay(); });
 
     function togglePlay() {
         if(isPlaying) {
@@ -534,23 +535,19 @@
         isPlaying = !isPlaying;
     }
     
-    // Attempt Auto-Play on Load
     window.addEventListener('load', () => {
         document.getElementById('preloader').classList.add('fade-out');
         
-        // Show scroll hint
         if(isMobile) {
             setTimeout(() => {
                 document.getElementById('scroll-hint').classList.add('visible');
             }, 500);
         }
 
-        // Show Radio Widget (Slide Up)
         setTimeout(() => {
             document.getElementById('radio-player').classList.add('slide-in');
         }, 1200);
 
-        // Try Audio
         audio.play().then(() => {
             isPlaying = true;
             radioEl.classList.remove('player-stopped');
@@ -576,10 +573,9 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
     
-    // MOVED LIGHTING for Angled Effect (Top-Left)
     scene.add(new THREE.AmbientLight(0xffffff, 1.6));
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    dirLight.position.set(-5, 10, 10); // Hits from Top-Left
+    dirLight.position.set(-5, 10, 10); 
     scene.add(dirLight);
 
     const raycaster = new THREE.Raycaster();
@@ -590,10 +586,8 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        // Mobile split moves UP (0.80) to clear clock
         const splitFactor = isMobile ? 0.80 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
-        
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
@@ -647,7 +641,7 @@
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
         mesh.userData.wasClicked = false; 
         mesh.userData.isSpringing = false; 
-        // Store base grid positions for magnetic effect
+        // Store base positions for magnetic effect
         mesh.userData.baseX = 0;
         mesh.userData.baseY = 0;
         
@@ -693,7 +687,6 @@
             const col = i % COLS;
             const row = Math.floor(i / COLS);
 
-            // Store Base Positions
             b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
             b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
             
@@ -711,6 +704,13 @@
         renderer.setSize(container.clientWidth, container.clientHeight);
         updateBorders();
         updateGrid(); 
+    });
+
+    // FIXED: Toggle Debug Mode Listener
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '`' || e.key === '~') {
+            document.body.classList.toggle('debug-mode');
+        }
     });
 
     window.addEventListener('mousedown', (e) => {
@@ -754,7 +754,6 @@
 
     window.addEventListener('touchstart', (e) => {
         if (!isMobile) return;
-        
         document.getElementById('scroll-hint').classList.remove('visible');
         
         scrollState.isScrolling = false;
@@ -832,14 +831,14 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
-            // MAGNETIC LOGIC
+            // MAGNETIC LOGIC (FIXED: Subtle 0.05 intensity)
             let hoveredTile = null;
             if (intersects.length > 0) {
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
-                // Magnet strength 0.2
-                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.2;
-                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.2;
+                // Magnet strength reduced to 0.05
+                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.05;
+                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.05;
                 
                 hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
                 
