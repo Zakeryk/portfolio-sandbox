@@ -1,86 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>ZAK KNOWLTON | Creative Design & Dev</title>
+    <title>BADPLANETCO | Creative Design & Dev</title>
     <link id="favicon" rel="icon" href="data:,">
     <style>
         /* PREMIUM RESET */
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-        canvas { display: block; outline: none; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        canvas {
+            display: block;
+            outline: none;
+        }
 
         /* LANDING PAGE UI */
         #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Click through to 3D */
-            display: flex; align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            /* Click through to 3D */
+            display: flex;
+            align-items: center;
             z-index: 5;
             padding-left: 5%;
         }
 
         .content-box {
-            pointer-events: auto; 
-            max-width: 600px; 
+            pointer-events: auto;
+            max-width: 600px;
         }
 
         h1 {
-            font-size: 6rem; font-weight: 900; margin: 0; line-height: 0.85;
-            color: #ffffff; text-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            letter-spacing: -3px; text-transform: uppercase;
+            font-size: 6rem;
+            font-weight: 900;
+            margin: 0;
+            line-height: 0.85;
+            color: #ffffff;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            letter-spacing: -3px;
+            text-transform: uppercase;
         }
-        
+
         h2 {
-            font-size: 1.4rem; font-weight: 500; margin: 25px 0 40px 5px;
-            color: rgba(255,255,255,0.95); letter-spacing: 0.5px; text-transform: uppercase;
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin: 25px 0 40px 5px;
+            color: rgba(255, 255, 255, 0.95);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
             line-height: 1.4;
         }
 
-        .btn-group { display: flex; gap: 20px; margin-left: 5px; }
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            margin-left: 5px;
+        }
 
         /* BUTTON STYLES WITH MOUSE FX */
         .btn {
             position: relative;
             overflow: hidden;
-            padding: 18px 45px; font-size: 14px; font-weight: 800;
-            border-radius: 50px; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 1px;
+            padding: 18px 45px;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-            --x: 50%; --y: 50%;
+            --x: 50%;
+            --y: 50%;
         }
-        
+
         /* The glow effect container */
         .btn::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none;
-            background: radial-gradient(circle at var(--x) var(--y), rgba(255,255,255,0.8) 0%, transparent 60%);
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            background: radial-gradient(circle at var(--x) var(--y), rgba(255, 255, 255, 0.8) 0%, transparent 60%);
         }
-        .btn:hover::before { opacity: 1; }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
 
         /* Primary */
         .btn-primary {
-            background: rgba(255, 255, 255, 0.85); 
-            color: #000; border: 1px solid rgba(255,255,255,0.4);
+            background: rgba(255, 255, 255, 0.85);
+            color: #000;
+            border: 1px solid rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(4px);
         }
-        .btn-primary:hover { 
-            background: rgba(255, 255, 255, 0.95); 
-            box-shadow: 0 10px 30px rgba(255,255,255,0.2); 
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
         }
 
         /* Secondary */
         .btn-secondary {
-            background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
         }
-        .btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
 
         /* SIDE PANEL */
         #side-panel {
-            position: absolute; top: 50%; right: 5%; 
+            position: absolute;
+            top: 50%;
+            right: 5%;
             transform: translateY(-50%) scale(0.95);
             width: 320px;
             /* Added subtle black tint to increase contrast */
-            background: rgba(0, 0, 0, 0.2); 
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
@@ -89,8 +143,8 @@
             z-index: 20;
             opacity: 0;
             pointer-events: none;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
         #side-panel.active {
@@ -100,24 +154,38 @@
         }
 
         #side-panel h3 {
-            margin: 0 0 20px 0; color: #fff; font-size: 12px; 
-            text-transform: uppercase; letter-spacing: 2px; opacity: 0.6;
+            margin: 0 0 20px 0;
+            color: #fff;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
         }
 
-        .link-list { list-style: none; padding: 0; margin: 0; }
-        .link-list li { 
-            margin-bottom: 1px; 
-            position: relative; /* Needed for hover tab */
+        .link-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        
+
+        .link-list li {
+            margin-bottom: 1px;
+            position: relative;
+            /* Needed for hover tab */
+        }
+
         /* Tab Glow Effect */
         .link-list li::before {
             content: '';
-            position: absolute; top: 0; left: -30px;
-            width: calc(100% + 60px); /* 30px padding on both sides */
+            position: absolute;
+            top: 0;
+            left: -30px;
+            width: calc(100% + 60px);
+            /* 30px padding on both sides */
             height: 100%;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 0; /* REMOVED CURVE */
+            border-radius: 0;
+            /* REMOVED CURVE */
             opacity: 0;
             transition: opacity 0.2s;
             pointer-events: none;
@@ -129,55 +197,196 @@
         }
 
         .link-list a {
-            color: #fff; text-decoration: none; font-size: 16px; font-weight: 600;
-            display: block; transition: opacity 0.2s, transform 0.2s;
-            position: relative; 
-            padding: 10px 0; /* Vertical padding on links */
-            z-index: 1; /* Keep text above the ::before glow */
-            display: flex; justify-content: space-between; align-items: center;
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            display: block;
+            transition: opacity 0.2s, transform 0.2s;
+            position: relative;
+            padding: 10px 0;
+            /* Vertical padding on links */
+            z-index: 1;
+            /* Keep text above the ::before glow */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .link-list a:hover { opacity: 1.0; }
-        .link-list a { opacity: 0.9; }
-        
+
+        .link-list a:hover {
+            opacity: 1.0;
+        }
+
+        .link-list a {
+            opacity: 0.9;
+        }
+
         .link-list a span {
-            font-size: 11px; text-transform: uppercase; 
-            opacity: 0.7; /* Increased readability for subtitle */
-            font-weight: 400; letter-spacing: 1px;
+            font-size: 11px;
+            text-transform: uppercase;
+            opacity: 0.7;
+            /* Increased readability for subtitle */
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
 
         /* INSTRUCTIONS / DEBUG FOOTERS */
-        #instructions, #copyright {
-            position: absolute; bottom: 30px; 
+        #instructions,
+        #copyright {
+            position: absolute;
+            bottom: 30px;
             color: rgba(255, 255, 255, 0.6);
-            font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
             z-index: 5;
         }
 
-        #instructions { left: 5%; }
-        #copyright { right: 5%; }
+        #instructions {
+            left: 5%;
+        }
+
+        #copyright {
+            right: 5%;
+        }
 
         /* TOOLTIP */
         #tooltip {
-            position: absolute; pointer-events: none;
-            width: 240px; background: rgba(255, 255, 255, 0.95);
-            padding: 15px; border-radius: 12px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            opacity: 0; transform: scale(0.9) translateY(10px);
+            position: absolute;
+            pointer-events: none;
+            width: 240px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transform: scale(0.9) translateY(10px);
             transform-origin: bottom center;
             transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 10;
         }
-        #tooltip.visible { opacity: 1; transform: scale(1) translateY(0); }
-        #tooltip h3 { margin: 0 0 5px 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        #tooltip h2 { margin: 0 0 10px 0; font-size: 18px; color: #000; font-weight: 800; letter-spacing: -0.5px; }
-        #tooltip .color-strip { height: 4px; width: 30px; border-radius: 2px; margin-bottom: 10px; background: #000; }
-        
+
+        #tooltip.visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        #tooltip h3 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #tooltip h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #000;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        #tooltip .color-strip {
+            height: 4px;
+            width: 30px;
+            border-radius: 2px;
+            margin-bottom: 10px;
+            background: #000;
+        }
+
         /* GUI Tweak */
-        .dg.ac { z-index: 1000 !important; display: none; } 
-        .dg .close-button { text-align: center !important; }
+        .dg.ac {
+            z-index: 1000 !important;
+            display: none;
+        }
+
+        .dg .close-button {
+            text-align: center !important;
+        }
+
+        /* --- MOBILE OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 4rem;
+                word-break: break-word;
+            }
+
+            /* Scale down title */
+            .content-box {
+                padding-left: 0;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                padding-bottom: 120px;
+                pointer-events: none;
+                /* Let clicks pass through empty space */
+            }
+
+            .content-box>* {
+                pointer-events: auto;
+            }
+
+            /* Re-enable for text/btns */
+
+            #ui-layer {
+                padding-left: 20px;
+                align-items: flex-end;
+            }
+
+            /* Mobile Project Panel - Bottom Sheet */
+            #side-panel {
+                top: auto;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                max-height: 70vh;
+                transform: translateY(110%);
+                /* Slide up from bottom */
+                border-radius: 24px 24px 0 0;
+                padding: 25px;
+                box-sizing: border-box;
+                overflow-y: auto;
+            }
+
+            #side-panel.active {
+                transform: translateY(0);
+            }
+
+            /* Mobile Tooltip - Fixed Bottom Card */
+            #tooltip {
+                position: fixed !important;
+                top: auto !important;
+                left: 20px !important;
+                right: 20px !important;
+                bottom: 20px !important;
+                /* Force override JS styles */
+                width: auto;
+                transform: translateY(20px);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            #tooltip.visible {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            /* Adjust buttons for mobile */
+            .btn-group {
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 40px;
+                margin-right: 20px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
     <!-- DYNAMIC PROJECTS PANEL -->
@@ -188,7 +397,7 @@
 
     <div id="ui-layer">
         <div class="content-box">
-            <h1>ZAK<br>KNOWLTON</h1>
+            <h1>BAD<br>PLANET<br>CO</h1>
             <h2>Creative Design & <br>Ecommerce Development</h2>
             <div class="btn-group">
                 <button class="btn btn-primary" id="btn-projects">View Projects</button>
@@ -198,7 +407,7 @@
     </div>
 
     <div id="instructions">Drag to Spin &bull; [1-9] Camera Spots &bull; [~] Controls</div>
-    <div id="copyright">ZAK KNOWLTON 2026</div>
+    <div id="copyright">BADPLANETCO 2026</div>
 
     <div id="tooltip">
         <div class="color-strip" id="tp-color"></div>
@@ -211,7 +420,7 @@
 
     <script>
         // --- DYNAMIC FAVICON ---
-        (function() {
+        (function () {
             const link = document.getElementById('favicon');
             const img = new Image();
             img.onload = () => {
@@ -241,10 +450,10 @@
 
         // --- DATA ---
         const PLANET_DATA = [
-            { r: 1.5, color: 0xff3333, orbitR: 35, speed: 0.5, y: 6, name: "Shopify Analytics", cat: "Dev" },    
-            { r: 1.2, color: 0x3388ff, orbitR: 42, speed: -0.3, y: -5, name: "Mazda Mods", cat: "Auto" },  
-            { r: 0.9, color: 0xffaa00, orbitR: 30, speed: 0.7, y: 14, name: "Debt Payoff", cat: "Finance" },    
-            { r: 2.0, color: 0x9933ff, orbitR: 48, speed: 0.2, y: 0, name: "Creative Dir", cat: "Branding" }     
+            { r: 1.5, color: 0xff3333, orbitR: 35, speed: 0.5, y: 6, name: "Shopify Analytics", cat: "Dev" },
+            { r: 1.2, color: 0x3388ff, orbitR: 42, speed: -0.3, y: -5, name: "Mazda Mods", cat: "Auto" },
+            { r: 0.9, color: 0xffaa00, orbitR: 30, speed: 0.7, y: 14, name: "Debt Payoff", cat: "Finance" },
+            { r: 2.0, color: 0x9933ff, orbitR: 48, speed: 0.2, y: 0, name: "Creative Dir", cat: "Branding" }
         ];
 
         const listEl = document.getElementById('project-list');
@@ -264,13 +473,13 @@
         // --------------------------------------------------------
         const PARAMS = {
             sensitivity: 1.2, friction: 0.97, momentumEase: 0.1, snappiness: 0.85,
-            grassAttack: 0.05, grassDecay: 0.94, bendPower: 4.0, maxBend: 3.0, 
+            grassAttack: 0.05, grassDecay: 0.94, bendPower: 4.0, maxBend: 3.0,
             windSpeed: 1.2, keySpeed: 0.1,
-            
-            ballScale: 3.0, grassLength: 1.0, grassWidth: 1.0, skyTint: 0.3, 
-            
+
+            ballScale: 3.0, grassLength: 1.0, grassWidth: 1.0, skyTint: 0.3,
+
             transitionDuration: 1000, easeIntensity: 1.0, // Default 1.0 for smooth, controlled move
-            
+
             // Current Camera State (Loaded from Keyframe 1)
             camX: -24, camY: -44, camZ: 65, aimX: -33, aimY: 29, aimZ: 0,
             activeSlot: 1
@@ -298,13 +507,13 @@
             PARAMS.camX = parseFloat(camera.position.x.toFixed(2));
             PARAMS.camY = parseFloat(camera.position.y.toFixed(2));
             PARAMS.camZ = parseFloat(camera.position.z.toFixed(2));
-            
+
             let code = `// --- PASTE THIS OVER THE CONFIGURATION BLOCK ---\n\n`;
-            
+
             code += `const PARAMS = ${JSON.stringify(PARAMS, null, 4)};\n\n`;
             code += `const VISUALS = ${JSON.stringify(VISUALS, null, 4)};\n\n`;
             code += `const keyframes = ${JSON.stringify(keyframes, null, 4)};\n\n`;
-            
+
             console.log("%cðŸ“‹ SETTINGS EXPORT:", "color: #00ff00; font-weight: bold; font-size: 14px;");
             console.log(code);
             alert("All Settings exported to Console (F12). Copy/Paste to save.");
@@ -328,7 +537,7 @@
             PARAMS.activeSlot = slot;
             cameraTween = {
                 start: { camX: PARAMS.camX, camY: PARAMS.camY, camZ: PARAMS.camZ, aimX: PARAMS.aimX, aimY: PARAMS.aimY, aimZ: PARAMS.aimZ },
-                end: target, startTime: performance.now(), duration: PARAMS.transitionDuration 
+                end: target, startTime: performance.now(), duration: PARAMS.transitionDuration
             };
         }
 
@@ -347,32 +556,32 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.outputEncoding = THREE.sRGBEncoding;
         document.body.appendChild(renderer.domElement);
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000);
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        
+
         // --- SCENE OBJECTS ---
         let skyboxMesh;
         const loader = new THREE.TextureLoader();
-        loader.load('./Daylight_Box_0.png', function(texture) {
+        loader.load('./Daylight_Box_0.png', function (texture) {
             texture.mapping = THREE.EquirectangularReflectionMapping;
-            scene.environment = texture; 
+            scene.environment = texture;
             const skyGeo = new THREE.SphereGeometry(500, 60, 40);
-            skyGeo.scale(-1, 1, 1); 
+            skyGeo.scale(-1, 1, 1);
             const skyMat = new THREE.MeshBasicMaterial({ map: texture, color: 0xffffff });
             skyboxMesh = new THREE.Mesh(skyGeo, skyMat);
             scene.add(skyboxMesh);
             updateSkyTint(PARAMS.skyTint);
         });
-        function updateSkyTint(val) { if(skyboxMesh) skyboxMesh.material.color.setScalar(1.0 - val); }
+        function updateSkyTint(val) { if (skyboxMesh) skyboxMesh.material.color.setScalar(1.0 - val); }
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.3); 
-        dirLight.position.set(10, 30, 20); 
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
+        dirLight.position.set(10, 30, 20);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.set(2048, 2048);
         dirLight.shadow.radius = 4;
@@ -389,8 +598,8 @@
         orbGroup.add(baseMesh);
 
         let instancedGrass;
-        const grassGeo = new THREE.PlaneGeometry(0.05, 0.4); 
-        grassGeo.translate(0, 0.2, 0); 
+        const grassGeo = new THREE.PlaneGeometry(0.05, 0.4);
+        grassGeo.translate(0, 0.2, 0);
         const grassMaterial = new THREE.ShaderMaterial({
             vertexShader: `
                 varying vec2 vUv; uniform float uTime; uniform vec3 uRotVel; 
@@ -415,17 +624,17 @@
                 }
             `,
             fragmentShader: `varying vec2 vUv; uniform vec3 uColorBottom; uniform vec3 uColorTop; void main() { gl_FragColor = vec4(mix(uColorBottom, uColorTop, vUv.y), 1.0); }`,
-            uniforms: { 
+            uniforms: {
                 uTime: { value: 0 }, uRotVel: { value: new THREE.Vector3(0, 0, 0) },
                 uBendPower: { value: PARAMS.bendPower }, uMaxBend: { value: PARAMS.maxBend },
                 uLength: { value: PARAMS.grassLength }, uWidth: { value: PARAMS.grassWidth },
-                uColorBottom: { value: new THREE.Color(0x115500) }, uColorTop: { value: new THREE.Color(0x44cc00) }     
+                uColorBottom: { value: new THREE.Color(0x115500) }, uColorTop: { value: new THREE.Color(0x44cc00) }
             },
             side: THREE.DoubleSide
         });
 
         function initGrass() {
-            if(instancedGrass) { orbGroup.remove(instancedGrass); instancedGrass.dispose(); }
+            if (instancedGrass) { orbGroup.remove(instancedGrass); instancedGrass.dispose(); }
             instancedGrass = new THREE.InstancedMesh(grassGeo, grassMaterial, VISUALS.grassCount);
             const dummy = new THREE.Object3D();
             const _pos = new THREE.Vector3();
@@ -458,20 +667,20 @@
 
         function createUFO() {
             const g = new THREE.Group();
-            const matS = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.9, roughness: 0.1 }); 
+            const matS = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.9, roughness: 0.1 });
             const matG = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 0.5 });
             g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.5, 0.3, 16), matS));
-            const d = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI*2, 0, Math.PI*0.5), matG); d.position.y = 0.1; g.add(d);
+            const d = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.5), matG); d.position.y = 0.1; g.add(d);
             const l = new THREE.PointLight(0x00ffff, 1, 8); l.position.y = -0.5; g.add(l);
             g.userData = { angle: 0, orbitR: 25, speed: 0.8, y: 6, color: new THREE.Color(0x00ffff), type: 'ufo', name: "Contact", cat: "UFO" };
-            scene.add(g); interactables.push(g); g.traverse(c => { if(c.isMesh) c.userData = g.userData; });
+            scene.add(g); interactables.push(g); g.traverse(c => { if (c.isMesh) c.userData = g.userData; });
         }
         createUFO();
 
         // --- LOOP ---
         const clock = new THREE.Clock();
         const gui = new dat.GUI({ closed: true });
-        setTimeout(() => { const b = document.querySelector('.dg .close-button'); if(b) b.innerHTML = 'Controls'; }, 1000);
+        setTimeout(() => { const b = document.querySelector('.dg .close-button'); if (b) b.innerHTML = 'Controls'; }, 1000);
         const camFolder = gui.addFolder('Camera & Layout');
         camFolder.add(PARAMS, 'ballScale', 0.5, 5.0).name('Ball Size').onChange(v => orbGroup.scale.setScalar(v));
         camFolder.add(PARAMS, 'camX', -100, 100).name('Cam X').listen();
@@ -484,7 +693,7 @@
         transFolder.add(PARAMS, 'transitionDuration', 100, 5000).name('Duration (ms)');
         transFolder.add(PARAMS, 'easeIntensity', 0.0, 3.0).name('Ease Overshoot');
         const keyFolder = gui.addFolder('Keyframes');
-        keyFolder.add(PARAMS, 'activeSlot', [1,2,3,4,5,6,7,8,9]).name('Slot').listen();
+        keyFolder.add(PARAMS, 'activeSlot', [1, 2, 3, 4, 5, 6, 7, 8, 9]).name('Slot').listen();
         keyFolder.add({ save: saveKeyframe }, 'save').name('Save View');
         keyFolder.add({ export: exportAllSettings }, 'export').name('Export ALL Settings');
         const visFolder = gui.addFolder('Visuals');
@@ -503,13 +712,13 @@
         let targetGrassColorBottom = new THREE.Color(0x115500); // Default to dark green
         let targetDirtColor = new THREE.Color(VISUALS.baseColor); // Default to brown base
 
-        window.addEventListener('keydown', (e) => { 
-            if (e.key === '`' || e.key === '~') { const g = document.querySelector('.dg.ac'); if(g) g.style.display = g.style.display === 'none' ? 'block' : 'none'; }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '`' || e.key === '~') { const g = document.querySelector('.dg.ac'); if (g) g.style.display = g.style.display === 'none' ? 'block' : 'none'; }
             if (e.key >= '1' && e.key <= '9') loadKeyframe(parseInt(e.key));
-            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)) keys[e.key] = true;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) keys[e.key] = true;
         });
         window.addEventListener('keyup', (e) => keys[e.key] = false);
-        window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX/window.innerWidth)*2-1; mouse.y = -(e.clientY/window.innerHeight)*2+1; });
+        window.addEventListener('mousemove', (e) => { mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1; });
         window.addEventListener('click', () => {
             if (hoveredObj) {
                 targetGrassColorTop.copy(hoveredObj.userData.color);
@@ -518,17 +727,17 @@
             }
         });
 
-        let isDrag=false, prev={x:0,y:0}, orbVel={x:0,y:0}, grassVel={x:0,y:0};
-        document.addEventListener('mousedown', (e) => { if(e.target.tagName !== 'BUTTON') isDrag = true; });
+        let isDrag = false, prev = { x: 0, y: 0 }, orbVel = { x: 0, y: 0 }, grassVel = { x: 0, y: 0 };
+        document.addEventListener('mousedown', (e) => { if (e.target.tagName !== 'BUTTON') isDrag = true; });
         document.addEventListener('mouseup', () => isDrag = false);
         document.addEventListener('mousemove', (e) => {
             const dx = e.offsetX - prev.x, dy = e.offsetY - prev.y;
-            if(isDrag) {
+            if (isDrag) {
                 const s = 0.005 * PARAMS.sensitivity;
-                orbGroup.rotation.y += dx*s; orbGroup.rotation.x += dy*s;
-                orbVel.x = dy*s; orbVel.y = dx*s;
+                orbGroup.rotation.y += dx * s; orbGroup.rotation.x += dy * s;
+                orbVel.x = dy * s; orbVel.y = dx * s;
             }
-            prev = {x:e.offsetX, y:e.offsetY};
+            prev = { x: e.offsetX, y: e.offsetY };
         });
 
         function animate() {
@@ -537,7 +746,7 @@
             const time = clock.getElapsedTime();
 
             // --- COLOR INTERPOLATION (LERP) ---
-            const colorLerpFactor = 0.2; 
+            const colorLerpFactor = 0.2;
             grassMaterial.uniforms.uColorTop.value.lerp(targetGrassColorTop, colorLerpFactor);
             grassMaterial.uniforms.uColorBottom.value.lerp(targetGrassColorBottom, colorLerpFactor);
             dirtMat.color.lerp(targetDirtColor, colorLerpFactor);
@@ -555,18 +764,18 @@
                 PARAMS.aimZ = THREE.MathUtils.lerp(cameraTween.start.aimZ, cameraTween.end.aimZ, eT);
                 for (var i in camFolder.__controllers) camFolder.__controllers[i].updateDisplay();
             }
-            
+
             camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
             camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
 
-            let kx=0, ky=0;
-            if(keys.ArrowUp||keys.w) kx = -PARAMS.keySpeed; if(keys.ArrowDown||keys.s) kx = PARAMS.keySpeed;
-            if(keys.ArrowLeft||keys.a) ky = -PARAMS.keySpeed; if(keys.ArrowRight||keys.d) ky = PARAMS.keySpeed;
+            let kx = 0, ky = 0;
+            if (keys.ArrowUp || keys.w) kx = -PARAMS.keySpeed; if (keys.ArrowDown || keys.s) kx = PARAMS.keySpeed;
+            if (keys.ArrowLeft || keys.a) ky = -PARAMS.keySpeed; if (keys.ArrowRight || keys.d) ky = PARAMS.keySpeed;
 
-            if(!isDrag && (kx!==0 || ky!==0)) {
+            if (!isDrag && (kx !== 0 || ky !== 0)) {
                 orbGroup.rotation.x += kx; orbGroup.rotation.y += ky;
                 orbVel.x = kx; orbVel.y = ky;
-            } else if(!isDrag) {
+            } else if (!isDrag) {
                 orbVel.x *= PARAMS.friction; orbVel.y *= PARAMS.friction;
                 orbGroup.rotation.x += orbVel.x; orbGroup.rotation.y += orbVel.y;
             }
@@ -589,9 +798,19 @@
 
             if (hoveredObj) {
                 elTooltip.classList.add('visible');
-                const vec = new THREE.Vector3(); hoveredObj.getWorldPosition(vec); vec.project(camera);
-                const x = (vec.x * 0.5 + 0.5) * window.innerWidth; const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
-                elTooltip.style.left = `${x + 20}px`; elTooltip.style.top = `${y - 60}px`;
+
+                // Only follow mouse if NOT mobile (simple width check)
+                if (window.innerWidth > 768) {
+                    const vec = new THREE.Vector3(); hoveredObj.getWorldPosition(vec); vec.project(camera);
+                    const x = (vec.x * 0.5 + 0.5) * window.innerWidth; const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
+                    elTooltip.style.left = `${x + 20}px`; elTooltip.style.top = `${y - 60}px`;
+                    elTooltip.style.right = 'auto'; elTooltip.style.bottom = 'auto';
+                } else {
+                    // Reset inline styles so CSS takes over for mobile fixed position
+                    elTooltip.style.left = ''; elTooltip.style.top = '';
+                    elTooltip.style.right = ''; elTooltip.style.bottom = '';
+                }
+
                 const tid = hoveredObj.uuid;
                 if (elTooltip.dataset.target !== tid) {
                     elTooltip.dataset.target = tid; elTitle.innerText = hoveredObj.userData.name || "Unknown"; elCat.innerText = hoveredObj.userData.cat || "Project"; elColor.style.backgroundColor = '#' + hoveredObj.userData.color.getHexString();
@@ -602,9 +821,9 @@
                 const d = obj.userData;
                 const ts = (obj === hoveredObj) ? 1.5 : 1.0;
                 obj.scale.lerp(new THREE.Vector3(ts, ts, ts), 0.1);
-                if (obj !== hoveredObj) { d.angle += d.speed * dt; if(d.type==='ufo') obj.rotation.y+=2*dt; } 
-                else { if(d.type==='ufo') obj.rotation.y+=10*dt; }
-                obj.position.x = Math.cos(d.angle)*d.orbitR; obj.position.z = Math.sin(d.angle)*d.orbitR; obj.position.y = d.y + Math.sin(time + d.orbitR)*0.5;
+                if (obj !== hoveredObj) { d.angle += d.speed * dt; if (d.type === 'ufo') obj.rotation.y += 2 * dt; }
+                else { if (d.type === 'ufo') obj.rotation.y += 10 * dt; }
+                obj.position.x = Math.cos(d.angle) * d.orbitR; obj.position.z = Math.sin(d.angle) * d.orbitR; obj.position.y = d.y + Math.sin(time + d.orbitR) * 0.5;
             });
 
             renderer.render(scene, camera);
@@ -615,4 +834,5 @@
         animate();
     </script>
 </body>
+
 </html>
