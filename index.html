@@ -406,15 +406,13 @@
         <div class="grid list-mode" id="project-grid"></div>
 
         <div class="accordion-wrapper"
-            style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
+            style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 20px;">
             <button class="accordion-header">
                 <span class="mono">/// MY WORK</span>
                 <span class="acc-icon mono">[+]</span>
             </button>
             <div class="accordion-content">
                 <ul class="work-links mono">
-                    <li><a href="https://zakknowlton.com/" target="_blank"
-                            style="color: inherit; text-decoration: none;">>> ZAKKNOWLTON.COM</a></li>
                     <li><a href="https://zakknowlton.com/snowie" target="_blank"
                             style="color: inherit; text-decoration: none;">>> Snowie <span
                                 class="tag">ECOMMERCE</span></a></li>
@@ -549,6 +547,12 @@
             color: var(--text-dim);
             font-size: 11px;
             display: block;
+        }
+
+        .work-links a:active {
+            color: #fff !important;
+            text-shadow: 0 0 8px #fff;
+            animation: blink 0.05s steps(2) infinite;
         }
     </style>
 
