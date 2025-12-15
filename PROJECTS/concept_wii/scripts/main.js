@@ -18,7 +18,8 @@ const PARAMS = {
     // Visuals
     borderRadius: 0.018,
     bgColor: 0xe0e0e0,
-    activeSlot: 1
+    activeSlot: 1,
+    baselineY: 0
 };
 
 // --- STATE MANAGEMENT ---
@@ -78,9 +79,12 @@ function updateCurvedBorder() {
 
     // Adjust this value to move the line up/down
     const isMobile = window.innerWidth <= 768;
-    // Just above the clock (approx 100px from bottom on mobile to clear clock + footer)
-    const baselineY = isMobile ? height - 100 : height * 0.85;
+    // Just above the clock (approx 65px from bottom on mobile to clear clock + footer)
+    const baselineY = isMobile ? height - 65 : height * 0.85;
     const inset = 0; // Set to 0 for full width
+
+    // Store for raycaster
+    PARAMS.baselineY = baselineY;
 
     // STRAIGHT LINE PATH
     // Moves to left, draws straight line to right, then closes box for mask
@@ -271,7 +275,14 @@ function animate() {
     camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
 
     raycaster.setFromCamera(pointer, camera);
-    const intersects = raycaster.intersectObjects(channelBlocks, false);
+
+    // CHECK: Is pointer below the blue line?
+    const pointerYScreen = ((-pointer.y + 1) / 2) * window.innerHeight;
+    // If pointer is below the line (Y increases downwards in screen coords), ignore
+    const isBelowPanel = pointerYScreen > PARAMS.baselineY;
+
+    // If dragging, we still allow logic, but if just hovering/clicking, we block
+    const intersects = isBelowPanel && !isDragging ? [] : raycaster.intersectObjects(channelBlocks, false);
 
     if (intersects.length > 0) {
         const closestBlock = intersects[0].object;

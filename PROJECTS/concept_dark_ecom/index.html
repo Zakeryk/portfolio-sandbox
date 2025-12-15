@@ -167,12 +167,10 @@
     <script>
         // --- DATA (Images removed, lightweight) ---
         const products = [
-            { t: "Razor Band", p: "$55", tag: "New" },
-            { t: "Thorn Signet", p: "$80" },
-            { t: "Chrome Link", p: "$120" },
-            { t: "Spike Choker", p: "$95", tag: "Sold Out" },
-            { t: "Coffin Ring", p: "$60" },
-            { t: "Anarchy Pendant", p: "$75" }
+            { t: "Sad Boi Embroidered Unisex T-Shirt", p: "$25.00", link: "https://www.etsy.com/listing/750511740/sad-boi-embroidered-unisex-t-shirt" },
+            { t: "Sad Boi Embroidered Crew Neck", p: "$34.00", link: "https://www.etsy.com/listing/764395549/sad-boi-embroidered-crew-neck" },
+            { t: "Sad Boi Moon Graphic Tee", p: "$25.00", link: "https://www.etsy.com/listing/797750847/sad-boi-moon-graphic-tee" },
+            { t: "Sadboi Embroidered Dad Hat", p: "$28.00", link: "https://www.etsy.com/listing/801670429/sadboi-embroidered-dad-hat-cotton-twill" }
         ];
 
         // --- INIT FUNCTION ---
@@ -183,7 +181,7 @@
                 grid.innerHTML = '';
                 products.forEach(o => {
                     grid.innerHTML += `
-                    <div class="product-card">
+                    <div class="product-card" onclick="window.open('${o.link}', '_blank')">
                         ${o.tag ? `<div class="badge">${o.tag}</div>` : ''}
                         <div class="card-visual">//</div>
                         <div class="meta up"><span class="stretch">${o.t}</span><span>${o.p}</span></div>
