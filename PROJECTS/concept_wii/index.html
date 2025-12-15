@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Wii Concept OS</title>
   <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,17 +18,19 @@
       font-family: 'Inter', sans-serif;
       cursor: none; 
       user-select: none;
+      /* Prevent native pull-to-refresh on mobile */
+      overscroll-behavior: none;
+      touch-action: none; 
     }
 
-    /* --- CRT / GRAIN OVERLAY (THE ANALOG FIX) --- */
+    /* --- CRT / GRAIN OVERLAY --- */
     #analog-overlay {
         position: fixed;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        pointer-events: none; /* Lets clicks pass through */
+        pointer-events: none; 
         z-index: 9000;
-        /* Main overlay opacity control */
-        opacity: 0.1; 
+        opacity: 1.0; 
     }
 
     #scanlines {
@@ -50,25 +52,13 @@
         top: 0; left: 0;
         width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        
-        /* FIX: Subtlety and Slow Roll */
-        opacity: 0.1; /* Reduced opacity for subtlety */
+        opacity: 0.1; 
         mix-blend-mode: overlay;
-        /* Changed duration to 2.5s and added 'linear' for slow roll */
         animation: noiseAnimation 2.5s linear infinite; 
     }
 
     @keyframes noiseAnimation {
         0% { transform: translate(0,0); }
-        10% { transform: translate(-1%,-1%); }
-        20% { transform: translate(-2%,1%); }
-        30% { transform: translate(1%,-2%); }
-        40% { transform: translate(2%,1%); }
-        50% { transform: translate(-1%,2%); }
-        60% { transform: translate(1%,1%); }
-        70% { transform: translate(2%,-2%); }
-        80% { transform: translate(-2%,-1%); }
-        90% { transform: translate(1%,2%); }
         100% { transform: translate(0,0); }
     }
 
@@ -135,15 +125,10 @@
 
     #canvas-wrapper { width: 100%; height: 100%; display: block; }
     
-    /* --- TILE LABEL CONTAINER STYLE --- */
     #tile-label-container {
         position: absolute;
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%;
-        pointer-events: none; 
-        z-index: 40; 
+        top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 40; 
     }
 
     /* --- CLOCK --- */
@@ -182,6 +167,12 @@
         height: auto;
     }
 
+    /* HIDE CURSOR ON MOBILE (NEW) */
+    @media (max-width: 768px) {
+        #custom-cursor { display: none !important; }
+        body, html { cursor: auto; } /* Restore native touch behavior visually */
+    }
+
     #debug-hotspot {
       display: none;
       position: absolute; top: -2px; left: -2px;
@@ -189,16 +180,11 @@
       background: red; border-radius: 50%;
     }
 
-    /* --- GUI CONTAINER --- */
     #gui-container {
         position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 10001;
-        display: none; 
+        top: 0; right: 0; z-index: 10001; display: none; 
     }
     
-    /* --- TILE INDEX LABEL --- */
     .tile-index-label {
         position: absolute;
         color: rgba(0, 0, 0, 0.4);
@@ -211,11 +197,8 @@
         text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
     }
     
-    .tile-hidden {
-        display: none !important;
-    }
+    .tile-hidden { display: none !important; }
 
-    /* --- DEBUG MODE --- */
     body.debug-mode { cursor: auto !important; }
     body.debug-mode #gui-container { display: block; }
     body.debug-mode #debug-hotspot { display: block; }
@@ -279,7 +262,6 @@
     import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
     import { GUI } from 'dat.gui';
     
-    // --- ASSETS: TILE IMAGE MAPPING ---
     const ASSETS = {
         0: 'assets/channel_devil.jpg',
         1: 'assets/channel_wii.jpg',
@@ -288,20 +270,15 @@
         4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
     };
     
-    // --- LINKS: TILE NAVIGATION MAPPING (HARD LINKS) ---
-    // Edit these individual strings to change destinations quickly
     const LINKS = {
-        0: 'https://sandbox.zakknowlton.com/', 
+        0: 'https://sandbox.zakknowlton.com/projects/concept_devil', 
         1: 'https://sandbox.zakknowlton.com/projects/concept_wii', 
-        2: 'https://sandbox.zakknowlton.com/projects/concept_wii',
-        3: 'https://sandbox.zakknowlton.com/projects/concept_wii',
-        // 4-11 are null (no link)
+        2: 'https://sandbox.zakknowlton.com/projects/concept_grassball',
+        3: 'https://sandbox.zakknowlton.com/projects/concept_knot',
         4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
     };
 
-    // --- CONFIG ---
     const PARAMS = {
-        transitionDuration: 1000,
         camX: 0, camY: -1.5, camZ: 10,
         aimX: 0, aimY: -1.5, aimZ: 0,
         camZoom: 2.7,
@@ -313,20 +290,29 @@
         splitHeight: 0.85,
     };
 
-    // --- STATE ---
     const cursorState = { 
         x: 0, y: 0, prevX: 0, targetX: 0, targetY: 0, 
         angle: 0, scale: 1, targetScale: 1 
     };
     
     let INTERSECTED = null;
-    let cameraTween = null;
     let lastMoveTime = performance.now(); 
     let isMouseDown = false; 
+    let isMobile = false; // Track mobile state
     
+    // Grid State
     let COLS = 4; 
     let ROWS = 3; 
     
+    // Scroll State (NEW)
+    const scrollState = {
+        current: 0,
+        target: 0,
+        max: 0,
+        lastTouchY: 0,
+        isScrolling: false
+    };
+
     // --- SETUP ---
     const container = document.getElementById('canvas-wrapper');
     const labelContainer = document.getElementById('tile-label-container');
@@ -361,57 +347,40 @@
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
     }
 
-    // --- TEXTURE LOADER SETUP ---
-    const textureLoader = new THREE.TextureLoader();
-    const materials = [];
-    const channelBlocks = []; 
-
     // --- GRID MANAGEMENT ---
+    const textureLoader = new THREE.TextureLoader();
+    const channelBlocks = []; 
     const BASE_BLOCK_WIDTH = 1.12; 
     const BASE_BLOCK_HEIGHT = 0.72;
-    const MOBILE_SCALE_FACTOR = 0.55; 
+    // On mobile we want the tile slightly bigger to fill the 1 col layout
+    const MOBILE_SCALE_FACTOR = 0.85; 
     const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
     const MAX_TILES = 12;
     
-    // Initial creation of all 12 tiles (done once)
+    // Initial creation
     for(let i=0; i<MAX_TILES; i++) {
         const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-        
         let mat = new THREE.MeshPhongMaterial({ 
-            color: 0xe0e0e0, 
-            specular: 0x222222, 
-            shininess: 10 
+            color: 0xe0e0e0, specular: 0x222222, shininess: 10 
         });
-        const assetPath = ASSETS[i]; 
-
-        if (assetPath) {
-            textureLoader.load(assetPath, 
-                (tex) => {
-                    tex.colorSpace = THREE.SRGBColorSpace; 
-                    tex.wrapS = THREE.RepeatWrapping; 
-                    tex.wrapT = THREE.RepeatWrapping;
-
-                    const imageAspect = tex.image.width / tex.image.height;
-                    const tileAspect = TILE_ASPECT;
-                    
-                    if (imageAspect / tileAspect > 1) {
-                        tex.repeat.set(tileAspect / imageAspect, 1);
-                        tex.offset.set((1 - (tileAspect / imageAspect)) / 2, 0);
-                    } else {
-                        tex.repeat.set(1, imageAspect / tileAspect);
-                        tex.offset.set(0, (1 - (imageAspect / tileAspect)) / 2);
-                    }
-                    
-                    mat.map = tex;
-                    mat.needsUpdate = true;
-                },
-                undefined, 
-                (err) => {
-                    console.error('Error loading texture for tile', i, err);
-                    mat.color.setHex(0xe0e0e0); 
-                    mat.needsUpdate = true;
+        
+        if (ASSETS[i]) {
+            textureLoader.load(ASSETS[i], (tex) => {
+                tex.colorSpace = THREE.SRGBColorSpace; 
+                tex.wrapS = THREE.RepeatWrapping; 
+                tex.wrapT = THREE.RepeatWrapping;
+                const imageAspect = tex.image.width / tex.image.height;
+                const tileAspect = TILE_ASPECT;
+                if (imageAspect / tileAspect > 1) {
+                    tex.repeat.set(tileAspect / imageAspect, 1);
+                    tex.offset.set((1 - (tileAspect / imageAspect)) / 2, 0);
+                } else {
+                    tex.repeat.set(1, imageAspect / tileAspect);
+                    tex.offset.set(0, (1 - (imageAspect / tileAspect)) / 2);
                 }
-            );
+                mat.map = tex;
+                mat.needsUpdate = true;
+            }, undefined, (err) => { mat.color.setHex(0xe0e0e0); mat.needsUpdate = true; });
         }
 
         const mesh = new THREE.Mesh(geo, mat);
@@ -423,7 +392,6 @@
         
         scene.add(mesh);
         channelBlocks.push(mesh);
-        materials.push(mat); 
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'tile-index-label';
@@ -433,48 +401,54 @@
     }
 
     function updateGrid() {
-        const isMobile = window.innerWidth <= 768;
-        COLS = isMobile ? 2 : 4;
-        ROWS = 3;
+        isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            COLS = 1;
+            ROWS = MAX_TILES; // All tiles in one column
+        } else {
+            COLS = 4;
+            ROWS = 3;
+        }
         
         const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-        
-        const limit = COLS * ROWS; 
+        const limit = MAX_TILES; // Show all tiles
+
+        // Update Scroll Max
+        const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
+        const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
+        const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
+        // Only scroll if content exceeds view (simple approximation)
+        scrollState.max = isMobile ? Math.max(0, totalContentHeight - 4) : 0; // 4 units visible roughly
 
         channelBlocks.forEach((b, i) => {
-            const isVisible = i < limit;
+            b.visible = true;
+            if (b.userData.label) b.userData.label.classList.remove('tile-hidden');
             
-            b.visible = isVisible;
-            if (b.userData.label) {
-                b.userData.label.classList.toggle('tile-hidden', !isVisible);
-            }
-            
-            // Set the dynamic scale for the mesh
             b.scale.set(scaleFactor, scaleFactor, 1); 
             
-            // Positioning must use the new scaled dimensions
-            const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
-            const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            const yOffset = ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // Align start at top on mobile
+            const startY = isMobile ? 1.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
 
-            b.position.set(xOffset + col * PARAMS.gridSpacing * scaleFactor, yOffset - row * autoSpacingY * scaleFactor, 0);
+            // Store Base Y for scrolling
+            b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
+            
+            b.position.set(xOffset + col * PARAMS.gridSpacing * scaleFactor, b.userData.baseY, 0);
         });
     }
     
-    updateGrid(); // Initial grid setup
+    updateGrid(); 
 
-    // --- PRELOADER FADE OUT ---
     window.addEventListener('load', () => {
         document.getElementById('preloader').classList.add('fade-out');
     });
 
-
-    // --- EVENTS ---
+    // --- INPUT & SCROLL LOGIC ---
     window.addEventListener('resize', () => {
         const asp = container.clientWidth / container.clientHeight;
         camera.left = -asp * baseSize; camera.right = asp * baseSize;
@@ -484,40 +458,30 @@
         updateGrid(); 
     });
 
-    window.addEventListener('keydown', (e) => {
-        if (e.key === '`' || e.key === '~') {
-            document.body.classList.toggle('debug-mode');
-        }
-    });
-
+    // Desktop: Click
     window.addEventListener('mousedown', (e) => {
-        if (document.body.classList.contains('debug-mode') && e.target.closest('.dg')) return;
+        if (isMobile || (document.body.classList.contains('debug-mode') && e.target.closest('.dg'))) return;
         isMouseDown = true; 
         lastMoveTime = performance.now(); 
         cursorState.targetScale = 0.8; 
     });
 
     window.addEventListener('mouseup', () => {
+        if (isMobile) return;
         isMouseDown = false; 
         lastMoveTime = performance.now(); 
         cursorState.targetScale = 1.0; 
         
         if (INTERSECTED) { 
-            const index = INTERSECTED.userData.index;
-            const targetLink = LINKS[index];
-
-            if (targetLink) {
-                // 0.3s DELAY FOR NAVIGATION
-                setTimeout(() => {
-                    window.location.href = targetLink;
-                }, 300); 
-            }
-            
+            const targetLink = LINKS[INTERSECTED.userData.index];
+            if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300); 
             INTERSECTED.userData.wasClicked = true; 
         } 
     });
 
+    // Desktop: Mouse Move
     window.addEventListener('mousemove', (e) => {
+        if (isMobile) return;
         cursorState.targetX = e.clientX;
         cursorState.targetY = e.clientY;
         lastMoveTime = performance.now(); 
@@ -527,69 +491,137 @@
         pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
     });
 
+    // Desktop: Wheel Scroll (Optional for mobile layout on desktop)
+    window.addEventListener('wheel', (e) => {
+        if (isMobile) {
+            scrollState.target += e.deltaY * 0.005;
+            scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
+        }
+    });
+
+    // MOBILE TOUCH LOGIC
+    window.addEventListener('touchstart', (e) => {
+        if (!isMobile) return;
+        scrollState.isScrolling = false;
+        scrollState.lastTouchY = e.touches[0].clientY;
+        
+        // Raycast for tap interaction
+        const rect = container.getBoundingClientRect();
+        pointer.x = ((e.touches[0].clientX - rect.left) / container.clientWidth) * 2 - 1;
+        pointer.y = -((e.touches[0].clientY - rect.top) / container.clientHeight) * 2 + 1;
+        
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(channelBlocks, false);
+        
+        if (intersects.length > 0) {
+            INTERSECTED = intersects[0].object;
+            isMouseDown = true; // Trigger spring down
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => {
+        if (!isMobile) return;
+        // e.preventDefault(); // Prevent native scroll
+        const touchY = e.touches[0].clientY;
+        const delta = scrollState.lastTouchY - touchY;
+        
+        // If moved significantly, treat as scroll and cancel tap
+        if (Math.abs(delta) > 5) {
+            scrollState.isScrolling = true;
+            isMouseDown = false; // Cancel spring down
+            INTERSECTED = null;
+        }
+        
+        // Update scroll target
+        scrollState.target += delta * 0.01; 
+        scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
+        
+        scrollState.lastTouchY = touchY;
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => {
+        if (!isMobile) return;
+        
+        if (!scrollState.isScrolling && INTERSECTED) {
+            // It was a tap!
+            isMouseDown = false;
+            INTERSECTED.userData.wasClicked = true; // Trigger spring up
+            const targetLink = LINKS[INTERSECTED.userData.index];
+            if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
+        }
+        
+        INTERSECTED = null;
+        isMouseDown = false;
+    });
+
+
     // --- ANIMATION ---
     function animate() {
         requestAnimationFrame(animate);
         
-        if (cameraTween) { /* ... camera tween logic ... */ }
-
-        camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
-        camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
-
-        raycaster.setFromCamera(pointer, camera);
-        
-        const visibleChannels = channelBlocks.filter(b => b.visible);
-        const intersects = raycaster.intersectObjects(visibleChannels, false);
-        
-        const DEFAULT_SHININESS = 10;
-        const HOVER_SHININESS = 90;
-        const DEFAULT_EMISSIVE = 0x000000;
-        const HOVER_EMISSIVE = 0x555555; // Bright glare
-        const LERP_FACTOR = 0.15;
-
-        if (intersects.length > 0) {
-            const target = intersects[0].object;
-            if (INTERSECTED !== target) {
-                INTERSECTED = target;
-            }
+        // Smooth Scroll Logic
+        if (isMobile) {
+            scrollState.current += (scrollState.target - scrollState.current) * 0.1;
+            // Apply scroll offset to camera Y
+            camera.position.y = PARAMS.camY - scrollState.current;
         } else {
-            INTERSECTED = null;
+            // Reset on desktop
+            camera.position.y = PARAMS.camY;
+            scrollState.target = 0;
+            scrollState.current = 0;
         }
 
-        // --- RENDER LOOP: MATERIAL & PHYSICS ---
+        if(!isMobile) {
+            camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
+            raycaster.setFromCamera(pointer, camera);
+            const intersects = raycaster.intersectObjects(channelBlocks, false);
+            
+            const DEFAULT_SHININESS = 10;
+            const HOVER_SHININESS = 90;
+            const DEFAULT_EMISSIVE = 0x000000;
+            const HOVER_EMISSIVE = 0x555555; 
+            const LERP_FACTOR = 0.15;
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+                if (INTERSECTED !== target) INTERSECTED = target;
+            } else {
+                INTERSECTED = null;
+            }
+            
+            // Desktop Hover Logic
+            channelBlocks.forEach(b => {
+                const currentlyHovered = b === INTERSECTED;
+                const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
+                b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
+                const currentEmissive = b.material.emissive;
+                const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
+                const targetColor = new THREE.Color(targetHex);
+                currentEmissive.lerp(targetColor, LERP_FACTOR);
+                b.material.needsUpdate = true;
+            });
+        }
+
+        // --- HYBRID TILE PHYSICS (Global) ---
+        const SPRING_TENSION = 0.14; 
+        const SPRING_DAMPING = 0.85; 
+        const OVERSHOOT_SCALE = 1.03; 
+        const LERP_CLICK = 0.2; 
+        const LERP_NORMAL = 0.08; 
+
         channelBlocks.forEach(b => {
-            if (!b.visible) return;
-
-            const currentlyHovered = b === INTERSECTED;
-            
-            // --- MATERIAL LERP (Anime Glare) ---
-            const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
-            b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
-            
-            const currentEmissive = b.material.emissive;
-            const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
-            const targetColor = new THREE.Color(targetHex);
-            currentEmissive.lerp(targetColor, LERP_FACTOR);
-            
-            b.material.needsUpdate = true;
-
-
-            // --- HYBRID TILE PHYSICS ---
             let targetS = 1.0;
-            const SPRING_TENSION = 0.14; 
-            const SPRING_DAMPING = 0.85; 
-            const OVERSHOOT_SCALE = 1.03; 
-            const LERP_CLICK = 0.2; 
-            const LERP_NORMAL = 0.08; 
-            
-            if (currentlyHovered) {
+            // Mobile Physics: Only spring if explicitly intersected via touch logic
+            // Desktop Physics: Intersected via hover
+            const activeTarget = INTERSECTED === b; 
+
+            if (activeTarget) {
                 if (isMouseDown) {
-                    targetS = 0.95; 
+                    targetS = 0.95; // Pressed
                     b.userData.isSpringing = false; 
                     b.userData.velocity.set(0,0,0);
                 } else {
-                    targetS = 1.05; 
-                    
+                    targetS = 1.05; // Hover/Released
                     if (b.userData.wasClicked) {
                         b.userData.isSpringing = true;
                         const launchForce = OVERSHOOT_SCALE - b.scale.x;
@@ -602,12 +634,11 @@
                 b.userData.wasClicked = false; 
             }
             
-            // 2. Apply Animation Logic
+            // Physics Update
             if (b.userData.isSpringing) {
                 const tension = SPRING_TENSION; 
                 const damping = SPRING_DAMPING; 
                 const dist = targetS - b.scale.x;
-                
                 b.userData.velocity.x += dist * tension;
                 b.userData.velocity.x *= damping;
                 
@@ -619,24 +650,26 @@
                     b.scale.set(next, next, next);
                 }
             } else {
-                let lerpFactor = currentlyHovered && isMouseDown ? LERP_CLICK : LERP_NORMAL;
-                b.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), lerpFactor);
+                let lerpFactor = activeTarget && isMouseDown ? LERP_CLICK : LERP_NORMAL;
+                // On mobile, force scale scaleFactor into base scale
+                const scaleBase = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
+                // Lerp relative to base scale
+                const finalTarget = targetS * scaleBase;
+                const currentX = b.scale.x;
+                const nextX = currentX + (finalTarget - currentX) * lerpFactor;
+                b.scale.set(nextX, nextX, 1);
             }
             
-            // 3. Update HTML Label Position
+            // Label Position Update
             b.updateWorldMatrix(true, false);
             b.getWorldPosition(worldPosition);
-            
             const screenPosition = worldPosition.clone();
             screenPosition.project(camera);
-            
             const x = (screenPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
             const y = (-screenPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
-            
             if(b.userData.label) {
                 b.userData.label.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${b.scale.x})`;
             }
-
         });
 
         renderer.render(scene, camera);
@@ -648,9 +681,9 @@
     const IDLE_TIMEOUT = 300; 
 
     function animateCursor() {
+        if (isMobile) return; // Skip on mobile
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
-        
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
         
         if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
@@ -661,20 +694,14 @@
         const isIdle = isTrulyIdle && !isMouseDown; 
         
         let targetBaseRotation = -10; 
-
-        if (isIdle) {
-            targetBaseRotation = 0; 
-        }
+        if (isIdle) targetBaseRotation = 0; 
         
         const decayFactor = isIdle ? 0.1 : 1; 
-        
         const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
-
         const velocityTilt = dx * 1.5; 
         const targetAngle = baseRotation + velocityTilt;
         
         cursorState.angle += (targetAngle - cursorState.angle) * 0.2; 
-
 
         if (cursorEl) {
             cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) translateX(-35%) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
@@ -701,7 +728,6 @@
     folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateGrid);
     folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateGrid);
     folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
-    
     folder.open();
   </script>
 </body>
