@@ -837,8 +837,8 @@
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
                 // Magnet strength reduced to 0.05
-                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.05;
-                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.05;
+                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.03;
+                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.03;
                 
                 hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
                 
