@@ -324,8 +324,20 @@ function animate() {
 
     const timeSeconds = performance.now() / 1000;
     channelBlocks.forEach(block => {
-        // Fix for image washout: Remove specular on mapped tiles
-        block.material.specular.setHex(block.material.map ? 0x000000 : 0x555555);
+        // Material Hardening for Image Tiles
+        if (block.material.map) {
+            // Mapped: Darker base to compensate for light, No Specular, No Shine
+            block.material.color.setHex(0x999999);
+            block.material.specular.setHex(0x000000);
+            block.material.shininess = 0;
+            // Ensure no emissive bleed from previous states
+            block.material.emissive.setHex(0x000000);
+        } else {
+            // Blank: White, Plastic Shine, Glossy
+            block.material.color.setHex(0xffffff);
+            block.material.specular.setHex(0x555555);
+            block.material.shininess = 40;
+        }
 
         // Update Shader Time
         if (block.material.userData.uTime) {
