@@ -34,7 +34,8 @@
         width: 100%; height: 100%;
         pointer-events: none; 
         z-index: 9000;
-        opacity: 0; /* Container is 1.0, children control specific opacity */
+        /* FIXED: Super subtle opacity */
+        opacity: 0.05; 
     }
 
     #scanlines {
@@ -43,8 +44,8 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.1) 50%,  /* FIXED: 0.1 Opacity (Subtle) */
-            rgba(0,0,0,0.1)
+            rgba(0,0,0,0.2) 50%,
+            rgba(0,0,0,0.2)
         );
         background-size: 100% 4px;
         position: absolute;
@@ -56,7 +57,7 @@
         top: 0; left: 0;
         width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.02; /* Extremely subtle grain */
+        opacity: 0.2; 
         mix-blend-mode: overlay;
         animation: noiseAnimation 2.5s linear infinite; 
     }
@@ -133,6 +134,7 @@
         font-family: 'Orbitron', sans-serif;
         cursor: pointer;
         
+        /* Default Desktop Slide (Up) */
         transform: translateY(100px); 
         opacity: 0;
         transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
@@ -211,11 +213,14 @@
         line-height: 1;
     }
 
+    /* MOBILE ADJUSTMENTS */
     @media (max-width: 768px) {
         #radio-player {
-            bottom: 15px;
-            right: 15px;
-            transform: scale(0.9) translateY(100px); 
+            bottom: auto; /* Clear bottom */
+            top: 20px;    /* FIXED: Top Right */
+            right: 20px;
+            /* Slide DOWN from top on mobile */
+            transform: scale(0.9) translateY(-100px); 
         }
         #radio-player.slide-in {
             transform: scale(0.9) translateY(0);
@@ -357,7 +362,6 @@
     
     .tile-hidden { display: none !important; }
 
-    /* MOBILE ADJUSTMENTS */
     @media (max-width: 768px) {
         #custom-cursor { display: none !important; }
         body, html { cursor: auto; }
@@ -372,7 +376,6 @@
         }
     }
 
-    /* DEBUG MODE TOGGLE */
     body.debug-mode { cursor: auto !important; }
     body.debug-mode #gui-container { display: block !important; }
     body.debug-mode #debug-hotspot { display: block; }
@@ -548,7 +551,7 @@
             document.getElementById('radio-player').classList.add('slide-in');
         }, 1200);
 
-        // FIXED: Removed autoplay on load
+        // No autoplay
     });
 
 
@@ -677,7 +680,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIXED: Mobile Start Y lowered to -1.2 to show first tile
+            const startY = isMobile ? -1.2 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -701,7 +705,6 @@
         updateGrid(); 
     });
 
-    // FIXED: Toggle Debug Mode Listener
     window.addEventListener('keydown', (e) => {
         if (e.key === '`' || e.key === '~') {
             document.body.classList.toggle('debug-mode');
@@ -826,12 +829,12 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
-            // MAGNETIC LOGIC (FIXED: Subtle 0.02 intensity)
+            // MAGNETIC LOGIC (Subtle)
             let hoveredTile = null;
             if (intersects.length > 0) {
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
-                // Magnet strength reduced to 0.02
+                // Magnet strength 0.02
                 const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.02;
                 const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.02;
                 
@@ -842,13 +845,11 @@
                 INTERSECTED = null;
             }
             
-            // Return tiles to base if not hovered
             channelBlocks.forEach(b => {
                 if(b !== hoveredTile) {
                     b.position.lerp(new THREE.Vector3(b.userData.baseX, b.userData.baseY, 0), 0.1);
                 }
                 
-                // Hover Visuals
                 const currentlyHovered = b === INTERSECTED;
                 const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
                 b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
