@@ -80,7 +80,7 @@ function updateCurvedBorder() {
     // Adjust this value to move the line up/down
     const isMobile = window.innerWidth <= 768;
     // Just above the clock (approx 40px from bottom on mobile to sit right above clock)
-    const baselineY = isMobile ? height - 40 : height * 0.85;
+    const baselineY = isMobile ? height - 40 : height * 0.9;
     const inset = 0; // Set to 0 for full width
 
     // Store for raycaster
