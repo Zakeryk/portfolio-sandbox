@@ -621,10 +621,12 @@
         // 2. View Toggle
         const toggleBtn = document.getElementById('view-toggle');
         const gridContainer = document.getElementById('project-grid');
-        let isList = true;
 
-        toggleBtn.addEventListener('click', () => {
-            isList = !isList;
+        // Logic: Default to TILES on desktop (>768px), LIST on mobile
+        const isMobile = window.innerWidth < 768;
+        let isList = isMobile; // If mobile, start as list. If desktop, start as tiles.
+
+        function updateView() {
             if (isList) {
                 gridContainer.classList.remove('tile-mode');
                 gridContainer.classList.add('list-mode');
@@ -634,6 +636,14 @@
                 gridContainer.classList.add('tile-mode');
                 toggleBtn.innerText = "/// LIST";
             }
+        }
+
+        // Initialize
+        updateView();
+
+        toggleBtn.addEventListener('click', () => {
+            isList = !isList;
+            updateView();
         });
 
         // 3. Operator Status (GitHub)

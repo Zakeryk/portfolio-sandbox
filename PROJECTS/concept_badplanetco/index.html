@@ -564,7 +564,7 @@
         </div>
     </div>
 
-    <div id="instructions">Drag to Spin &bull; [1-9] Camera Spots &bull; [~] Controls</div>
+    <div id="instructions">Click Orbs to Spin &bull; [1-9] Camera Spots &bull; [~] Controls</div>
     <div id="copyright">
         BADPLNTCO 2026 <br>
         <a href="https://sandbox.zakknowlton.com"
@@ -879,20 +879,20 @@
                 targetGrassColorTop.copy(hoveredObj.userData.color);
                 targetDirtColor.copy(hoveredObj.userData.color);
                 targetGrassColorBottom.copy(hoveredObj.userData.color).multiplyScalar(0.2);
+
+                // --- NEW CLICK IMPULSE LOGIC ---
+                // "Rapidly shift toward cursor" -> spin towards the clicked planet
+                // We use mouse position to determine direction of spin
+                const force = 0.15 * PARAMS.sensitivity;
+                orbVel.x += -mouse.y * force; // Rotate X based on Y pos
+                orbVel.y += mouse.x * force;  // Rotate Y based on X pos
             }
         });
 
-        let isDrag = false, prev = { x: 0, y: 0 }, orbVel = { x: 0, y: 0 }, grassVel = { x: 0, y: 0 };
-        document.addEventListener('mousedown', (e) => { if (e.target.tagName !== 'BUTTON') isDrag = true; });
-        document.addEventListener('mouseup', () => isDrag = false);
+        let orbVel = { x: 0, y: 0 }, grassVel = { x: 0, y: 0 };
+        // Cleaned up unused drag variables
         document.addEventListener('mousemove', (e) => {
-            const dx = e.offsetX - prev.x, dy = e.offsetY - prev.y;
-            if (isDrag) {
-                const s = 0.005 * PARAMS.sensitivity;
-                orbGroup.rotation.y += dx * s; orbGroup.rotation.x += dy * s;
-                orbVel.x = dy * s; orbVel.y = dx * s;
-            }
-            prev = { x: e.offsetX, y: e.offsetY };
+            // kept for future mouse pos needs if any, currently simple cursor tracking is in window listener
         });
 
         function animate() {
@@ -927,10 +927,10 @@
             if (keys.ArrowUp || keys.w) kx = -PARAMS.keySpeed; if (keys.ArrowDown || keys.s) kx = PARAMS.keySpeed;
             if (keys.ArrowLeft || keys.a) ky = -PARAMS.keySpeed; if (keys.ArrowRight || keys.d) ky = PARAMS.keySpeed;
 
-            if (!isDrag && (kx !== 0 || ky !== 0)) {
+            if (kx !== 0 || ky !== 0) {
                 orbGroup.rotation.x += kx; orbGroup.rotation.y += ky;
                 orbVel.x = kx; orbVel.y = ky;
-            } else if (!isDrag) {
+            } else {
                 orbVel.x *= PARAMS.friction; orbVel.y *= PARAMS.friction;
                 orbGroup.rotation.x += orbVel.x; orbGroup.rotation.y += orbVel.y;
             }
