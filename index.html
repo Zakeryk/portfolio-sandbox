@@ -1,990 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Wii OS Concept</title>
-  <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-
-  <style>
-    /* --- RESET & MOBILE FIXES --- */
-    * { 
-        margin: 0; padding: 0; box-sizing: border-box; 
-        -webkit-tap-highlight-color: transparent; 
-        outline: none;
-    }
-    body, html {
-      width: 100%; height: 100%; overflow: hidden;
-      background-color: #e0e0e0;
-      font-family: 'Inter', sans-serif;
-      cursor: none; 
-      user-select: none;
-      -webkit-user-select: none; 
-      overscroll-behavior: none;
-      touch-action: none; 
-    }
-
-    /* --- CRT / GRAIN OVERLAY --- */
-    #analog-overlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        pointer-events: none; 
-        z-index: 9000;
-        opacity: 1.0; 
-    }
-
-    #scanlines {
-        width: 100%; height: 100%;
-        background: linear-gradient(
-            to bottom,
-            rgba(255,255,255,0),
-            rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.02) 50%,  
-            rgba(0,0,0,0.02)
-        );
-        background-size: 100% 4px;
-        position: absolute;
-        top: 0; left: 0;
-    }
-
-    #noise {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.02; 
-        mix-blend-mode: overlay;
-        animation: noiseAnimation 2.5s linear infinite; 
-    }
-
-    @keyframes noiseAnimation {
-        0% { transform: translate(0,0); }
-        100% { transform: translate(0,0); }
-    }
-
-    /* --- VERTICAL SCROLL HINT --- */
-    @keyframes bobVertical {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(10px); }
-    }
-    
-    #scroll-hint {
-        position: fixed;
-        top: 50%; 
-        right: -60px; 
-        transform: translateY(-50%);
-        color: #7ec1d9; 
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.8rem;
-        letter-spacing: 2px;
-        z-index: 8000;
-        pointer-events: none;
-        display: flex;
-        flex-direction: column; 
-        align-items: center;
-        gap: 12px;
-        opacity: 0;
-        transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease;
-    }
-    
-    #scroll-hint.visible {
-        right: 15px;
-        opacity: 1;
-    }
-    
-    #scroll-hint-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        animation: bobVertical 2s ease-in-out infinite;
-    }
-    
-    #scroll-hint span {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        transform: rotate(180deg); 
-    }
-    
-    #scroll-hint svg {
-        width: 18px;
-        height: 18px;
-        fill: currentColor;
-        margin-top: 5px;
-    }
-
-    /* --- RADIO PLAYER --- */
-    #radio-player {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background-color: #f0f0f0;
-        border: 2px solid #ffffff;
-        padding: 8px 12px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        z-index: 8500;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        font-family: 'Orbitron', sans-serif;
-        cursor: pointer;
-        
-        transform: translateY(100px); 
-        opacity: 0;
-        transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
-    }
-    
-    #radio-player.slide-in {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    /* MOBILE RADIO: BOTTOM CENTER, BELOW CLOCK */
-    @media (max-width: 768px) {
-        #radio-player {
-            right: auto;
-            left: 50%;
-            bottom: 8%; /* FIXED: Down 10% */
-            transform: translateX(-50%) translateY(100px); 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANDBOX | ZAK KNOWLTON</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <style>
+        /* BASE THEME */
+        :root {
+            --bg: #050505;
+            --card: #111;
+            --border: #222;
+            --text: #eee;
+            --text-dim: #666;
+            --accent: #fff;
         }
-        #radio-player.slide-in {
-            transform: translateX(-50%) translateY(0);
-        }
-    }
-
-    .radio-controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-
-    .radio-btn {
-        width: 20px;
-        height: 20px;
-        fill: #000;
-        opacity: 0.6;
-        transition: opacity 0.2s, transform 0.1s;
-    }
-    
-    .radio-btn:hover { opacity: 1; }
-    .radio-btn:active { transform: scale(0.9); }
-
-    .eq-container {
-        display: flex; 
-        gap: 2px; 
-        align-items: flex-end; 
-        height: 14px;
-    }
-    .eq-bar {
-        width: 3px;
-        background-color: #7ec1d9;
-        animation: eq 0.8s ease-in-out infinite;
-    }
-    .eq-bar:nth-child(1) { height: 8px; animation-duration: 0.6s; }
-    .eq-bar:nth-child(2) { height: 14px; animation-duration: 0.9s; }
-    .eq-bar:nth-child(3) { height: 6px; animation-duration: 0.7s; }
-
-    @keyframes eq {
-        0%, 100% { transform: scaleY(1); }
-        50% { transform: scaleY(0.5); }
-    }
-    
-    .player-stopped .eq-bar {
-        animation: none;
-        height: 3px; 
-    }
-    
-    .icon-play { display: none; }
-    .icon-pause { display: block; }
-    
-    .player-stopped .icon-play { display: block; }
-    .player-stopped .icon-pause { display: none; }
-
-    #radio-info {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    #radio-label {
-        font-size: 0.55rem;
-        color: #888;
-        letter-spacing: 1px;
-        line-height: 1;
-        margin-bottom: 3px;
-    }
-    
-    #radio-track {
-        font-size: 0.7rem;
-        font-weight: 700;
-        line-height: 1;
-    }
-
-    /* --- PRELOADER --- */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    #preloader {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: #f0f0f0; 
-        color: #000000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.5rem;
-        z-index: 100000;
-        opacity: 1;
-        transition: opacity 0.5s ease; 
-    }
-
-    #preloader.fade-out {
-        opacity: 0;
-        visibility: hidden;
-    }
-
-    #preloader-spinner {
-        border: 4px solid #f0f0f0; 
-        border-top: 4px solid #7ec1d9; 
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
-    }
-
-    #preloader-text {
-        color: #888;
-        font-size: 0.8rem;
-        margin-top: 10px;
-        letter-spacing: 1px;
-    }
-
-    /* --- LAYOUT --- */
-    #scene-container {
-      position: relative;
-      width: 100%; height: 100%;
-      z-index: 10;
-    }
-
-    #primary-panel {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
-      clip-path: url(#panel-mask);
-      -webkit-clip-path: url(#panel-mask);
-      filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.15));
-      z-index: 1; 
-    }
-
-    #canvas-wrapper { width: 100%; height: 100%; display: block; }
-    
-    #tile-label-container {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 40; 
-    }
-
-    /* --- CLOCK --- */
-    #clock {
-      position: absolute; 
-      bottom: 30px; 
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Orbitron', sans-serif; 
-      font-size: 3rem;
-      color: #000000; 
-      pointer-events: none;
-      z-index: 30; 
-      white-space: nowrap;
-      opacity: 0.8;
-    }
-
-    #instructions {
-      position: fixed; bottom: 20px; left: 20px;
-      color: #888; font-size: 12px; z-index: 100;
-      pointer-events: none; font-family: sans-serif;
-    }
-
-    /* --- CUSTOM CURSOR --- */
-    #custom-cursor {
-      position: fixed; top: 0; left: 0;
-      pointer-events: none; z-index: 9999;
-      will-change: transform;
-      transform-origin: 0% 0%; 
-      transition: opacity 0.2s ease;
-    }
-    
-    #custom-cursor img { 
-        display: block;
-        width: 60px; 
-        height: auto;
-    }
-
-    #debug-hotspot {
-      display: none;
-      position: absolute; top: -2px; left: -2px;
-      width: 4px; height: 4px;
-      background: red; border-radius: 50%;
-    }
-
-    /* --- GUI CONTAINER --- */
-    #gui-container {
-        position: absolute;
-        top: 0; 
-        right: 0; 
-        z-index: 20000; 
-        display: none; 
-    }
-    
-    .tile-index-label {
-        position: absolute;
-        color: rgba(0, 0, 0, 0.4);
-        font-size: 18px;
-        font-weight: 700;
-        z-index: 50; 
-        pointer-events: none;
-        display: none; 
-        font-family: 'Orbitron', sans-serif;
-        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
-    }
-    
-    .tile-hidden { display: none !important; }
-
-    /* MOBILE ADJUSTMENTS */
-    @media (max-width: 768px) {
-        #custom-cursor { display: none !important; }
-        body, html { cursor: auto; }
+        body { margin: 0; background-color: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         
-        #clock {
-            font-size: 1.5rem; 
-            bottom: 22%; /* FIXED: Up 10% */
+        #app { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
+
+        /* HEADER */
+        header { 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: 20px; margin-bottom: 30px; 
+            display: flex; justify-content: space-between; align-items: center; 
+        }
+        h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: var(--text-dim); }
+        
+        /* CONTROLS */
+        .controls { display: flex; gap: 15px; align-items: center; }
+        .stats { font-size: 11px; font-family: monospace; color: #444; }
+        
+        button#view-toggle {
+            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+            padding: 6px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+            cursor: pointer; border-radius: 4px; transition: all 0.2s;
+        }
+        button#view-toggle:hover { border-color: #555; color: #fff; }
+
+        /* GRID / LIST CONTAINER */
+        .grid { display: grid; gap: 10px; }
+
+        /* CARD SHARED STYLES */
+        .card { 
+            background: var(--card); border: 1px solid var(--border); 
+            text-decoration: none; color: inherit; display: flex; 
+            overflow: hidden; transition: transform 0.1s, border-color 0.1s;
+        }
+        .card:hover { border-color: #444; transform: translateY(-1px); }
+        .card-title { font-size: 13px; font-weight: 600; letter-spacing: 0.5px;}
+        .card-meta { display: flex; align-items: center; gap: 10px; }
+        .card-img { 
+            background-color: #000; 
+            background-repeat: no-repeat; 
+            background-position: center; 
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tag { 
+            font-size: 9px; border: 1px solid #333; padding: 3px 6px; 
+            border-radius: 4px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .date { font-size: 10px; color: #444; font-family: monospace; }
+
+        /* --- MODE: LIST (Compact) --- */
+        .grid.list-mode { grid-template-columns: 1fr; }
+        .grid.list-mode .card { height: 60px; border-radius: 4px; align-items: center; }
+        
+        /* LIST IMAGE STYLES */
+        .grid.list-mode .card-img { 
+            width: 60px; 
+            height: 100%; 
+            border-right: 1px solid var(--border); 
+            background-size: cover; /* Fill the square */
+        }
+
+        .grid.list-mode .card-info { 
+            flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; 
+        }
+
+        /* --- MODE: TILES (Gallery) --- */
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .grid.tile-mode .card { flex-direction: column; height: 260px; border-radius: 8px; }
+        
+        /* TILE IMAGE STYLES */
+        .grid.tile-mode .card-img { 
+            width: 100%; height: 160px; 
+            border-bottom: 1px solid var(--border); 
+            background-size: contain; /* Don't crop sprites */
+        }
+
+        .grid.tile-mode .card-info { 
+            flex: 1; padding: 15px; 
+            display: flex; flex-direction: column; justify-content: space-between; 
         }
         
-        #instructions {
-            display: none; 
-        }
-    }
+        .grid.tile-mode .card-meta { justify-content: space-between; width: 100%; margin-top: auto; }
 
-    /* DEBUG MODE TOGGLE */
-    body.debug-mode { cursor: auto !important; }
-    body.debug-mode #gui-container { display: block !important; }
-    body.debug-mode #debug-hotspot { display: block; }
-    body.debug-mode #custom-cursor { opacity: 0.5; }
-    body.debug-mode .tile-index-label { display: block; } 
-
-  </style>
+    </style>
 </head>
-
 <body>
-    
-  <div id="preloader">
-      <div id="preloader-spinner"></div>
-      LOADING OS
-      <div id="preloader-text">ZAK KNOWLTON &copy; 2026</div>
-  </div>
 
-  <div id="analog-overlay">
-      <div id="scanlines"></div>
-      <div id="noise"></div>
-  </div>
-  
-  <div id="scroll-hint">
-      <div id="scroll-hint-content">
-          <span>SCROLL</span>
-          <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>
-      </div>
-  </div>
+    <div id="app">
+        <header>
+            <h1>ZAK'S PC</h1>
+            <div class="controls">
+                <div class="stats" id="status">LOADING...</div>
+                <button id="view-toggle">Switch to Tiles</button>
+            </div>
+        </header>
 
-  <div id="radio-player" class="player-stopped">
-      <div class="radio-controls">
-          <div id="btn-toggle" class="radio-btn">
-              <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-              <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-          </div>
-      </div>
-      
-      <div class="eq-container">
-          <div class="eq-bar"></div>
-          <div class="eq-bar"></div>
-          <div class="eq-bar"></div>
-      </div>
-      
-      <div id="radio-info">
-          <span id="radio-label">NOW PLAYING</span>
-          <span id="radio-track">DO YA SHOPPING</span>
-      </div>
-  </div>
-
-  <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
-    <defs>
-      <clipPath id="panel-mask" clipPathUnits="userSpaceOnUse">
-        <path id="mask-path-el" d="" /> 
-      </clipPath>
-    </defs>
-    <path id="border-path-el" fill="none" stroke="#7ec1d9" stroke-width="2" stroke-linecap="square" />
-  </svg>
-
-  <div id="scene-container">
-    <div id="primary-panel">
-      <div id="canvas-wrapper"></div>
+        <div class="grid list-mode" id="project-grid"></div>
     </div>
-    <div id="tile-label-container"></div> 
-    
-    <div id="clock">12:00</div>
-    <div id="instructions">[~] Toggle Debug Config</div>
-  </div>
-  
-  <div id="gui-container"></div>
 
-  <div id="custom-cursor">
-    <img src="assets/wiicursor_sprite.png" alt="cursor">
-    <div id="debug-hotspot"></div>
-  </div>
-
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-        "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-        "dat.gui": "https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js"
-      }
-    }
-  </script>
-
-  <script type="module">
-    import * as THREE from 'three';
-    import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-    import { GUI } from 'dat.gui';
-    
-    const ASSETS = {
-        0: 'assets/channel_devil.jpg',
-        1: 'assets/channel_wii.jpg',
-        2: 'assets/channel_grassball.jpg',
-        3: 'assets/channel_knot.jpg',
-        4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
-    };
-    
-    const LINKS = {
-        0: 'https://sandbox.zakknowlton.com', 
-        1: 'https://sandbox.zakknowlton.com/projects/concept_wii', 
-        2: 'https://sandbox.zakknowlton.com/projects/concept_wii',
-        3: 'https://sandbox.zakknowlton.com/projects/concept_wii',
-        4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
-    };
-
-    const PARAMS = {
-        camX: 0, camY: -1.5, camZ: 10,
-        aimX: 0, aimY: -1.5, aimZ: 0,
-        camZoom: 2.7,
-        gridSpacing: 1.2, 
-        gridOffsetX: 0.0, 
-        gridOffsetY: -1.2,
-        borderRadius: 0.018,
-        activeSlot: 1,
-        splitHeight: 0.75, // FIXED: 0.75 (Above Clock)
-    };
-
-    const cursorState = { 
-        x: 0, y: 0, prevX: 0, targetX: 0, targetY: 0, 
-        angle: 0, scale: 1, targetScale: 1 
-    };
-    
-    let INTERSECTED = null;
-    let cameraTween = null;
-    let lastMoveTime = performance.now(); 
-    let isMouseDown = false; 
-    let isMobile = false; 
-    
-    let COLS = 4; 
-    let ROWS = 3; 
-    
-    const scrollState = {
-        current: 0,
-        target: 0,
-        max: 0,
-        lastTouchY: 0,
-        isScrolling: false
-    };
-
-    // --- RADIO LOGIC ---
-    const audio = new Audio('assets/do_ya_shopping.mp3');
-    audio.loop = true; 
-    audio.volume = 0.15; 
-    
-    const radioEl = document.getElementById('radio-player');
-    const btnToggle = document.getElementById('btn-toggle');
-    let isPlaying = false;
-
-    radioEl.addEventListener('click', () => { togglePlay(); });
-
-    // SPACEBAR TOGGLE
-    window.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
-            e.preventDefault();
-            togglePlay();
-        }
-    });
-
-    function togglePlay() {
-        if(isPlaying) {
-            audio.pause();
-            radioEl.classList.add('player-stopped');
-        } else {
-            audio.play().catch(e => console.log("Audio autoplay blocked:", e));
-            radioEl.classList.remove('player-stopped');
-        }
-        isPlaying = !isPlaying;
-    }
-    
-    window.addEventListener('load', () => {
-        document.getElementById('preloader').classList.add('fade-out');
-        
-        if(isMobile) {
-            setTimeout(() => {
-                document.getElementById('scroll-hint').classList.add('visible');
-            }, 500);
-        }
-
-        setTimeout(() => {
-            document.getElementById('radio-player').classList.add('slide-in');
-        }, 1200);
-    });
-
-
-    // --- SETUP ---
-    const container = document.getElementById('canvas-wrapper');
-    const labelContainer = document.getElementById('tile-label-container');
-    const scene = new THREE.Scene();
-    const aspect = container.clientWidth / container.clientHeight;
-    const baseSize = 5;
-    const camera = new THREE.OrthographicCamera(-aspect * baseSize, aspect * baseSize, baseSize, -baseSize, 0.1, 1000);
-    camera.position.set(PARAMS.camX, PARAMS.camY, PARAMS.camZ);
-    camera.zoom = PARAMS.camZoom;
-    camera.updateProjectionMatrix();
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
-    
-    scene.add(new THREE.AmbientLight(0xffffff, 1.6));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    dirLight.position.set(-5, 10, 10); 
-    scene.add(dirLight);
-
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-    const worldPosition = new THREE.Vector3(); 
-
-    // --- BORDERS ---
-    function updateBorders() {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        // FIXED: Mobile split set to 0.75
-        const splitFactor = isMobile ? 0.75 : PARAMS.splitHeight;
-        const splitY = h * splitFactor;
-        document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
-        document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
-    }
-
-    // --- GRID MANAGEMENT ---
-    const textureLoader = new THREE.TextureLoader();
-    const channelBlocks = []; 
-    const BASE_BLOCK_WIDTH = 1.12; 
-    const BASE_BLOCK_HEIGHT = 0.72;
-    const MOBILE_SCALE_FACTOR = 1.35; 
-    const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
-    const MAX_TILES = 12;
-    
-    for(let i=0; i<MAX_TILES; i++) {
-        const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-        let mat = new THREE.MeshPhongMaterial({ 
-            color: 0xe0e0e0, specular: 0x222222, shininess: 10 
-        });
-        
-        if (ASSETS[i]) {
-            textureLoader.load(ASSETS[i], (tex) => {
-                tex.colorSpace = THREE.SRGBColorSpace; 
-                tex.wrapS = THREE.RepeatWrapping; 
-                tex.wrapT = THREE.RepeatWrapping;
+    <script>
+        // 1. Fetch & Render Data
+        fetch('./data.json')
+            .then(res => res.json())
+            .then(data => {
+                const grid = document.getElementById('project-grid');
                 
-                const ZOOM_FACTOR = 0.9;
-                const imageAspect = tex.image.width / tex.image.height;
-                const tileAspect = TILE_ASPECT;
+                // Filter active projects only
+                const visibleProjects = data.filter(p => p.active !== false);
+
+                document.getElementById('status').innerText = `${visibleProjects.length} NODES`;
                 
-                let rX = 1, rY = 1;
-                if (imageAspect / tileAspect > 1) {
-                    rX = tileAspect / imageAspect;
-                } else {
-                    rY = imageAspect / tileAspect;
-                }
-                
-                tex.repeat.set(rX * ZOOM_FACTOR, rY * ZOOM_FACTOR);
-                tex.offset.set(
-                    0.5 - (rX * ZOOM_FACTOR) / 2,
-                    0.5 - (rY * ZOOM_FACTOR) / 2
-                );
+                visibleProjects.forEach(p => {
+                    const card = document.createElement('a');
+                    card.href = p.path;
+                    card.className = 'card';
+                    
+                    // Image Handling
+                    const imgUrl = p.image || ''; 
+                    const imgStyle = imgUrl ? `background-image: url('${imgUrl}')` : '';
+                    
+                    // The Placeholder: Shows // if no image exists
+                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">//</span>';
+                    
+                    // Apply styles
+                    const imgDiv = `<div class="card-img" style="${imgStyle}">${imgContent}</div>`;
 
-                mat.map = tex;
-                mat.needsUpdate = true;
-            }, undefined, (err) => { mat.color.setHex(0xe0e0e0); mat.needsUpdate = true; });
-        }
+                    // Date Formatting (MM.DD.YY)
+                    const dateObj = new Date(p.date);
+                    const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                    const dd = dateObj.getDate().toString().padStart(2, '0');
+                    const yy = dateObj.getFullYear().toString().slice(-2);
+                    const dateStr = `${mm}.${dd}.${yy}`;
+                    
+                    // Tag Handling
+                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'EXP';
 
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.userData.index = i;
-        mesh.userData.velocity = new THREE.Vector3();
-        mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-        mesh.userData.wasClicked = false; 
-        mesh.userData.isSpringing = false; 
-        mesh.userData.baseX = 0;
-        mesh.userData.baseY = 0;
-        
-        scene.add(mesh);
-        channelBlocks.push(mesh);
-
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'tile-index-label';
-        labelDiv.textContent = i;
-        labelContainer.appendChild(labelDiv);
-        mesh.userData.label = labelDiv; 
-    }
-
-    function updateGrid() {
-        isMobile = window.innerWidth <= 768;
-        
-        if (isMobile) {
-            COLS = 1;
-            ROWS = MAX_TILES; 
-        } else {
-            COLS = 4;
-            ROWS = 3;
-        }
-        
-        const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-        const limit = MAX_TILES; 
-
-        const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
-        const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
-        const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
-        scrollState.max = isMobile ? Math.max(0, totalContentHeight - 3.5) : 0; 
-
-        channelBlocks.forEach((b, i) => {
-            b.visible = true;
-            if (b.userData.label) b.userData.label.classList.remove('tile-hidden');
-            
-            b.scale.set(scaleFactor, scaleFactor, 1); 
-            
-            const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
-            const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // FIXED: Mobile Start Y lowered to -0.9 (Down 15%)
-            const startY = isMobile ? -0.9 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
-            
-            const col = i % COLS;
-            const row = Math.floor(i / COLS);
-
-            b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
-            b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
-            
-            b.position.set(b.userData.baseX, b.userData.baseY, 0);
-        });
-    }
-    
-    updateGrid(); 
-
-    // --- INPUT & SCROLL LOGIC ---
-    window.addEventListener('resize', () => {
-        const asp = container.clientWidth / container.clientHeight;
-        camera.left = -asp * baseSize; camera.right = asp * baseSize;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        updateBorders();
-        updateGrid(); 
-    });
-
-    window.addEventListener('keydown', (e) => {
-        if (e.key === '`' || e.key === '~') {
-            document.body.classList.toggle('debug-mode');
-        }
-    });
-
-    window.addEventListener('mousedown', (e) => {
-        if (isMobile || (document.body.classList.contains('debug-mode') && e.target.closest('.dg'))) return;
-        isMouseDown = true; 
-        lastMoveTime = performance.now(); 
-        cursorState.targetScale = 0.8; 
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (isMobile) return;
-        isMouseDown = false; 
-        lastMoveTime = performance.now(); 
-        cursorState.targetScale = 1.0; 
-        
-        if (INTERSECTED) { 
-            const targetLink = LINKS[INTERSECTED.userData.index];
-            if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300); 
-            INTERSECTED.userData.wasClicked = true; 
-        } 
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (isMobile) return;
-        cursorState.targetX = e.clientX;
-        cursorState.targetY = e.clientY;
-        lastMoveTime = performance.now(); 
-        
-        const rect = container.getBoundingClientRect();
-        pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
-        pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
-    });
-
-    window.addEventListener('wheel', (e) => {
-        if (isMobile) {
-            document.getElementById('scroll-hint').classList.remove('visible');
-            scrollState.target += e.deltaY * 0.005;
-            scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
-        }
-    });
-
-    window.addEventListener('touchstart', (e) => {
-        if (!isMobile) return;
-        document.getElementById('scroll-hint').classList.remove('visible');
-        
-        scrollState.isScrolling = false;
-        scrollState.lastTouchY = e.touches[0].clientY;
-        
-        const rect = container.getBoundingClientRect();
-        pointer.x = ((e.touches[0].clientX - rect.left) / container.clientWidth) * 2 - 1;
-        pointer.y = -((e.touches[0].clientY - rect.top) / container.clientHeight) * 2 + 1;
-        
-        raycaster.setFromCamera(pointer, camera);
-        const intersects = raycaster.intersectObjects(channelBlocks, false);
-        
-        if (intersects.length > 0) {
-            INTERSECTED = intersects[0].object;
-            isMouseDown = true; 
-        }
-    }, { passive: false });
-
-    window.addEventListener('touchmove', (e) => {
-        if (!isMobile) return;
-        const touchY = e.touches[0].clientY;
-        const delta = scrollState.lastTouchY - touchY;
-        
-        if (Math.abs(delta) > 5) {
-            scrollState.isScrolling = true;
-            isMouseDown = false; 
-            INTERSECTED = null;
-        }
-        
-        scrollState.target += delta * 0.01; 
-        scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
-        scrollState.lastTouchY = touchY;
-    }, { passive: false });
-
-    window.addEventListener('touchend', () => {
-        if (!isMobile) return;
-        
-        if (!scrollState.isScrolling && INTERSECTED) {
-            isMouseDown = false;
-            
-            INTERSECTED.userData.isSpringing = true;
-            const popForce = 0.05; 
-            INTERSECTED.userData.velocity.x += popForce;
-            
-            const targetLink = LINKS[INTERSECTED.userData.index];
-            if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
-        }
-        
-        isMouseDown = false;
-        setTimeout(() => { INTERSECTED = null; }, 300); 
-    });
-
-
-    // --- ANIMATION ---
-    function animate() {
-        requestAnimationFrame(animate);
-        
-        if (isMobile) {
-            scrollState.current += (scrollState.target - scrollState.current) * 0.1;
-            camera.position.y = PARAMS.camY - scrollState.current;
-        } else {
-            camera.position.y = PARAMS.camY;
-            scrollState.target = 0;
-            scrollState.current = 0;
-        }
-
-        if(!isMobile) {
-            camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
-            raycaster.setFromCamera(pointer, camera);
-            const intersects = raycaster.intersectObjects(channelBlocks, false);
-            
-            const DEFAULT_SHININESS = 10;
-            const HOVER_SHININESS = 90;
-            const DEFAULT_EMISSIVE = 0x000000;
-            const HOVER_EMISSIVE = 0x555555; 
-            const LERP_FACTOR = 0.15;
-
-            // MAGNETIC LOGIC
-            let hoveredTile = null;
-            if (intersects.length > 0) {
-                hoveredTile = intersects[0].object;
-                const hitPoint = intersects[0].point;
-                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.02;
-                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.02;
-                
-                hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
-                
-                if (INTERSECTED !== hoveredTile) INTERSECTED = hoveredTile;
-            } else {
-                INTERSECTED = null;
-            }
-            
-            channelBlocks.forEach(b => {
-                if(b !== hoveredTile) {
-                    b.position.lerp(new THREE.Vector3(b.userData.baseX, b.userData.baseY, 0), 0.1);
-                }
-                
-                const currentlyHovered = b === INTERSECTED;
-                const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
-                b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
-                const currentEmissive = b.material.emissive;
-                const targetHex = currentlyHovered ? HOVER_EMISSIVE : DEFAULT_EMISSIVE;
-                const targetColor = new THREE.Color(targetHex);
-                currentEmissive.lerp(targetColor, LERP_FACTOR);
-                b.material.needsUpdate = true;
+                    card.innerHTML = `
+                        ${imgDiv}
+                        <div class="card-info">
+                            <div class="card-title">${p.title}</div>
+                            <div class="card-meta">
+                                <span class="date">${dateStr}</span>
+                                <span class="tag">${mainTag}</span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            })
+            .catch(err => {
+                document.getElementById('status').innerText = 'OFFLINE';
+                console.error(err);
             });
-        }
 
-        const SPRING_TENSION = 0.5; 
-        const SPRING_DAMPING = 0.75; 
-        const OVERSHOOT_SCALE = 1.03; 
-        const LERP_CLICK = 0.2; 
-        const LERP_NORMAL = 0.08; 
+        // 2. View Toggle Logic
+        const toggleBtn = document.getElementById('view-toggle');
+        const gridContainer = document.getElementById('project-grid');
+        let isList = true;
 
-        channelBlocks.forEach(b => {
-            let targetS = 1.0;
-            const activeTarget = INTERSECTED === b; 
-
-            if (activeTarget) {
-                if (isMouseDown) {
-                    targetS = 0.98; // Subtle shrink
-                    b.userData.isSpringing = false; 
-                    b.userData.velocity.set(0,0,0);
-                } else {
-                    targetS = 1.05; 
-                    if (b.userData.wasClicked) {
-                        b.userData.isSpringing = true;
-                        const launchForce = OVERSHOOT_SCALE - b.scale.x;
-                        b.userData.velocity.x += launchForce * 0.5; 
-                        b.userData.wasClicked = false; 
-                    }
-                }
+        toggleBtn.addEventListener('click', () => {
+            isList = !isList;
+            if (isList) {
+                gridContainer.classList.remove('tile-mode');
+                gridContainer.classList.add('list-mode');
+                toggleBtn.innerText = "SWITCH TO TILES";
             } else {
-                targetS = 1.0; 
-                b.userData.wasClicked = false; 
-            }
-            
-            if (b.userData.isSpringing) {
-                const tension = SPRING_TENSION; 
-                const damping = SPRING_DAMPING; 
-                const dist = targetS - b.scale.x;
-                b.userData.velocity.x += dist * tension;
-                b.userData.velocity.x *= damping;
-                
-                if (Math.abs(b.userData.velocity.x) < 0.001 && Math.abs(dist) < 0.005) {
-                    b.userData.isSpringing = false;
-                    b.scale.set(targetS, targetS, targetS);
-                } else {
-                    const next = b.scale.x + b.userData.velocity.x;
-                    b.scale.set(next, next, next);
-                }
-            } else {
-                let lerpFactor = activeTarget && isMouseDown ? LERP_CLICK : LERP_NORMAL;
-                const scaleBase = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-                const finalTarget = targetS * scaleBase;
-                const currentX = b.scale.x;
-                const nextX = currentX + (finalTarget - currentX) * lerpFactor;
-                b.scale.set(nextX, nextX, 1);
-            }
-            
-            b.updateWorldMatrix(true, false);
-            b.getWorldPosition(worldPosition);
-            const screenPosition = worldPosition.clone();
-            screenPosition.project(camera);
-            const x = (screenPosition.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
-            const y = (-screenPosition.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
-            if(b.userData.label) {
-                b.userData.label.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${b.scale.x})`;
+                gridContainer.classList.remove('list-mode');
+                gridContainer.classList.add('tile-mode');
+                toggleBtn.innerText = "SWITCH TO LIST";
             }
         });
-
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    const cursorEl = document.getElementById('custom-cursor');
-    const IDLE_TIMEOUT = 300; 
-
-    function animateCursor() {
-        if (isMobile) return; 
-        cursorState.x = cursorState.targetX;
-        cursorState.y = cursorState.targetY;
-        cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
-        
-        if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
-        const dx = cursorState.x - cursorState.prevX;
-        cursorState.prevX = cursorState.x;
-
-        const isTrulyIdle = performance.now() - lastMoveTime > IDLE_TIMEOUT;
-        const isIdle = isTrulyIdle && !isMouseDown; 
-        
-        let targetBaseRotation = -10; 
-        if (isIdle) targetBaseRotation = 0; 
-        
-        const decayFactor = isIdle ? 0.1 : 1; 
-        const baseRotation = THREE.MathUtils.lerp(cursorState.angle, targetBaseRotation, decayFactor);
-        const velocityTilt = dx * 1.5; 
-        const targetAngle = baseRotation + velocityTilt;
-        
-        cursorState.angle += (targetAngle - cursorState.angle) * 0.2; 
-
-        if (cursorEl) {
-            cursorEl.style.transform = `translate3d(${cursorState.x}px, ${cursorState.y}px, 0) translateX(-35%) rotate(${cursorState.angle}deg) scale(${cursorState.scale})`;
-        }
-        requestAnimationFrame(animateCursor);
-    }
-    animateCursor();
-
-    function updateClock() {
-        const d = new Date();
-        let h = d.getHours(); const m = d.getMinutes();
-        const ampm = h >= 12 ? 'PM' : 'AM';
-        h = h % 12 || 12;
-        const mStr = m < 10 ? '0'+m : m;
-        document.getElementById('clock').innerHTML = `${h}:${mStr} <span style="font-size:0.4em; vertical-align: top;">${ampm}</span>`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-    updateBorders();
-
-    const gui = new GUI({ autoPlace: false });
-    document.getElementById('gui-container').appendChild(gui.domElement);
-    const folder = gui.addFolder('Layout');
-    folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateGrid);
-    folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateGrid);
-    folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
-    
-    folder.open();
-  </script>
+    </script>
 </body>
 </html>
