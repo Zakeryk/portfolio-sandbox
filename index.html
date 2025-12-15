@@ -43,7 +43,7 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.02) 50%, 
+            rgba(0,0,0,0.02) 50%,  /* 0.02 Opacity */
             rgba(0,0,0,0.02)
         );
         background-size: 100% 4px;
@@ -143,16 +143,16 @@
         opacity: 1;
     }
 
-    /* MOBILE RADIO: BOTTOM LEFT */
+    /* MOBILE RADIO: BOTTOM CENTER */
     @media (max-width: 768px) {
         #radio-player {
             right: auto;
-            left: 20px; 
-            bottom: 85px; 
-            transform: translateY(100px); 
+            left: 50%; /* Center horizontally */
+            bottom: 20%; /* Stacked above clock */
+            transform: translateX(-50%) translateY(100px); 
         }
         #radio-player.slide-in {
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
         }
     }
 
@@ -366,7 +366,7 @@
         
         #clock {
             font-size: 1.5rem; 
-            bottom: 15px; 
+            bottom: 12%; /* FIXED: Up 15% (relative to previous 20px) */
         }
         
         #instructions {
@@ -490,7 +490,7 @@
         gridOffsetY: -1.2,
         borderRadius: 0.018,
         activeSlot: 1,
-        splitHeight: 0.82, // FIXED: 0.82 Middle Ground
+        splitHeight: 0.72, // FIXED: 0.72 (Above Audio/Clock Stack)
     };
 
     const cursorState = { 
@@ -581,7 +581,8 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        const splitFactor = isMobile ? 0.82 : PARAMS.splitHeight;
+        // FIXED: Mobile split set to 0.72
+        const splitFactor = isMobile ? 0.72 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
@@ -592,7 +593,7 @@
     const channelBlocks = []; 
     const BASE_BLOCK_WIDTH = 1.12; 
     const BASE_BLOCK_HEIGHT = 0.72;
-    const MOBILE_SCALE_FACTOR = 1.35; 
+    const MOBILE_SCALE_FACTOR = 1.25; // FIXED: 1.25 to prevent overlap with scroll tip
     const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
     const MAX_TILES = 12;
     
@@ -676,8 +677,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // FIXED: Mobile Start Y set to -0.25 (Middle Ground)
-            const startY = isMobile ? -0.25 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIXED: Mobile Start Y lowered to -0.55
+            const startY = isMobile ? -0.55 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -856,7 +857,6 @@
             });
         }
 
-        // FIXED: Snappy Tap Animation (0.5 Tension, 0.98 Shrink)
         const SPRING_TENSION = 0.5; 
         const SPRING_DAMPING = 0.75; 
         const OVERSHOOT_SCALE = 1.03; 
