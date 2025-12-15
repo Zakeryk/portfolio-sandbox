@@ -290,13 +290,9 @@
             height: 100%;
             border-right: 1px solid #1a1a1a;
             background-size: cover;
-            filter: grayscale(100%);
-            transition: filter 0.1s;
         }
 
-        .grid.list-mode .card:hover .card-img {
-            filter: grayscale(0%);
-        }
+
 
         .grid.list-mode .card-info {
             flex: 1;
@@ -410,7 +406,6 @@
 
         <div class="grid list-mode" id="project-grid"></div>
 
-        <!-- MY WORK ACCORDION -->
         <div class="accordion-wrapper"
             style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
             <button class="accordion-header">
@@ -422,6 +417,21 @@
                     <li><a href="#">>> SYSTEM_ARCH.PDF</a></li>
                     <li><a href="#">>> VISUAL_LOGS</a></li>
                     <li><a href="#">>> AUDIO_RECORDS</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CLIENTS x COLLABORATORS ACCORDION -->
+        <div class="accordion-wrapper" style="border-top: 1px solid var(--border);">
+            <button class="accordion-header">
+                <span class="mono">/// CLIENTS x COLLABORATORS</span>
+                <span class="acc-icon mono">[+]</span>
+            </button>
+            <div class="accordion-content">
+                <ul class="work-links mono">
+                    <li><a href="#">>> CLIENT_A</a></li>
+                    <li><a href="#">>> COLLAB_NETWORK_B</a></li>
+                    <li><a href="#">>> STUDIO_C</a></li>
                 </ul>
             </div>
         </div>
@@ -613,19 +623,26 @@
         checkOperatorStatus();
 
         // 4. Accordion Logic
-        const accHeader = document.querySelector('.accordion-header');
-        const accContent = document.querySelector('.accordion-content');
-        const accIcon = document.querySelector('.acc-icon');
+        // 4. Accordion Logic (Handles multiple)
+        const accordions = document.querySelectorAll('.accordion-header');
 
-        accHeader.addEventListener('click', () => {
-            accHeader.classList.toggle('active');
-            accContent.classList.toggle('active');
+        accordions.forEach(accHeader => {
+            accHeader.addEventListener('click', () => {
+                // Toggle active state for header
+                accHeader.classList.toggle('active');
 
-            if (accHeader.classList.contains('active')) {
-                accIcon.innerText = "[-]";
-            } else {
-                accIcon.innerText = "[+]";
-            }
+                // Find associated content (sibling)
+                const accContent = accHeader.nextElementSibling;
+                accContent.classList.toggle('active');
+
+                // Toggle icon
+                const accIcon = accHeader.querySelector('.acc-icon');
+                if (accHeader.classList.contains('active')) {
+                    accIcon.innerText = "[-]";
+                } else {
+                    accIcon.innerText = "[+]";
+                }
+            });
         });
 
     </script>
