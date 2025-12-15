@@ -72,11 +72,6 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            position: sticky;
-            top: 0;
-            background: rgba(8, 8, 8, 0.9);
-            backdrop-filter: blur(5px);
-            z-index: 100;
             padding-top: 10px;
         }
 
@@ -276,6 +271,7 @@
         /* --- MODE: LIST --- */
         .grid.list-mode {
             grid-template-columns: 1fr;
+            gap: 10px;
         }
 
         .grid.list-mode .card {
