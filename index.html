@@ -6,100 +6,244 @@
     <title>SANDBOX | ZAK KNOWLTON</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <style>
-        /* BASE THEME */
+        /* --- KOJIMA CORE --- */
         :root {
-            --bg: #050505;
-            --card: #111;
-            --border: #222;
-            --text: #eee;
-            --text-dim: #666;
+            --bg: #080808;
+            --card-bg: #0c0c0c;
+            --border: #333;
+            --border-active: #fff;
+            --text: #ddd;
+            --text-dim: #555;
             --accent: #fff;
+            --alert: #ff3333; /* Occasional red accent if needed */
         }
-        body { margin: 0; background-color: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
         
-        #app { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
+        @font-face {
+            font-family: 'TechMono';
+            src: local('Courier New'); /* Fallback to system mono for speed */
+        }
 
-        /* HEADER */
+        /* SCANLINE OVERLAY */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 3px;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        body { 
+            margin: 0; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            font-family: 'Helvetica Neue', Arial, sans-serif; /* Clean sans for readability */
+            font-size: 12px;
+            overflow-x: hidden;
+        }
+        
+        /* UTILS */
+        .mono { font-family: 'TechMono', monospace; }
+        .uppercase { text-transform: uppercase; }
+
+        #app { max-width: 900px; margin: 0 auto; padding: 80px 20px; }
+
+        /* HEADER - HUD STYLE */
         header { 
             border-bottom: 1px solid var(--border); 
-            padding-bottom: 20px; margin-bottom: 30px; 
-            display: flex; justify-content: space-between; align-items: center; 
+            padding-bottom: 15px; margin-bottom: 40px; 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            position: sticky; top: 0; background: rgba(8,8,8, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            padding-top: 20px;
         }
-        h1 { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: var(--text-dim); }
         
+        h1 { 
+            font-size: 16px; 
+            font-weight: 700; 
+            letter-spacing: 4px; 
+            margin: 0; 
+            color: var(--text);
+            position: relative;
+            display: inline-block;
+        }
+        h1::before {
+            content: '■';
+            color: var(--accent);
+            margin-right: 10px;
+            font-size: 10px;
+            vertical-align: middle;
+            animation: blink 2s infinite;
+        }
+
         /* CONTROLS */
-        .controls { display: flex; gap: 15px; align-items: center; }
-        .stats { font-size: 11px; font-family: monospace; color: #444; }
+        .controls { display: flex; gap: 20px; align-items: center; }
+        .stats { 
+            font-size: 10px; 
+            font-family: 'TechMono', monospace; 
+            color: var(--text-dim); 
+            letter-spacing: 1px;
+        }
         
         button#view-toggle {
-            background: transparent; border: 1px solid var(--border); color: var(--text-dim);
-            padding: 6px 12px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-            cursor: pointer; border-radius: 4px; transition: all 0.2s;
+            background: transparent; 
+            border: 1px solid var(--border); 
+            color: var(--text-dim);
+            padding: 8px 16px; 
+            font-size: 9px; 
+            font-weight: 700;
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            cursor: pointer; 
+            transition: all 0s; /* Instant tactical feel */
+            position: relative;
+            overflow: hidden;
         }
-        button#view-toggle:hover { border-color: #555; color: #fff; }
+        
+        button#view-toggle:hover { 
+            background: var(--text); 
+            color: var(--bg); 
+            border-color: var(--text);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
 
-        /* GRID / LIST CONTAINER */
-        .grid { display: grid; gap: 10px; }
+        /* GRID SYSTEM */
+        .grid { display: grid; gap: 2px; } /* Tight gap for cohesive feel */
 
-        /* CARD SHARED STYLES */
+        /* CARD - THE UNIT */
         .card { 
-            background: var(--card); border: 1px solid var(--border); 
-            text-decoration: none; color: inherit; display: flex; 
-            overflow: hidden; transition: transform 0.1s, border-color 0.1s;
+            background: var(--card-bg); 
+            border: 1px solid transparent; /* Hidden base border */
+            text-decoration: none; 
+            color: inherit; 
+            display: flex; 
+            position: relative;
+            transition: opacity 0.2s;
         }
-        .card:hover { border-color: #444; transform: translateY(-1px); }
-        .card-title { font-size: 13px; font-weight: 600; letter-spacing: 0.5px;}
-        .card-meta { display: flex; align-items: center; gap: 10px; }
+
+        /* TACTICAL CORNERS (CSS DRAWING) */
+        .card::before, .card::after {
+            content: ''; position: absolute; width: 6px; height: 6px;
+            transition: all 0.2s; opacity: 0.3;
+        }
+        /* Top Left */
+        .card::before { top: -1px; left: -1px; border-top: 1px solid var(--text-dim); border-left: 1px solid var(--text-dim); }
+        /* Bottom Right */
+        .card::after { bottom: -1px; right: -1px; border-bottom: 1px solid var(--text-dim); border-right: 1px solid var(--text-dim); }
+
+        .card:hover { 
+            background: #111; 
+            z-index: 10;
+        }
+        .card:hover::before, .card:hover::after {
+            width: 100%; height: 100%;
+            border-color: var(--accent);
+            opacity: 1;
+        }
+
+        .card-title { 
+            font-family: 'Helvetica Neue', sans-serif; 
+            font-size: 12px; 
+            font-weight: 700; 
+            letter-spacing: 1px; 
+            text-transform: uppercase;
+        }
+        
+        .card-meta { display: flex; align-items: center; gap: 15px; margin-top: 4px; }
+        
         .card-img { 
-            background-color: #000; 
+            background-color: #050505; 
             background-repeat: no-repeat; 
             background-position: center; 
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+        }
+        /* Image overlay scan effect */
+        .card-img::after {
+            content: '';
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(255,255,255,0.03);
+            pointer-events: none;
         }
 
         .tag { 
-            font-size: 9px; border: 1px solid #333; padding: 3px 6px; 
-            border-radius: 4px; color: #888; text-transform: uppercase; letter-spacing: 0.5px;
-            white-space: nowrap;
+            font-size: 9px; 
+            color: var(--text-dim); 
+            border: 1px solid #222;
+            padding: 2px 5px;
+            font-family: 'TechMono', monospace;
         }
-        .date { font-size: 10px; color: #444; font-family: monospace; }
-
-        /* --- MODE: LIST (Compact) --- */
-        .grid.list-mode { grid-template-columns: 1fr; }
-        .grid.list-mode .card { height: 60px; border-radius: 4px; align-items: center; }
         
-        /* LIST IMAGE STYLES */
-        .grid.list-mode .card-img { 
-            width: 60px; 
-            height: 100%; 
-            border-right: 1px solid var(--border); 
-            background-size: cover; /* Fill the square */
+        .date { 
+            font-size: 9px; 
+            color: #444; 
+            font-family: 'TechMono', monospace; 
+            letter-spacing: 1px;
         }
+
+        /* --- MODE: LIST (Compact / Data Log) --- */
+        .grid.list-mode { grid-template-columns: 1fr; }
+        .grid.list-mode .card { 
+            height: 40px; 
+            border-bottom: 1px solid #1a1a1a; /* Divider lines */
+            align-items: center; 
+        }
+        
+        .grid.list-mode .card-img { 
+            width: 40px; 
+            height: 100%; 
+            border-right: 1px solid #1a1a1a; 
+            background-size: cover; 
+            filter: grayscale(100%); /* Desaturate in list view */
+            transition: filter 0.1s;
+        }
+        .grid.list-mode .card:hover .card-img { filter: grayscale(0%); }
 
         .grid.list-mode .card-info { 
-            flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; 
+            flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; 
         }
 
-        /* --- MODE: TILES (Gallery) --- */
-        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .grid.tile-mode .card { flex-direction: column; height: 260px; border-radius: 8px; }
-        
-        /* TILE IMAGE STYLES */
-        .grid.tile-mode .card-img { 
-            width: 100%; height: 160px; 
-            border-bottom: 1px solid var(--border); 
-            background-size: contain; /* Don't crop sprites */
+        /* --- MODE: TILES (Gallery / Inventory) --- */
+        .grid.tile-mode { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 30px 15px; }
+        .grid.tile-mode .card { 
+            flex-direction: column; 
+            height: 240px; 
+            background: transparent;
+            border: 1px solid #151515;
         }
+        
+        .grid.tile-mode .card-img { 
+            width: 100%; height: 140px; 
+            border-bottom: 1px solid #151515; 
+            background-size: contain; 
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .grid.tile-mode .card:hover .card-img { opacity: 1; }
 
         .grid.tile-mode .card-info { 
-            flex: 1; padding: 15px; 
+            flex: 1; padding: 12px; 
             display: flex; flex-direction: column; justify-content: space-between; 
         }
         
         .grid.tile-mode .card-meta { justify-content: space-between; width: 100%; margin-top: auto; }
+
+        /* ANIMATIONS */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
 
     </style>
 </head>
@@ -109,8 +253,8 @@
         <header>
             <h1>ZAK'S PC</h1>
             <div class="controls">
-                <div class="stats" id="status">LOADING...</div>
-                <button id="view-toggle">Switch to Tiles</button>
+                <div class="stats" id="status">INIT_SEQ...</div>
+                <button id="view-toggle">/// TILES</button>
             </div>
         </header>
 
@@ -123,12 +267,21 @@
             .then(res => res.json())
             .then(data => {
                 const grid = document.getElementById('project-grid');
+                const status = document.getElementById('status');
                 
-                // Filter active projects only
+                // Filter active projects
                 const visibleProjects = data.filter(p => p.active !== false);
-
-                document.getElementById('status').innerText = `${visibleProjects.length} NODES`;
                 
+                // Simulate a fast "decryption" flicker for status
+                let count = 0;
+                const total = visibleProjects.length;
+                status.innerText = `SCANNING...`;
+                
+                setTimeout(() => {
+                    status.innerText = `NODES: [${total}]`;
+                    status.style.color = '#fff';
+                }, 400);
+
                 visibleProjects.forEach(p => {
                     const card = document.createElement('a');
                     card.href = p.path;
@@ -138,11 +291,11 @@
                     const imgUrl = p.image || ''; 
                     const imgStyle = imgUrl ? `background-image: url('${imgUrl}')` : '';
                     
-                    // The Placeholder: Shows // if no image exists
-                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">//</span>';
-                    
-                    // Apply styles
-                    const imgDiv = `<div class="card-img" style="${imgStyle}">${imgContent}</div>`;
+                    // The Placeholder - using your preferred neutral grey for "No Signal"
+                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">NO_SIGNAL</span>';
+                    const noImgClass = imgUrl ? '' : 'background-color: #e0e0e0;'; // Injected preference
+
+                    const imgDiv = `<div class="card-img" style="${imgStyle}; ${noImgClass}">${imgContent}</div>`;
 
                     // Date Formatting (MM.DD.YY)
                     const dateObj = new Date(p.date);
@@ -152,15 +305,15 @@
                     const dateStr = `${mm}.${dd}.${yy}`;
                     
                     // Tag Handling
-                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'EXP';
+                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'RAW';
 
                     card.innerHTML = `
                         ${imgDiv}
                         <div class="card-info">
                             <div class="card-title">${p.title}</div>
                             <div class="card-meta">
-                                <span class="date">${dateStr}</span>
                                 <span class="tag">${mainTag}</span>
+                                <span class="date">${dateStr}</span>
                             </div>
                         </div>
                     `;
@@ -168,7 +321,8 @@
                 });
             })
             .catch(err => {
-                document.getElementById('status').innerText = 'OFFLINE';
+                document.getElementById('status').innerText = 'ERR_CONNECTION';
+                document.getElementById('status').style.color = 'red';
                 console.error(err);
             });
 
@@ -182,11 +336,11 @@
             if (isList) {
                 gridContainer.classList.remove('tile-mode');
                 gridContainer.classList.add('list-mode');
-                toggleBtn.innerText = "SWITCH TO TILES";
+                toggleBtn.innerText = "/// TILES";
             } else {
                 gridContainer.classList.remove('list-mode');
                 gridContainer.classList.add('tile-mode');
-                toggleBtn.innerText = "SWITCH TO LIST";
+                toggleBtn.innerText = "/// LIST";
             }
         });
     </script>
