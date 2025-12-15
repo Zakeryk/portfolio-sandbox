@@ -13,7 +13,6 @@
     /* --- RESET & MOBILE FIXES --- */
     * { 
         margin: 0; padding: 0; box-sizing: border-box; 
-        /* KILL THE BLUE HIGHLIGHT ON MOBILE TAP */
         -webkit-tap-highlight-color: transparent; 
         outline: none;
     }
@@ -23,7 +22,7 @@
       font-family: 'Inter', sans-serif;
       cursor: none; 
       user-select: none;
-      -webkit-user-select: none; /* Safari/Chrome specific */
+      -webkit-user-select: none; 
       overscroll-behavior: none;
       touch-action: none; 
     }
@@ -67,39 +66,55 @@
         100% { transform: translate(0,0); }
     }
 
-    /* --- SCROLL HINT --- */
-    @keyframes bounceRight {
-        0%, 100% { transform: translateX(0); }
-        50% { transform: translateX(-10px); }
+    /* --- VERTICAL SCROLL HINT (NEW DESIGN) --- */
+    @keyframes bobVertical {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(10px); }
     }
     
     #scroll-hint {
         position: fixed;
-        bottom: 30px;
-        right: -100px; /* Start off screen */
+        top: 50%; /* Center Vertically */
+        right: -60px; /* Start off screen */
+        transform: translateY(-50%);
         color: #7ec1d9; 
         font-family: 'Orbitron', sans-serif;
-        font-size: 1rem;
+        font-size: 0.8rem;
+        letter-spacing: 2px;
         z-index: 8000;
         pointer-events: none;
         display: flex;
+        flex-direction: column; /* Stack vertical */
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         opacity: 0;
-        transition: right 0.5s ease, opacity 0.5s ease;
+        transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease;
     }
     
     #scroll-hint.visible {
-        right: 20px;
+        right: 15px;
         opacity: 1;
-        animation: bounceRight 2s infinite;
+    }
+    
+    #scroll-hint-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: bobVertical 2s ease-in-out infinite;
+    }
+    
+    /* Vertical Text Mode */
+    #scroll-hint span {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg); /* Read bottom to top or tweak as desired */
     }
     
     #scroll-hint svg {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
         fill: currentColor;
-        transform: rotate(90deg); 
+        margin-top: 5px;
     }
 
     /* --- PRELOADER --- */
@@ -271,8 +286,10 @@
   </div>
   
   <div id="scroll-hint">
-      SCROLL
-      <svg viewBox="0 0 24 24"><path d="M5 3l3.057-3 11.943 12-11.943 12-3.057-3 9-9z"/></svg>
+      <div id="scroll-hint-content">
+          <span>SCROLL</span>
+          <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h12z"/></svg>
+      </div>
   </div>
 
   <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
@@ -465,6 +482,7 @@
         const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
         const limit = MAX_TILES; 
 
+        // Update Scroll Max
         const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
         const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
         const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
@@ -478,7 +496,10 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            
+            // FIX: Start Y on mobile set to roughly camera center (offset from -1.5)
+            // On desktop startY is dynamic, on mobile we hardcode to ensure first tile visibility
+            const startY = isMobile ? -0.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -548,7 +569,7 @@
         }
     });
 
-    // --- MOBILE TAP & SCROLL LOGIC (FIXED) ---
+    // --- MOBILE TAP & SCROLL LOGIC ---
     window.addEventListener('touchstart', (e) => {
         if (!isMobile) return;
         
@@ -566,7 +587,7 @@
         
         if (intersects.length > 0) {
             INTERSECTED = intersects[0].object;
-            isMouseDown = true; // Trigger shrink
+            isMouseDown = true; 
         }
     }, { passive: false });
 
@@ -577,7 +598,7 @@
         
         if (Math.abs(delta) > 5) {
             scrollState.isScrolling = true;
-            isMouseDown = false; // Cancel shrink
+            isMouseDown = false; 
             INTERSECTED = null;
         }
         
@@ -590,28 +611,22 @@
         if (!isMobile) return;
         
         if (!scrollState.isScrolling && INTERSECTED) {
-            // It was a tap!
+            // TAP ACTION
+            isMouseDown = false;
             
-            // 1. Trigger Physics POP immediately
+            // 1. Force Spring
             INTERSECTED.userData.isSpringing = true;
-            
-            // 2. Force velocity for the pop (since we are releasing)
-            // Overshoot Scale (1.03) - Current Scale (~0.95 scaled)
-            // We give it a kick to simulate the release
-            const popForce = 0.1; 
+            const popForce = 0.15; 
             INTERSECTED.userData.velocity.x += popForce;
             
-            // 3. Navigate
+            // 2. Navigate
             const targetLink = LINKS[INTERSECTED.userData.index];
             if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
         }
         
-        // Reset Global State
+        // Reset state but keep INTERSECTED valid briefly for spring physics
         isMouseDown = false;
-        
-        // Note: We do NOT null INTERSECTED immediately here to allow the spring to run
-        // The physics loop will handle it, or the next touchstart will reset INTERSECTED
-        setTimeout(() => { INTERSECTED = null; }, 300); // Cleanup after animation
+        setTimeout(() => { INTERSECTED = null; }, 300); 
     });
 
 
@@ -704,10 +719,7 @@
             } else {
                 let lerpFactor = activeTarget && isMouseDown ? LERP_CLICK : LERP_NORMAL;
                 const scaleBase = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-                // Important: Scale physics relative to base size
                 const finalTarget = targetS * scaleBase;
-                
-                // Manual Lerp for smoothness
                 const currentX = b.scale.x;
                 const nextX = currentX + (finalTarget - currentX) * lerpFactor;
                 b.scale.set(nextX, nextX, 1);
