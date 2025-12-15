@@ -9,12 +9,12 @@ const PARAMS = {
     camX: 0, camY: -1.5, camZ: 10,
     aimX: 0, aimY: -1.5, aimZ: 0,
     camZoom: 2.7,
-    
+
     // Grid Layout
     gridSpacing: 1.5,
     gridOffsetX: 0.0,
     gridOffsetY: -1.5,
-    
+
     // Visuals
     borderRadius: 0.018,
     bgColor: 0xe0e0e0,
@@ -24,7 +24,7 @@ const PARAMS = {
 // --- STATE MANAGEMENT ---
 const cursorState = {
     x: 0, y: 0,
-    prevX: 0, 
+    prevX: 0,
     targetX: 0, targetY: 0,
     angle: 0,
     scale: 1, targetScale: 1
@@ -54,7 +54,7 @@ camera.updateProjectionMatrix();
 // Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setSize(container.clientWidth, container.clientHeight);
-renderer.setPixelRatio(window.devicePixelRatio); 
+renderer.setPixelRatio(window.devicePixelRatio);
 container.appendChild(renderer.domElement);
 
 // Lighting
@@ -75,9 +75,11 @@ function updateCurvedBorder() {
 
     const borderPath = document.getElementById('border-path');
     const maskPath = document.getElementById('mask-path');
-    
+
     // Adjust this value to move the line up/down
-    const baselineY = height * 0.85; 
+    const isMobile = window.innerWidth <= 768;
+    // Just above the clock (approx 85px from bottom on mobile)
+    const baselineY = isMobile ? height - 85 : height * 0.85;
     const inset = 0; // Set to 0 for full width
 
     // STRAIGHT LINE PATH
@@ -96,12 +98,12 @@ function updateCurvedBorder() {
         // But SVG paths stroke the whole perimeter.
         // VISUAL TRICK: We draw the line separately for the border stroke
         // and the box for the mask.
-        
+
         // For the visible blue line (just a single line across):
         const lineOnly = `M 0,${baselineY} L ${width},${baselineY}`;
         borderPath.setAttribute('d', lineOnly);
     }
-    
+
     if (maskPath) {
         // The mask needs to be a closed shape (the white area above the line)
         maskPath.setAttribute('d', d);
@@ -118,10 +120,10 @@ const channelBlocks = [];
 
 function createChannelBlock(index) {
     const geometry = new RoundedBoxGeometry(BLOCK_WIDTH, BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-    const material = new THREE.MeshPhongMaterial({ 
-        color: 0xffffff, 
-        specular: 0x555555, 
-        shininess: 40 
+    const material = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        specular: 0x555555,
+        shininess: 40
     });
     const block = new THREE.Mesh(geometry, material);
     block.userData.index = index;
@@ -166,30 +168,30 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('mousedown', (e) => {
     if (INTERSECTED) {
-        cursorState.targetScale = 0.85; 
-        return; 
+        cursorState.targetScale = 0.85;
+        return;
     }
     isDragging = true;
     previousMousePosition = { x: e.clientX, y: e.clientY };
-    cursorState.targetScale = 0.85; 
+    cursorState.targetScale = 0.85;
 });
 
 window.addEventListener('mouseup', () => {
     isDragging = false;
-    cursorState.targetScale = INTERSECTED ? 1.3 : 1.0; 
+    cursorState.targetScale = INTERSECTED ? 1.3 : 1.0;
 });
 
 window.addEventListener('mousemove', (e) => {
     // 1. Instant Cursor Tracking
     cursorState.targetX = e.clientX;
     cursorState.targetY = e.clientY;
-    
+
     // 2. Camera Panning
     if (isDragging) {
         const deltaX = e.clientX - previousMousePosition.x;
         const deltaY = e.clientY - previousMousePosition.y;
         previousMousePosition = { x: e.clientX, y: e.clientY };
-        
+
         const sensitivity = 0.002 * PARAMS.camZoom;
         PARAMS.camX -= deltaX * sensitivity;
         PARAMS.camY += deltaY * sensitivity;
@@ -208,9 +210,9 @@ function updateClock() {
     const minutes = now.getMinutes();
     const ampm = hours >= 12 ? 'PM' : 'AM';
     hours = hours % 12;
-    hours = hours ? hours : 12; 
+    hours = hours ? hours : 12;
     const strMinutes = minutes < 10 ? '0' + minutes : minutes;
-    
+
     const clockEl = document.getElementById('clock');
     if (clockEl) {
         clockEl.innerHTML = `${hours}:${strMinutes} <span style="font-size: 0.6em;">${ampm}</span>`;
@@ -234,17 +236,17 @@ function loadKeyframe(slot) {
     if (!target) return;
     cameraTween = {
         start: { camX: PARAMS.camX, camY: PARAMS.camY, camZ: PARAMS.camZ, aimX: PARAMS.aimX, aimY: PARAMS.aimY, aimZ: PARAMS.aimZ },
-        end: target, 
-        startTime: performance.now(), 
+        end: target,
+        startTime: performance.now(),
         duration: PARAMS.transitionDuration
     };
 }
 
 window.addEventListener('keydown', (e) => {
     if (e.key >= '1' && e.key <= '9') loadKeyframe(parseInt(e.key));
-    if (e.key === '`') { 
-        const g = document.querySelector('.dg.ac'); 
-        if (g) g.style.display = g.style.display === 'none' ? 'block' : 'none'; 
+    if (e.key === '`') {
+        const g = document.querySelector('.dg.ac');
+        if (g) g.style.display = g.style.display === 'none' ? 'block' : 'none';
     }
 });
 
@@ -256,7 +258,7 @@ function animate() {
         let t = (performance.now() - cameraTween.startTime) / cameraTween.duration;
         if (t >= 1) { t = 1; cameraTween = null; }
         const eT = easeOutExpo(t);
-        
+
         PARAMS.camX = THREE.MathUtils.lerp(cameraTween.start.camX, cameraTween.end.camX, eT);
         PARAMS.camY = THREE.MathUtils.lerp(cameraTween.start.camY, cameraTween.end.camY, eT);
         PARAMS.camZ = THREE.MathUtils.lerp(cameraTween.start.camZ, cameraTween.end.camZ, eT);
@@ -288,9 +290,9 @@ function animate() {
             if (!isDragging) cursorState.targetScale = 1.0;
         }
     }
-    
-    channelBlocks.forEach(block => { 
-        if (block !== INTERSECTED) block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), 0.1); 
+
+    channelBlocks.forEach(block => {
+        if (block !== INTERSECTED) block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), 0.1);
     });
 
     renderer.render(scene, camera);
@@ -311,14 +313,14 @@ function animateCursor() {
 
     // 3. Velocity Tilt 
     if (cursorState.prevX === undefined) cursorState.prevX = cursorState.x;
-    
+
     const dx = cursorState.x - cursorState.prevX;
     cursorState.prevX = cursorState.x;
 
-    const targetAngle = dx * 2.5; 
+    const targetAngle = dx * 2.5;
     cursorState.angle += (targetAngle - cursorState.angle) * 0.1;
 
-    if(cursorEl) {
+    if (cursorEl) {
         // No centering offset here. We assume top-left of image is the pointer tip.
         // Rotation naturally pivots around that top-left tip because of CSS transform-origin: 0 0;
         cursorEl.style.transform = `
