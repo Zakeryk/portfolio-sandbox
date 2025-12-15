@@ -510,6 +510,7 @@
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
         const container = document.getElementById('hero-canvas');
         const scene = new THREE.Scene();
@@ -537,14 +538,25 @@
         scene.environment = pmremGenerator.fromScene(envScene).texture;
 
         // Object
-        const geometry = new THREE.TorusKnotGeometry(1.6, 0.5, 300, 40);
-        const material = new THREE.MeshPhysicalMaterial({
+        // Object
+        let skullModel = null;
+        const skullMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x111111, metalness: 1.0, roughness: 0.15,
             iridescence: 0.6, iridescenceIOR: 1.8, iridescenceThicknessRange: [100, 400],
             clearcoat: 1.0, anisotropy: 0.5, envMapIntensity: 1.2
         });
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
+
+        const loader = new GLTFLoader();
+        loader.load('./misc/domestic_cat_skull.glb', (gltf) => {
+            skullModel = gltf.scene;
+            skullModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = skullMaterial;
+                }
+            });
+            skullModel.scale.set(3, 3, 3);
+            scene.add(skullModel);
+        });
 
         // Post
         const composer = new EffectComposer(renderer);
@@ -567,9 +579,12 @@
             const t = clock.getElapsedTime();
             target.x += (mouse.x - target.x) * 0.05;
             target.y += (mouse.y - target.y) * 0.05;
-            mesh.rotation.y = t * 0.1 + (target.x * 0.5);
-            mesh.rotation.x = (target.y * 0.5);
-            mesh.position.y = Math.sin(t * 0.5) * 0.1;
+
+            if (skullModel) {
+                skullModel.rotation.y = t * 0.1 + (target.x * 0.5);
+                skullModel.rotation.x = (target.y * 0.5);
+                skullModel.position.y = Math.sin(t * 0.5) * 0.1;
+            }
             composer.render();
         }
         animate();
