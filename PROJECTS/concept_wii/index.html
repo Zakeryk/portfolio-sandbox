@@ -43,8 +43,8 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.02) 50%, 
-            rgba(0,0,0,0.02)
+            rgba(0,0,0,0.1) 50%,  /* FIXED: 0.1 Opacity */
+            rgba(0,0,0,0.1)
         );
         background-size: 100% 4px;
         position: absolute;
@@ -116,36 +116,56 @@
         margin-top: 5px;
     }
 
-    /* --- RADIO PLAYER (NEW) --- */
+    /* --- RADIO PLAYER (MINIMAL LOOP) --- */
     #radio-player {
         position: fixed;
         bottom: 30px;
         right: 30px;
         background-color: #f0f0f0;
         border: 2px solid #ffffff;
-        padding: 10px 15px;
+        padding: 8px 12px;
         border-radius: 4px;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
         z-index: 8500;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         font-family: 'Orbitron', sans-serif;
-        /* Start hidden on mobile if space is tight, or scale down */
-        transform-origin: bottom right;
         transition: opacity 0.3s;
-        cursor: pointer; /* Click to toggle */
+        cursor: pointer;
     }
 
-    /* Equalizer Animation */
+    .radio-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .radio-btn {
+        width: 24px;
+        height: 24px;
+        fill: #000;
+        opacity: 0.6;
+        transition: opacity 0.2s, transform 0.1s;
+    }
+    
+    .radio-btn:hover { opacity: 1; }
+    .radio-btn:active { transform: scale(0.9); }
+
+    .eq-container {
+        display: flex; 
+        gap: 2px; 
+        align-items: flex-end; 
+        height: 16px;
+    }
     .eq-bar {
         width: 3px;
         background-color: #7ec1d9;
         animation: eq 0.8s ease-in-out infinite;
     }
-    .eq-bar:nth-child(1) { height: 10px; animation-duration: 0.6s; }
-    .eq-bar:nth-child(2) { height: 16px; animation-duration: 0.9s; }
-    .eq-bar:nth-child(3) { height: 8px; animation-duration: 0.7s; }
+    .eq-bar:nth-child(1) { height: 8px; animation-duration: 0.6s; }
+    .eq-bar:nth-child(2) { height: 14px; animation-duration: 0.9s; }
+    .eq-bar:nth-child(3) { height: 6px; animation-duration: 0.7s; }
 
     @keyframes eq {
         0%, 100% { transform: scaleY(1); }
@@ -154,32 +174,41 @@
     
     .player-stopped .eq-bar {
         animation: none;
-        height: 4px; /* Flatline when stopped */
+        height: 3px; 
     }
+    
+    .icon-play { display: none; }
+    .icon-pause { display: block; }
+    
+    .player-stopped .icon-play { display: block; }
+    .player-stopped .icon-pause { display: none; }
 
     #radio-info {
         display: flex;
         flex-direction: column;
+        justify-content: center;
     }
-
+    
     #radio-label {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #888;
         letter-spacing: 1px;
+        line-height: 1;
+        margin-bottom: 2px;
     }
-
-    #radio-status {
-        font-size: 0.9rem;
-        color: #000;
+    
+    #radio-track {
+        font-size: 0.8rem;
         font-weight: 700;
+        line-height: 1;
     }
 
     @media (max-width: 768px) {
         #radio-player {
             bottom: 15px;
             right: 15px;
-            padding: 8px 12px;
-            transform: scale(0.8);
+            transform: scale(0.9);
+            transform-origin: bottom right;
         }
     }
 
@@ -359,14 +388,22 @@
   </div>
 
   <div id="radio-player" class="player-stopped">
-      <div style="display:flex; gap:3px; align-items:flex-end; height:20px;">
+      <div class="radio-controls">
+          <div id="btn-toggle" class="radio-btn">
+              <svg class="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </div>
+      </div>
+      
+      <div class="eq-container">
           <div class="eq-bar"></div>
           <div class="eq-bar"></div>
           <div class="eq-bar"></div>
       </div>
+      
       <div id="radio-info">
-          <span id="radio-label">LOFI RADIO</span>
-          <span id="radio-status">PAUSED</span>
+          <span id="radio-label">NOW PLAYING</span>
+          <span id="radio-track">DO YA SHOPPING</span>
       </div>
   </div>
 
@@ -436,7 +473,7 @@
         gridOffsetY: -1.2,
         borderRadius: 0.018,
         activeSlot: 1,
-        splitHeight: 0.92, // MOBILE TWEAK: Lowered to 0.92
+        splitHeight: 0.85, 
     };
 
     const cursorState = { 
@@ -461,40 +498,31 @@
         isScrolling: false
     };
 
-    // --- RADIO LOGIC ---
-    const playlist = [
-        'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Elipsis.mp3',
-        'https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Lobo_Loco/Vagabond/Lobo_Loco_-_06_-_Window_Smasher_-_Vagabond.mp3'
-    ];
-    let currentTrackIdx = 0;
-    const audio = new Audio();
-    audio.volume = 0.2; // Quiet volume
-    audio.src = playlist[0];
+    // --- RADIO LOGIC (Single Track Loop) ---
+    // NOTE: You must download "do_ya_shopping.mp3" to your assets folder!
+    const audio = new Audio('assets/do_ya_shopping.mp3');
+    audio.loop = true; 
+    audio.volume = 0.5; // FIXED: Default 50%
     
     const radioEl = document.getElementById('radio-player');
-    const radioStatus = document.getElementById('radio-status');
+    const btnToggle = document.getElementById('btn-toggle');
     let isPlaying = false;
-
-    // Auto-cycle logic
-    audio.addEventListener('ended', () => {
-        currentTrackIdx = (currentTrackIdx + 1) % playlist.length;
-        audio.src = playlist[currentTrackIdx];
-        audio.play();
-    });
 
     // Toggle Play/Pause
     radioEl.addEventListener('click', () => {
+        togglePlay();
+    });
+
+    function togglePlay() {
         if(isPlaying) {
             audio.pause();
-            radioStatus.innerText = "PAUSED";
             radioEl.classList.add('player-stopped');
         } else {
             audio.play().catch(e => console.log("Audio autoplay blocked:", e));
-            radioStatus.innerText = "ON AIR";
             radioEl.classList.remove('player-stopped');
         }
         isPlaying = !isPlaying;
-    });
+    }
 
 
     // --- SETUP ---
@@ -526,8 +554,8 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        // Desktop uses config, Mobile forced to 0.92
-        const splitFactor = isMobile ? 0.92 : PARAMS.splitHeight;
+        // FIXED: Mobile split moves UP (0.80) to properly clear the clock
+        const splitFactor = isMobile ? 0.80 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
         
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
@@ -555,30 +583,18 @@
                 tex.wrapS = THREE.RepeatWrapping; 
                 tex.wrapT = THREE.RepeatWrapping;
                 
-                // ZOOM LOGIC: Show only 90% of texture (Zoom 10%)
                 const ZOOM_FACTOR = 0.9;
-                
                 const imageAspect = tex.image.width / tex.image.height;
                 const tileAspect = TILE_ASPECT;
                 
-                // Calculate base repeat to cover the tile
                 let rX = 1, rY = 1;
-                let offX = 0, offY = 0;
-
                 if (imageAspect / tileAspect > 1) {
                     rX = tileAspect / imageAspect;
-                    offX = (1 - rX) / 2;
                 } else {
                     rY = imageAspect / tileAspect;
-                    offY = (1 - rY) / 2;
                 }
                 
-                // Apply Zoom: reduce repeat window, adjust offset to center
                 tex.repeat.set(rX * ZOOM_FACTOR, rY * ZOOM_FACTOR);
-                
-                // Recalculate offset to center the zoomed window
-                // Center of the texture is 0.5. We want center of visible window to be 0.5.
-                // New Width = rX * Z. Start = 0.5 - (NewWidth/2).
                 tex.offset.set(
                     0.5 - (rX * ZOOM_FACTOR) / 2,
                     0.5 - (rY * ZOOM_FACTOR) / 2
@@ -749,7 +765,7 @@
             isMouseDown = false;
             
             INTERSECTED.userData.isSpringing = true;
-            // Snappy Spring Force (0.05)
+            // FIXED: Snappy spring force (0.05)
             const popForce = 0.05; 
             INTERSECTED.userData.velocity.x += popForce;
             
