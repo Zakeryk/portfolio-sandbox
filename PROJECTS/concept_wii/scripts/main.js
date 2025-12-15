@@ -291,12 +291,11 @@ function animate() {
     if (intersects.length > 0) {
         const closestBlock = intersects[0].object;
         if (INTERSECTED !== closestBlock) {
-            // Restore previous if needed (though we now rely on decay)
-            // if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); 
-
             INTERSECTED = closestBlock;
-            // Trigger Flash
-            INTERSECTED.userData.triggerFlash = performance.now();
+            // Trigger Flash via Uniform
+            if (INTERSECTED.material.userData.uFlashTime) {
+                INTERSECTED.material.userData.uFlashTime.value = performance.now() / 1000; // Seconds
+            }
 
             if (!isDragging) cursorState.targetScale = 1.3;
         }
@@ -322,20 +321,11 @@ function animate() {
         }
     }
 
-    const now = performance.now();
+    const timeSeconds = performance.now() / 1000;
     channelBlocks.forEach(block => {
-        // Handle Flash Decay
-        if (block.userData.triggerFlash > 0) {
-            const elapsed = now - block.userData.triggerFlash;
-            if (elapsed < 200) {
-                // Decay from 1.0 to 0.0 over 200ms
-                const t = 1.0 - (elapsed / 200);
-                const intensity = THREE.MathUtils.lerp(0, 0.2, t); // 0.2 approx 0x333333
-                block.material.emissive.setScalar(intensity);
-            } else {
-                block.material.emissive.setHex(0x000000);
-                block.userData.triggerFlash = 0; // Reset
-            }
+        // Update Shader Time
+        if (block.material.userData.uTime) {
+            block.material.userData.uTime.value = timeSeconds;
         }
 
         if (block !== INTERSECTED) {
