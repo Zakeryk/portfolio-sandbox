@@ -136,6 +136,10 @@ function createChannelBlock(index) {
 
 for (let i = 0; i < TOTAL_BLOCKS; i++) {
     const block = createChannelBlock(i);
+    block.userData.baseX = 0;
+    block.userData.baseY = 0;
+    block.userData.triggerFlash = 0;
+
     scene.add(block);
     channelBlocks.push(block);
 }
@@ -287,10 +291,13 @@ function animate() {
     if (intersects.length > 0) {
         const closestBlock = intersects[0].object;
         if (INTERSECTED !== closestBlock) {
-            if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+            // Restore previous if needed (though we now rely on decay)
+            // if (INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex); 
+
             INTERSECTED = closestBlock;
-            INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-            INTERSECTED.material.emissive.setHex(0x151515);
+            // Trigger Flash
+            INTERSECTED.userData.triggerFlash = performance.now();
+
             if (!isDragging) cursorState.targetScale = 1.3;
         }
 
@@ -309,13 +316,28 @@ function animate() {
 
     } else {
         if (INTERSECTED) {
-            INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
+            // Mouse left the block
             INTERSECTED = null;
             if (!isDragging) cursorState.targetScale = 1.0;
         }
     }
 
+    const now = performance.now();
     channelBlocks.forEach(block => {
+        // Handle Flash Decay
+        if (block.userData.triggerFlash > 0) {
+            const elapsed = now - block.userData.triggerFlash;
+            if (elapsed < 200) {
+                // Decay from 1.0 to 0.0 over 200ms
+                const t = 1.0 - (elapsed / 200);
+                const intensity = THREE.MathUtils.lerp(0, 0.2, t); // 0.2 approx 0x333333
+                block.material.emissive.setScalar(intensity);
+            } else {
+                block.material.emissive.setHex(0x000000);
+                block.userData.triggerFlash = 0; // Reset
+            }
+        }
+
         if (block !== INTERSECTED) {
             // Mobile: Snap back fast (0.5)
             // Desktop: Smooth return (0.1)
