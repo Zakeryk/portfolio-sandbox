@@ -18,7 +18,6 @@
       font-family: 'Inter', sans-serif;
       cursor: none; 
       user-select: none;
-      /* Prevent native pull-to-refresh on mobile */
       overscroll-behavior: none;
       touch-action: none; 
     }
@@ -39,8 +38,8 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.05) 50%,
-            rgba(0,0,0,0.05)
+            rgba(0,0,0,0.02) 50%, /* Reduced opacity for subtlety */
+            rgba(0,0,0,0.02)
         );
         background-size: 100% 4px;
         position: absolute;
@@ -60,6 +59,41 @@
     @keyframes noiseAnimation {
         0% { transform: translate(0,0); }
         100% { transform: translate(0,0); }
+    }
+
+    /* --- SCROLL HINT (NEW) --- */
+    @keyframes bounceRight {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-10px); }
+    }
+    
+    #scroll-hint {
+        position: fixed;
+        bottom: 30px;
+        right: -100px; /* Start off screen */
+        color: #7ec1d9; /* Wii Blue */
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1rem;
+        z-index: 8000;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        transition: right 0.5s ease, opacity 0.5s ease;
+    }
+    
+    #scroll-hint.visible {
+        right: 20px;
+        opacity: 1;
+        animation: bounceRight 2s infinite;
+    }
+    
+    #scroll-hint svg {
+        width: 24px;
+        height: 24px;
+        fill: currentColor;
+        transform: rotate(90deg); /* Point down */
     }
 
     /* --- PRELOADER --- */
@@ -167,12 +201,6 @@
         height: auto;
     }
 
-    /* HIDE CURSOR ON MOBILE (NEW) */
-    @media (max-width: 768px) {
-        #custom-cursor { display: none !important; }
-        body, html { cursor: auto; } /* Restore native touch behavior visually */
-    }
-
     #debug-hotspot {
       display: none;
       position: absolute; top: -2px; left: -2px;
@@ -199,6 +227,21 @@
     
     .tile-hidden { display: none !important; }
 
+    /* MOBILE ADJUSTMENTS */
+    @media (max-width: 768px) {
+        #custom-cursor { display: none !important; }
+        body, html { cursor: auto; }
+        
+        #clock {
+            font-size: 1.5rem; /* Half size */
+            bottom: 20px;
+        }
+        
+        #instructions {
+            display: none; /* Hide debug toggle text */
+        }
+    }
+
     body.debug-mode { cursor: auto !important; }
     body.debug-mode #gui-container { display: block; }
     body.debug-mode #debug-hotspot { display: block; }
@@ -219,6 +262,11 @@
   <div id="analog-overlay">
       <div id="scanlines"></div>
       <div id="noise"></div>
+  </div>
+  
+  <div id="scroll-hint">
+      SCROLL
+      <svg viewBox="0 0 24 24"><path d="M5 3l3.057-3 11.943 12-11.943 12-3.057-3 9-9z"/></svg>
   </div>
 
   <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 15; top: 0; left: 0;">
@@ -296,15 +344,14 @@
     };
     
     let INTERSECTED = null;
+    let cameraTween = null;
     let lastMoveTime = performance.now(); 
     let isMouseDown = false; 
-    let isMobile = false; // Track mobile state
+    let isMobile = false; 
     
-    // Grid State
     let COLS = 4; 
     let ROWS = 3; 
     
-    // Scroll State (NEW)
     const scrollState = {
         current: 0,
         target: 0,
@@ -352,12 +399,10 @@
     const channelBlocks = []; 
     const BASE_BLOCK_WIDTH = 1.12; 
     const BASE_BLOCK_HEIGHT = 0.72;
-    // On mobile we want the tile slightly bigger to fill the 1 col layout
-    const MOBILE_SCALE_FACTOR = 0.85; 
+    const MOBILE_SCALE_FACTOR = 1.35; // FIX: Bigger tiles on mobile (1.35x)
     const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
     const MAX_TILES = 12;
     
-    // Initial creation
     for(let i=0; i<MAX_TILES; i++) {
         const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
         let mat = new THREE.MeshPhongMaterial({ 
@@ -405,21 +450,20 @@
         
         if (isMobile) {
             COLS = 1;
-            ROWS = MAX_TILES; // All tiles in one column
+            ROWS = MAX_TILES; 
         } else {
             COLS = 4;
             ROWS = 3;
         }
         
         const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-        const limit = MAX_TILES; // Show all tiles
+        const limit = MAX_TILES; 
 
         // Update Scroll Max
         const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
         const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
         const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
-        // Only scroll if content exceeds view (simple approximation)
-        scrollState.max = isMobile ? Math.max(0, totalContentHeight - 4) : 0; // 4 units visible roughly
+        scrollState.max = isMobile ? Math.max(0, totalContentHeight - 3.5) : 0; 
 
         channelBlocks.forEach((b, i) => {
             b.visible = true;
@@ -429,15 +473,13 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // Align start at top on mobile
-            const startY = isMobile ? 1.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIX: Lower start position on mobile to be visible (1.0 vs 1.5)
+            const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
 
-            // Store Base Y for scrolling
             b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
-            
             b.position.set(xOffset + col * PARAMS.gridSpacing * scaleFactor, b.userData.baseY, 0);
         });
     }
@@ -446,6 +488,13 @@
 
     window.addEventListener('load', () => {
         document.getElementById('preloader').classList.add('fade-out');
+        
+        // Show scroll hint on mobile after load
+        if(isMobile) {
+            setTimeout(() => {
+                document.getElementById('scroll-hint').classList.add('visible');
+            }, 500);
+        }
     });
 
     // --- INPUT & SCROLL LOGIC ---
@@ -458,7 +507,6 @@
         updateGrid(); 
     });
 
-    // Desktop: Click
     window.addEventListener('mousedown', (e) => {
         if (isMobile || (document.body.classList.contains('debug-mode') && e.target.closest('.dg'))) return;
         isMouseDown = true; 
@@ -479,7 +527,6 @@
         } 
     });
 
-    // Desktop: Mouse Move
     window.addEventListener('mousemove', (e) => {
         if (isMobile) return;
         cursorState.targetX = e.clientX;
@@ -491,21 +538,25 @@
         pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
     });
 
-    // Desktop: Wheel Scroll (Optional for mobile layout on desktop)
     window.addEventListener('wheel', (e) => {
         if (isMobile) {
+            // Hide hint on interaction
+            document.getElementById('scroll-hint').classList.remove('visible');
+            
             scrollState.target += e.deltaY * 0.005;
             scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
         }
     });
 
-    // MOBILE TOUCH LOGIC
     window.addEventListener('touchstart', (e) => {
         if (!isMobile) return;
+        
+        // Hide hint on interaction
+        document.getElementById('scroll-hint').classList.remove('visible');
+        
         scrollState.isScrolling = false;
         scrollState.lastTouchY = e.touches[0].clientY;
         
-        // Raycast for tap interaction
         const rect = container.getBoundingClientRect();
         pointer.x = ((e.touches[0].clientX - rect.left) / container.clientWidth) * 2 - 1;
         pointer.y = -((e.touches[0].clientY - rect.top) / container.clientHeight) * 2 + 1;
@@ -515,24 +566,21 @@
         
         if (intersects.length > 0) {
             INTERSECTED = intersects[0].object;
-            isMouseDown = true; // Trigger spring down
+            isMouseDown = true; 
         }
     }, { passive: false });
 
     window.addEventListener('touchmove', (e) => {
         if (!isMobile) return;
-        // e.preventDefault(); // Prevent native scroll
         const touchY = e.touches[0].clientY;
         const delta = scrollState.lastTouchY - touchY;
         
-        // If moved significantly, treat as scroll and cancel tap
         if (Math.abs(delta) > 5) {
             scrollState.isScrolling = true;
-            isMouseDown = false; // Cancel spring down
+            isMouseDown = false; 
             INTERSECTED = null;
         }
         
-        // Update scroll target
         scrollState.target += delta * 0.01; 
         scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
         
@@ -543,9 +591,8 @@
         if (!isMobile) return;
         
         if (!scrollState.isScrolling && INTERSECTED) {
-            // It was a tap!
             isMouseDown = false;
-            INTERSECTED.userData.wasClicked = true; // Trigger spring up
+            INTERSECTED.userData.wasClicked = true; 
             const targetLink = LINKS[INTERSECTED.userData.index];
             if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
         }
@@ -559,13 +606,10 @@
     function animate() {
         requestAnimationFrame(animate);
         
-        // Smooth Scroll Logic
         if (isMobile) {
             scrollState.current += (scrollState.target - scrollState.current) * 0.1;
-            // Apply scroll offset to camera Y
             camera.position.y = PARAMS.camY - scrollState.current;
         } else {
-            // Reset on desktop
             camera.position.y = PARAMS.camY;
             scrollState.target = 0;
             scrollState.current = 0;
@@ -589,7 +633,6 @@
                 INTERSECTED = null;
             }
             
-            // Desktop Hover Logic
             channelBlocks.forEach(b => {
                 const currentlyHovered = b === INTERSECTED;
                 const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
@@ -602,7 +645,6 @@
             });
         }
 
-        // --- HYBRID TILE PHYSICS (Global) ---
         const SPRING_TENSION = 0.14; 
         const SPRING_DAMPING = 0.85; 
         const OVERSHOOT_SCALE = 1.03; 
@@ -611,17 +653,15 @@
 
         channelBlocks.forEach(b => {
             let targetS = 1.0;
-            // Mobile Physics: Only spring if explicitly intersected via touch logic
-            // Desktop Physics: Intersected via hover
             const activeTarget = INTERSECTED === b; 
 
             if (activeTarget) {
                 if (isMouseDown) {
-                    targetS = 0.95; // Pressed
+                    targetS = 0.95; 
                     b.userData.isSpringing = false; 
                     b.userData.velocity.set(0,0,0);
                 } else {
-                    targetS = 1.05; // Hover/Released
+                    targetS = 1.05; 
                     if (b.userData.wasClicked) {
                         b.userData.isSpringing = true;
                         const launchForce = OVERSHOOT_SCALE - b.scale.x;
@@ -634,7 +674,6 @@
                 b.userData.wasClicked = false; 
             }
             
-            // Physics Update
             if (b.userData.isSpringing) {
                 const tension = SPRING_TENSION; 
                 const damping = SPRING_DAMPING; 
@@ -651,16 +690,13 @@
                 }
             } else {
                 let lerpFactor = activeTarget && isMouseDown ? LERP_CLICK : LERP_NORMAL;
-                // On mobile, force scale scaleFactor into base scale
                 const scaleBase = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-                // Lerp relative to base scale
                 const finalTarget = targetS * scaleBase;
                 const currentX = b.scale.x;
                 const nextX = currentX + (finalTarget - currentX) * lerpFactor;
                 b.scale.set(nextX, nextX, 1);
             }
             
-            // Label Position Update
             b.updateWorldMatrix(true, false);
             b.getWorldPosition(worldPosition);
             const screenPosition = worldPosition.clone();
@@ -676,12 +712,11 @@
     }
     animate();
 
-    // --- CURSOR PHYSICS LOOP ---
     const cursorEl = document.getElementById('custom-cursor');
     const IDLE_TIMEOUT = 300; 
 
     function animateCursor() {
-        if (isMobile) return; // Skip on mobile
+        if (isMobile) return; 
         cursorState.x = cursorState.targetX;
         cursorState.y = cursorState.targetY;
         cursorState.scale += (cursorState.targetScale - cursorState.scale) * 0.2;
@@ -728,6 +763,7 @@
     folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateGrid);
     folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateGrid);
     folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
+    
     folder.open();
   </script>
 </body>
