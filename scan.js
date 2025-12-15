@@ -51,7 +51,7 @@ const getProjects = () => {
                 title: meta.title.toUpperCase().replace(/-/g, ' '),
                 tags: meta.tags || ['Experiment'],
                 active: true,
-                image: files.includes('thumb.jpg') ? `./projects/${dir.name}/thumb.jpg` : null,
+image: files.includes('thumb.png') ? `./projects/${dir.name}/thumb.png` : (files.includes('thumb.jpg') ? `./projects/${dir.name}/thumb.jpg` : null),
                 date: lastUpdated // <--- CHANGED TO MODIFIED DATE
             };
         })
