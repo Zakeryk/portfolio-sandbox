@@ -456,6 +456,21 @@
             display: none !important;
         }
 
+        #footer-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: #888;
+            letter-spacing: 1px;
+            pointer-events: none;
+            z-index: 30;
+            opacity: 0.6;
+            white-space: nowrap;
+        }
+
         /* MOBILE ADJUSTMENTS */
         @media (max-width: 768px) {
             #custom-cursor {
@@ -469,7 +484,7 @@
 
             #clock {
                 font-size: 1.5rem;
-                bottom: 35px;
+                bottom: 45px;
             }
 
             #instructions {
@@ -562,6 +577,7 @@
         <div id="tile-label-container"></div>
 
         <div id="clock">12:00</div>
+        <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
         <div id="instructions">[~] Toggle Debug Config</div>
     </div>
 

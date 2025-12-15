@@ -78,8 +78,8 @@ function updateCurvedBorder() {
 
     // Adjust this value to move the line up/down
     const isMobile = window.innerWidth <= 768;
-    // Just above the clock (approx 85px from bottom on mobile)
-    const baselineY = isMobile ? height - 85 : height * 0.85;
+    // Just above the clock (approx 100px from bottom on mobile to clear clock + footer)
+    const baselineY = isMobile ? height - 100 : height * 0.85;
     const inset = 0; // Set to 0 for full width
 
     // STRAIGHT LINE PATH
