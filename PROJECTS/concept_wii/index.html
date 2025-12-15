@@ -725,7 +725,7 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             // FIXED: Mobile split UP to 0.78
-            const splitFactor = isMobile ? 0.85 : PARAMS.splitHeight;
+            const splitFactor = isMobile ? 0.92 : PARAMS.splitHeight;
             const splitY = h * splitFactor;
             document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
             document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);

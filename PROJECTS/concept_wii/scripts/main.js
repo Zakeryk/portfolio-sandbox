@@ -35,6 +35,7 @@ let isDragging = false;
 let previousMousePosition = { x: 0, y: 0 };
 let INTERSECTED = null;
 let cameraTween = null;
+let isMobile = window.innerWidth <= 768;
 
 // --- SCENE SETUP ---
 const container = document.getElementById('canvas-wrapper');
@@ -78,7 +79,7 @@ function updateCurvedBorder() {
     const maskPath = document.getElementById('mask-path');
 
     // Adjust this value to move the line up/down
-    const isMobile = window.innerWidth <= 768;
+    // Adjust this value to move the line up/down
     // Just above the clock (approx 40px from bottom on mobile to sit right above clock)
     const baselineY = isMobile ? height - 40 : height * 0.9;
     const inset = 0; // Set to 0 for full width
@@ -139,6 +140,7 @@ for (let i = 0; i < TOTAL_BLOCKS; i++) {
     block.userData.baseX = 0;
     block.userData.baseY = 0;
     block.userData.triggerFlash = 0;
+    block.userData.scaleVelocity = new THREE.Vector3(0, 0, 0);
 
     scene.add(block);
     channelBlocks.push(block);
@@ -171,6 +173,7 @@ window.addEventListener('resize', () => {
     camera.bottom = -baseSize;
     camera.updateProjectionMatrix();
     renderer.setSize(container.clientWidth, container.clientHeight);
+    isMobile = window.innerWidth <= 768;
     updateCurvedBorder();
 });
 
@@ -301,17 +304,13 @@ function animate() {
             if (!isDragging) cursorState.targetScale = 1.3;
         }
 
-        // Animation Logic
+        // Interaction Logic
         if (isMobile) {
             // Mobile: Snappy Shrink on Tap
-            if (isDragging) { // Simulate "Active" state
-                closestBlock.scale.lerp(new THREE.Vector3(0.85, 0.85, 1), 0.5);
-            } else {
-                closestBlock.scale.lerp(new THREE.Vector3(1, 1, 1), 0.5);
-            }
+            // No direct scale manipulation here, handled in consolidated loop
         } else {
             // Desktop: Gentle Grow on Hover
-            closestBlock.scale.lerp(new THREE.Vector3(1.02, 1.02, 1.02), 0.12);
+            // No direct scale manipulation here, handled in consolidated loop
         }
 
     } else {
@@ -363,12 +362,39 @@ function animate() {
             }
         }
 
-        if (block !== INTERSECTED) {
-            // Mobile: Snap back fast (0.5)
-            // Desktop: Smooth return (0.1)
-            const speed = isMobile ? 0.5 : 0.1;
-            block.scale.lerp(new THREE.Vector3(1.0, 1.0, 1.0), speed);
+        // --- SPRING SCALE ANIMATION ---
+        let targetS = new THREE.Vector3(1, 1, 1);
+        if (block === INTERSECTED) {
+            if (isMobile) {
+                if (isDragging) {
+                    // Tap/Hold on Mobile: Subtle Shrink (0.95)
+                    targetS.set(0.95, 0.95, 1);
+                }
+            } else {
+                // Hover on Desktop: Gentle Grow
+                targetS.set(1.02, 1.02, 1.02);
+            }
         }
+
+        // Spring Physics
+        // F = -k * (x - target) - d * v
+        const k = 0.25; // stiffness (higher = faster snap)
+        const d = 0.55; // damping (lower = more bounce)
+
+        // X Axis
+        const fx = -k * (block.scale.x - targetS.x) - d * block.userData.scaleVelocity.x;
+        block.userData.scaleVelocity.x += fx;
+        block.scale.x += block.userData.scaleVelocity.x;
+
+        // Y Axis
+        const fy = -k * (block.scale.y - targetS.y) - d * block.userData.scaleVelocity.y;
+        block.userData.scaleVelocity.y += fy;
+        block.scale.y += block.userData.scaleVelocity.y;
+
+        // Z Axis
+        const fz = -k * (block.scale.z - targetS.z) - d * block.userData.scaleVelocity.z;
+        block.userData.scaleVelocity.z += fz;
+        block.scale.z += block.userData.scaleVelocity.z;
     });
 
     renderer.render(scene, camera);
