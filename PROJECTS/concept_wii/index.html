@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Wii Concept OS</title>
-  <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
+  <title>Wii OS Concept</title> <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
@@ -34,7 +33,7 @@
         width: 100%; height: 100%;
         pointer-events: none; 
         z-index: 9000;
-        opacity: 0.1; 
+        opacity: 1.0; 
     }
 
     #scanlines {
@@ -43,7 +42,7 @@
             to bottom,
             rgba(255,255,255,0),
             rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.1) 50%,  /* FIXED: 0.1 Opacity */
+            rgba(0,0,0,0.1) 50%,
             rgba(0,0,0,0.1)
         );
         background-size: 100% 4px;
@@ -56,7 +55,7 @@
         top: 0; left: 0;
         width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.02; 
+        opacity: 0.1; 
         mix-blend-mode: overlay;
         animation: noiseAnimation 2.5s linear infinite; 
     }
@@ -131,8 +130,17 @@
         z-index: 8500;
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         font-family: 'Orbitron', sans-serif;
-        transition: opacity 0.3s;
         cursor: pointer;
+        
+        /* SLIDE IN ANIMATION */
+        transform: translateY(100px); /* Start off screen */
+        opacity: 0;
+        transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+    }
+    
+    #radio-player.slide-in {
+        transform: translateY(0);
+        opacity: 1;
     }
 
     .radio-controls {
@@ -142,8 +150,8 @@
     }
 
     .radio-btn {
-        width: 24px;
-        height: 24px;
+        width: 20px; /* Slightly smaller */
+        height: 20px;
         fill: #000;
         opacity: 0.6;
         transition: opacity 0.2s, transform 0.1s;
@@ -156,7 +164,7 @@
         display: flex; 
         gap: 2px; 
         align-items: flex-end; 
-        height: 16px;
+        height: 14px;
     }
     .eq-bar {
         width: 3px;
@@ -190,15 +198,15 @@
     }
     
     #radio-label {
-        font-size: 0.65rem;
+        font-size: 0.55rem; /* SMALLER */
         color: #888;
         letter-spacing: 1px;
         line-height: 1;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
     }
     
     #radio-track {
-        font-size: 0.8rem;
+        font-size: 0.7rem; /* SMALLER */
         font-weight: 700;
         line-height: 1;
     }
@@ -207,8 +215,10 @@
         #radio-player {
             bottom: 15px;
             right: 15px;
-            transform: scale(0.9);
-            transform-origin: bottom right;
+            transform: scale(0.9) translateY(100px); /* Maintain scale logic with slide */
+        }
+        #radio-player.slide-in {
+            transform: scale(0.9) translateY(0);
         }
     }
 
@@ -499,10 +509,10 @@
     };
 
     // --- RADIO LOGIC ---
-    // Make sure 'assets/do_ya_shopping.mp3' exists!
+    // Ensure 'assets/do_ya_shopping.mp3' exists
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
-    audio.volume = 0.1; // FIXED: Default 15%
+    audio.volume = 0.5; 
     
     const radioEl = document.getElementById('radio-player');
     const btnToggle = document.getElementById('btn-toggle');
@@ -525,15 +535,29 @@
     }
     
     // Attempt Auto-Play on Load
-    /*window.addEventListener('load', () => {
+    window.addEventListener('load', () => {
+        document.getElementById('preloader').classList.add('fade-out');
+        
+        // Show scroll hint
+        if(isMobile) {
+            setTimeout(() => {
+                document.getElementById('scroll-hint').classList.add('visible');
+            }, 500);
+        }
+
+        // Show Radio Widget (Slide Up)
+        setTimeout(() => {
+            document.getElementById('radio-player').classList.add('slide-in');
+        }, 1200);
+
+        // Try Audio
         audio.play().then(() => {
             isPlaying = true;
             radioEl.classList.remove('player-stopped');
         }).catch(() => {
-            // Autoplay blocked, UI stays in stopped state
             console.log("Autoplay blocked - waiting for interaction");
         });
-    });*/
+    });
 
 
     // --- SETUP ---
@@ -552,9 +576,10 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
     
+    // MOVED LIGHTING for Angled Effect (Top-Left)
     scene.add(new THREE.AmbientLight(0xffffff, 1.6));
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    dirLight.position.set(5, 10, 10);
+    dirLight.position.set(-5, 10, 10); // Hits from Top-Left
     scene.add(dirLight);
 
     const raycaster = new THREE.Raycaster();
@@ -565,7 +590,7 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        // FIXED: Mobile split moves UP (0.80) to properly clear the clock
+        // Mobile split moves UP (0.80) to clear clock
         const splitFactor = isMobile ? 0.80 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
         
@@ -622,6 +647,9 @@
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
         mesh.userData.wasClicked = false; 
         mesh.userData.isSpringing = false; 
+        // Store base grid positions for magnetic effect
+        mesh.userData.baseX = 0;
+        mesh.userData.baseY = 0;
         
         scene.add(mesh);
         channelBlocks.push(mesh);
@@ -647,7 +675,6 @@
         const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
         const limit = MAX_TILES; 
 
-        // Update Scroll Max
         const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
         const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
         const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
@@ -661,27 +688,20 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // Mobile Start Y adjusted
             const startY = isMobile ? 1.0 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
 
+            // Store Base Positions
+            b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
             b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
-            b.position.set(xOffset + col * PARAMS.gridSpacing * scaleFactor, b.userData.baseY, 0);
+            
+            b.position.set(b.userData.baseX, b.userData.baseY, 0);
         });
     }
     
     updateGrid(); 
-
-    window.addEventListener('load', () => {
-        document.getElementById('preloader').classList.add('fade-out');
-        if(isMobile) {
-            setTimeout(() => {
-                document.getElementById('scroll-hint').classList.add('visible');
-            }, 500);
-        }
-    });
 
     // --- INPUT & SCROLL LOGIC ---
     window.addEventListener('resize', () => {
@@ -812,14 +832,29 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
+            // MAGNETIC LOGIC
+            let hoveredTile = null;
             if (intersects.length > 0) {
-                const target = intersects[0].object;
-                if (INTERSECTED !== target) INTERSECTED = target;
+                hoveredTile = intersects[0].object;
+                const hitPoint = intersects[0].point;
+                // Magnet strength 0.2
+                const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.2;
+                const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.2;
+                
+                hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
+                
+                if (INTERSECTED !== hoveredTile) INTERSECTED = hoveredTile;
             } else {
                 INTERSECTED = null;
             }
             
+            // Return tiles to base if not hovered
             channelBlocks.forEach(b => {
+                if(b !== hoveredTile) {
+                    b.position.lerp(new THREE.Vector3(b.userData.baseX, b.userData.baseY, 0), 0.1);
+                }
+                
+                // Hover Visuals
                 const currentlyHovered = b === INTERSECTED;
                 const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
                 b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
