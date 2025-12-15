@@ -324,6 +324,9 @@ function animate() {
 
     const timeSeconds = performance.now() / 1000;
     channelBlocks.forEach(block => {
+        // Fix for image washout: Remove specular on mapped tiles
+        block.material.specular.setHex(block.material.map ? 0x000000 : 0x555555);
+
         // Update Shader Time
         if (block.material.userData.uTime) {
             block.material.userData.uTime.value = timeSeconds;
