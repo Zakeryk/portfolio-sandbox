@@ -143,16 +143,16 @@
         opacity: 1;
     }
 
-    /* MOBILE RADIO: BOTTOM LEFT */
+    /* MOBILE RADIO: BOTTOM CENTER */
     @media (max-width: 768px) {
         #radio-player {
             right: auto;
-            left: 20px; 
+            left: 50%; 
             bottom: 85px; 
-            transform: translateY(100px); 
+            transform: translate(-50%, 100px); 
         }
         #radio-player.slide-in {
-            transform: translateY(0);
+            transform: translate(-50%, 0);
         }
     }
 
@@ -678,8 +678,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // FIXED: Mobile Start Y lowered to -0.6 to push content down
-            const startY = isMobile ? -0.6 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIXED: Mobile Start Y adjusted to -0.2 (approx 40px higher)
+            const startY = isMobile ? -0.2 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
