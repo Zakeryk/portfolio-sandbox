@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
-    /* --- RESET & MOBILE FIXES --- */
+    /* --- RESET & GLOBAL --- */
     * { 
         margin: 0; padding: 0; box-sizing: border-box; 
         -webkit-tap-highlight-color: transparent; 
@@ -27,365 +27,161 @@
       touch-action: none; 
     }
 
-    /* --- CRT / GRAIN OVERLAY --- */
+    /* --- VISUAL OVERLAYS --- */
     #analog-overlay {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        pointer-events: none; 
-        z-index: 9000;
-        opacity: 1.0; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 9000; opacity: 1.0; 
     }
-
     #scanlines {
         width: 100%; height: 100%;
         background: linear-gradient(
             to bottom,
-            rgba(255,255,255,0),
-            rgba(255,255,255,0) 50%,
-            rgba(0,0,0,0.02) 50%,  /* LOCKED: 0.02 Opacity */
-            rgba(0,0,0,0.02)
+            rgba(255,255,255,0), rgba(255,255,255,0) 50%,
+            rgba(0,0,0,0.02) 50%, rgba(0,0,0,0.02)
         );
-        background-size: 100% 4px;
-        position: absolute;
-        top: 0; left: 0;
+        background-size: 100% 4px; position: absolute; top: 0; left: 0;
     }
-
     #noise {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
-        opacity: 0.02; /* LOCKED: 0.02 Opacity */
-        mix-blend-mode: overlay;
-        animation: noiseAnimation 2.5s linear infinite; 
+        opacity: 0.02; mix-blend-mode: overlay; animation: noiseAnimation 2.5s linear infinite; 
     }
+    @keyframes noiseAnimation { 0% { transform: translate(0,0); } 100% { transform: translate(0,0); } }
 
-    @keyframes noiseAnimation {
-        0% { transform: translate(0,0); }
-        100% { transform: translate(0,0); }
-    }
-
-    /* --- VERTICAL SCROLL HINT --- */
-    @keyframes bobVertical {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(10px); }
-    }
+    /* --- SCROLL HINT (Desktop Default) --- */
+    @keyframes bobVertical { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
     
     #scroll-hint {
-        position: fixed;
-        top: 50%; 
-        right: -60px; 
-        transform: translateY(-50%);
-        color: #7ec1d9; 
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.8rem;
-        letter-spacing: 2px;
-        z-index: 8000;
-        pointer-events: none;
-        display: flex;
-        flex-direction: column; 
-        align-items: center;
-        gap: 12px;
-        opacity: 0;
-        transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease;
+        position: fixed; top: 50%; right: -60px; transform: translateY(-50%);
+        color: #7ec1d9; font-family: 'Orbitron', sans-serif; font-size: 0.8rem;
+        letter-spacing: 2px; z-index: 8000; pointer-events: none;
+        display: flex; flex-direction: column; align-items: center; gap: 12px;
+        opacity: 0; transition: right 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.5s ease;
     }
-    
-    #scroll-hint.visible {
-        right: 15px;
-        opacity: 1;
-    }
-    
-    #scroll-hint-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        animation: bobVertical 2s ease-in-out infinite;
-    }
-    
-    #scroll-hint span {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        transform: rotate(180deg); 
-    }
-    
-    #scroll-hint svg {
-        width: 18px;
-        height: 18px;
-        fill: currentColor;
-        margin-top: 5px;
-    }
+    #scroll-hint.visible { right: 15px; opacity: 1; }
+    #scroll-hint-content { display: flex; flex-direction: column; align-items: center; animation: bobVertical 2s ease-in-out infinite; }
+    #scroll-hint span { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); }
+    #scroll-hint svg { width: 18px; height: 18px; fill: currentColor; margin-top: 5px; }
 
-    /* --- RADIO PLAYER --- */
+    /* --- RADIO PLAYER (Desktop Default) --- */
     #radio-player {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background-color: #f0f0f0;
-        border: 2px solid #ffffff;
-        padding: 8px 12px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        z-index: 8500;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        font-family: 'Orbitron', sans-serif;
-        cursor: pointer;
-        
-        transform: translateY(100px); 
-        opacity: 0;
+        position: fixed; bottom: 30px; right: 30px;
+        background-color: #f0f0f0; border: 2px solid #ffffff;
+        padding: 8px 12px; border-radius: 4px;
+        display: flex; align-items: center; gap: 12px;
+        z-index: 8500; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        font-family: 'Orbitron', sans-serif; cursor: pointer;
+        transform: translateY(100px); opacity: 0;
         transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
     }
-    
-    #radio-player.slide-in {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    #radio-player.slide-in { transform: translateY(0); opacity: 1; }
 
-    /* MOBILE RADIO: BOTTOM LEFT */
-    @media (max-width: 768px) {
-        #radio-player {
-            right: auto;
-            left: 20px; 
-            bottom: 85px; 
-            transform: translateY(100px); 
-        }
-        #radio-player.slide-in {
-            transform: translateY(0);
-        }
-    }
+    .radio-controls { display: flex; gap: 8px; align-items: center; }
+    .radio-btn { width: 20px; height: 20px; fill: #000; opacity: 0.6; transition: opacity 0.2s, transform 0.1s; }
+    .radio-btn:hover { opacity: 1; } .radio-btn:active { transform: scale(0.9); }
 
-    .radio-controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-
-    .radio-btn {
-        width: 20px;
-        height: 20px;
-        fill: #000;
-        opacity: 0.6;
-        transition: opacity 0.2s, transform 0.1s;
-    }
-    
-    .radio-btn:hover { opacity: 1; }
-    .radio-btn:active { transform: scale(0.9); }
-
-    .eq-container {
-        display: flex; 
-        gap: 2px; 
-        align-items: flex-end; 
-        height: 14px;
-    }
-    .eq-bar {
-        width: 3px;
-        background-color: #7ec1d9;
-        animation: eq 0.8s ease-in-out infinite;
-    }
+    .eq-container { display: flex; gap: 2px; align-items: flex-end; height: 14px; }
+    .eq-bar { width: 3px; background-color: #7ec1d9; animation: eq 0.8s ease-in-out infinite; }
     .eq-bar:nth-child(1) { height: 8px; animation-duration: 0.6s; }
     .eq-bar:nth-child(2) { height: 14px; animation-duration: 0.9s; }
     .eq-bar:nth-child(3) { height: 6px; animation-duration: 0.7s; }
-
-    @keyframes eq {
-        0%, 100% { transform: scaleY(1); }
-        50% { transform: scaleY(0.5); }
-    }
+    @keyframes eq { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.5); } }
+    .player-stopped .eq-bar { animation: none; height: 3px; }
     
-    .player-stopped .eq-bar {
-        animation: none;
-        height: 3px; 
-    }
-    
-    .icon-play { display: none; }
-    .icon-pause { display: block; }
-    
-    .player-stopped .icon-play { display: block; }
-    .player-stopped .icon-pause { display: none; }
+    .icon-play { display: none; } .icon-pause { display: block; }
+    .player-stopped .icon-play { display: block; } .player-stopped .icon-pause { display: none; }
 
-    #radio-info {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    
-    #radio-label {
-        font-size: 0.55rem;
-        color: #888;
-        letter-spacing: 1px;
-        line-height: 1;
-        margin-bottom: 3px;
-    }
-    
-    #radio-track {
-        font-size: 0.7rem;
-        font-weight: 700;
-        line-height: 1;
-    }
+    #radio-info { display: flex; flex-direction: column; justify-content: center; }
+    #radio-label { font-size: 0.55rem; color: #888; letter-spacing: 1px; line-height: 1; margin-bottom: 3px; }
+    #radio-track { font-size: 0.7rem; font-weight: 700; line-height: 1; }
 
-    /* --- PRELOADER --- */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    #preloader {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: #f0f0f0; 
-        color: #000000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.5rem;
-        z-index: 100000;
-        opacity: 1;
-        transition: opacity 0.5s ease; 
-    }
-
-    #preloader.fade-out {
-        opacity: 0;
-        visibility: hidden;
-    }
-
-    #preloader-spinner {
-        border: 4px solid #f0f0f0; 
-        border-top: 4px solid #7ec1d9; 
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
-    }
-
-    #preloader-text {
-        color: #888;
-        font-size: 0.8rem;
-        margin-top: 10px;
-        letter-spacing: 1px;
-    }
-
-    /* --- LAYOUT --- */
-    #scene-container {
-      position: relative;
-      width: 100%; height: 100%;
-      z-index: 10;
-    }
-
-    #primary-panel {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
-      clip-path: url(#panel-mask);
-      -webkit-clip-path: url(#panel-mask);
-      filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.15));
-      z-index: 1; 
-    }
-
-    #canvas-wrapper { width: 100%; height: 100%; display: block; }
-    
-    #tile-label-container {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        pointer-events: none; z-index: 40; 
-    }
-
-    /* --- CLOCK --- */
+    /* --- CLOCK (Desktop Default) --- */
     #clock {
-      position: absolute; 
-      bottom: 30px; 
-      left: 50%;
-      transform: translateX(-50%);
-      font-family: 'Orbitron', sans-serif; 
-      font-size: 3rem;
-      color: #000000; 
-      pointer-events: none;
-      z-index: 30; 
-      white-space: nowrap;
-      opacity: 0.8;
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      font-family: 'Orbitron', sans-serif; font-size: 3rem; color: #000000;
+      pointer-events: none; z-index: 30; white-space: nowrap; opacity: 0.8;
     }
 
     #instructions {
-      position: fixed; bottom: 20px; left: 20px;
-      color: #888; font-size: 12px; z-index: 100;
-      pointer-events: none; font-family: sans-serif;
+      position: fixed; bottom: 20px; left: 20px; color: #888;
+      font-size: 12px; z-index: 100; pointer-events: none; font-family: sans-serif;
     }
 
-    /* --- CUSTOM CURSOR --- */
-    #custom-cursor {
-      position: fixed; top: 0; left: 0;
-      pointer-events: none; z-index: 9999;
-      will-change: transform;
-      transform-origin: 0% 0%; 
-      transition: opacity 0.2s ease;
-    }
-    
-    #custom-cursor img { 
-        display: block;
-        width: 60px; 
-        height: auto;
-    }
-
-    #debug-hotspot {
-      display: none;
-      position: absolute; top: -2px; left: -2px;
-      width: 4px; height: 4px;
-      background: red; border-radius: 50%;
-    }
-
-    /* --- GUI CONTAINER --- */
-    #gui-container {
-        position: absolute;
-        top: 0; 
-        right: 0; 
-        z-index: 20000; 
-        display: none; 
-    }
-    
-    .tile-index-label {
-        position: absolute;
-        color: rgba(0, 0, 0, 0.4);
-        font-size: 18px;
-        font-weight: 700;
-        z-index: 50; 
-        pointer-events: none;
-        display: none; 
-        font-family: 'Orbitron', sans-serif;
-        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
-    }
-    
-    .tile-hidden { display: none !important; }
-
-    /* MOBILE ADJUSTMENTS */
+    /* --- MOBILE OVERRIDES --- */
     @media (max-width: 768px) {
         #custom-cursor { display: none !important; }
         body, html { cursor: auto; }
         
+        /* 1. Clock moved UP (22% from bottom) */
         #clock {
             font-size: 1.5rem; 
-            bottom: 15px; 
+            bottom: 22%; 
         }
         
-        #instructions {
-            display: none; 
+        /* 2. Audio Player moved DOWN (8% from bottom) and Centered */
+        #radio-player {
+            right: auto;
+            left: 50%;
+            bottom: 8%; 
+            transform: translateX(-50%) translateY(100px); 
         }
+        #radio-player.slide-in {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        #instructions { display: none; }
     }
 
-    /* DEBUG MODE TOGGLE */
+    /* --- PRELOADER & REST --- */
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    #preloader {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: #f0f0f0; color: #000000;
+        display: flex; justify-content: center; align-items: center; flex-direction: column;
+        font-family: 'Orbitron', sans-serif; font-size: 1.5rem; z-index: 100000;
+        opacity: 1; transition: opacity 0.5s ease; 
+    }
+    #preloader.fade-out { opacity: 0; visibility: hidden; }
+    #preloader-spinner {
+        border: 4px solid #f0f0f0; border-top: 4px solid #7ec1d9; border-radius: 50%;
+        width: 30px; height: 30px; animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    #preloader-text { color: #888; font-size: 0.8rem; margin-top: 10px; letter-spacing: 1px; }
+
+    #scene-container { position: relative; width: 100%; height: 100%; z-index: 10; }
+    #primary-panel {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+      clip-path: url(#panel-mask); -webkit-clip-path: url(#panel-mask);
+      filter: drop-shadow(0px 10px 20px rgba(0,0,0,0.15)); z-index: 1; 
+    }
+    #canvas-wrapper { width: 100%; height: 100%; display: block; }
+    #tile-label-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+
+    #custom-cursor {
+      position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;
+      will-change: transform; transform-origin: 0% 0%; transition: opacity 0.2s ease;
+    }
+    #custom-cursor img { display: block; width: 60px; height: auto; }
+    #debug-hotspot { display: none; position: absolute; top: -2px; left: -2px; width: 4px; height: 4px; background: red; border-radius: 50%; }
+    
+    #gui-container { position: absolute; top: 0; right: 0; z-index: 20000; display: none; }
+    .tile-index-label {
+        position: absolute; color: rgba(0, 0, 0, 0.4); font-size: 18px; font-weight: 700;
+        z-index: 50; pointer-events: none; display: none; font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+    .tile-hidden { display: none !important; }
+
     body.debug-mode { cursor: auto !important; }
     body.debug-mode #gui-container { display: block !important; }
     body.debug-mode #debug-hotspot { display: block; }
     body.debug-mode #custom-cursor { opacity: 0.5; }
     body.debug-mode .tile-index-label { display: block; } 
-
   </style>
 </head>
 
 <body>
-    
   <div id="preloader">
       <div id="preloader-spinner"></div>
       LOADING OS
@@ -411,13 +207,11 @@
               <svg class="icon-pause" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
           </div>
       </div>
-      
       <div class="eq-container">
           <div class="eq-bar"></div>
           <div class="eq-bar"></div>
           <div class="eq-bar"></div>
       </div>
-      
       <div id="radio-info">
           <span id="radio-label">NOW PLAYING</span>
           <span id="radio-track">DO YA SHOPPING</span>
@@ -438,7 +232,6 @@
       <div id="canvas-wrapper"></div>
     </div>
     <div id="tile-label-container"></div> 
-    
     <div id="clock">12:00</div>
     <div id="instructions">[~] Toggle Debug Config</div>
   </div>
@@ -490,7 +283,7 @@
         gridOffsetY: -1.2,
         borderRadius: 0.018,
         activeSlot: 1,
-        splitHeight: 0.85, 
+        splitHeight: 0.75, // FIXED: Blue Line Height (Desktop default overridden on mobile)
     };
 
     const cursorState = { 
@@ -518,13 +311,21 @@
     // --- RADIO LOGIC ---
     const audio = new Audio('assets/do_ya_shopping.mp3');
     audio.loop = true; 
-    audio.volume = 0.15; // 15% Volume
+    audio.volume = 0.15; 
     
     const radioEl = document.getElementById('radio-player');
     const btnToggle = document.getElementById('btn-toggle');
     let isPlaying = false;
 
     radioEl.addEventListener('click', () => { togglePlay(); });
+
+    // SPACEBAR TOGGLE
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            togglePlay();
+        }
+    });
 
     function togglePlay() {
         if(isPlaying) {
@@ -549,8 +350,6 @@
         setTimeout(() => {
             document.getElementById('radio-player').classList.add('slide-in');
         }, 1200);
-
-        // No autoplay
     });
 
 
@@ -583,8 +382,8 @@
     function updateBorders() {
         const w = window.innerWidth;
         const h = window.innerHeight;
-        // FIXED: Mobile split set to 0.82 (Middle Ground)
-        const splitFactor = isMobile ? 0.82 : PARAMS.splitHeight;
+        // FIXED: Mobile split set to 0.75 (Blue Line above Clock)
+        const splitFactor = isMobile ? 0.75 : PARAMS.splitHeight;
         const splitY = h * splitFactor;
         document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
         document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
@@ -639,7 +438,6 @@
         mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
         mesh.userData.wasClicked = false; 
         mesh.userData.isSpringing = false; 
-        // Store base positions for magnetic effect
         mesh.userData.baseX = 0;
         mesh.userData.baseY = 0;
         
@@ -680,8 +478,8 @@
             
             const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
             const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-            // FIXED: Mobile Start Y set to -0.25 (Middle Ground)
-            const startY = isMobile ? -0.25 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+            // FIXED: Mobile Start Y lowered to -0.9
+            const startY = isMobile ? -0.9 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
             
             const col = i % COLS;
             const row = Math.floor(i / COLS);
@@ -705,7 +503,6 @@
         updateGrid(); 
     });
 
-    // FIXED: Toggle Debug Mode Listener
     window.addEventListener('keydown', (e) => {
         if (e.key === '`' || e.key === '~') {
             document.body.classList.toggle('debug-mode');
@@ -830,12 +627,11 @@
             const HOVER_EMISSIVE = 0x555555; 
             const LERP_FACTOR = 0.15;
 
-            // MAGNETIC LOGIC (FIXED: Subtle 0.02 intensity)
+            // MAGNETIC LOGIC
             let hoveredTile = null;
             if (intersects.length > 0) {
                 hoveredTile = intersects[0].object;
                 const hitPoint = intersects[0].point;
-                // Magnet strength reduced to 0.02
                 const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.02;
                 const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.02;
                 
@@ -846,13 +642,11 @@
                 INTERSECTED = null;
             }
             
-            // Return tiles to base if not hovered
             channelBlocks.forEach(b => {
                 if(b !== hoveredTile) {
                     b.position.lerp(new THREE.Vector3(b.userData.baseX, b.userData.baseY, 0), 0.1);
                 }
                 
-                // Hover Visuals
                 const currentlyHovered = b === INTERSECTED;
                 const targetShin = currentlyHovered ? HOVER_SHININESS : DEFAULT_SHININESS;
                 b.material.shininess += (targetShin - b.material.shininess) * LERP_FACTOR;
@@ -864,8 +658,8 @@
             });
         }
 
-        const SPRING_TENSION = 0.25; 
-        const SPRING_DAMPING = 0.80; 
+        const SPRING_TENSION = 0.5; 
+        const SPRING_DAMPING = 0.75; 
         const OVERSHOOT_SCALE = 1.03; 
         const LERP_CLICK = 0.2; 
         const LERP_NORMAL = 0.08; 
@@ -876,7 +670,7 @@
 
             if (activeTarget) {
                 if (isMouseDown) {
-                    targetS = 0.95; 
+                    targetS = 0.98; // Subtle shrink
                     b.userData.isSpringing = false; 
                     b.userData.velocity.set(0,0,0);
                 } else {
