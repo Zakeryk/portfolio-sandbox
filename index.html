@@ -449,6 +449,8 @@
             </button>
             <div class="accordion-content">
                 <ul class="work-links mono">
+                    <li><a href="https://reveo.com" style="color: inherit; text-decoration: none;">>>
+                            Reveo <span class="tag">SAAS</span></a></li>
                     <li><a href="https://zakknowlton.com/snowie" style="color: inherit; text-decoration: none;">>>
                             Snowie <span class="tag">ECOMMERCE</span></a></li>
                     <li><a href="https://zakknowlton.com/green-philosophy"
@@ -580,7 +582,6 @@
         .work-links a:hover {
             color: #fff !important;
             text-shadow: 0 0 8px #fff;
-            animation: blink 0.2s forwards;
         }
     </style>
 
@@ -612,8 +613,8 @@
 
                     const imgUrl = p.image || '';
                     const imgStyle = imgUrl ? `background-image: url('${imgUrl}')` : '';
-                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 10px; font-family: monospace;">NO_SIGNAL</span>';
-                    const noImgClass = imgUrl ? '' : 'background-color: #e0e0e0;';
+                    const imgContent = imgUrl ? '' : '<span style="color:#333; font-size: 14px; font-family: monospace; font-weight: bold;">//</span>';
+                    const noImgClass = imgUrl ? '' : 'background-color: #0c0c0c;';
 
                     const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
 
