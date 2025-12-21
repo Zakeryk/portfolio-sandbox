@@ -101,19 +101,6 @@
             z-index: 9999;
         }
 
-        /* VIGNETTE + CHROMATIC ABERRATION OVERLAY */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
-            pointer-events: none;
-            z-index: 9998;
-        }
-
         body {
             margin: 0;
             background-color: var(--bg);
@@ -212,31 +199,12 @@
             display: inline-block;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0);
             transition: all 0.3s;
-            position: relative;
-        }
-
-        .status-dot::before {
-            content: '';
-            position: absolute;
-            top: -3px;
-            left: -3px;
-            width: 12px;
-            height: 12px;
-            border: 1px solid var(--idle);
-            opacity: 0;
-            transition: all 0.3s;
         }
 
         .status-dot.online {
             background-color: var(--success);
             box-shadow: 0 0 8px var(--success);
             animation: pulse-green 1.5s infinite;
-        }
-
-        .status-dot.online::before {
-            border-color: var(--success);
-            opacity: 0.5;
-            animation: pulse-green 1.5s infinite 0.2s;
         }
 
         /* CONTROLS */
@@ -462,13 +430,11 @@
         .grid.tile-mode .card-img-inner {
             background-size: contain;
             opacity: 0.8;
-            transition: opacity 0.3s, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.2s;
         }
 
         .grid.tile-mode .card:hover .card-img-inner {
             opacity: 1;
-            transform: scale(1.28);
-            animation: glitch-subtle 0.4s ease-out;
         }
 
         .grid.tile-mode .card-info {
