@@ -243,6 +243,19 @@
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
+        .back-link {
+            font-size: 9px;
+            color: var(--text-dim);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--text);
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+
         /* GRID SYSTEM */
         .grid {
             display: grid;
@@ -510,6 +523,7 @@
             <div class="controls">
                 <div class="stats" id="status">INIT_SEQ...</div>
                 <button id="view-toggle">/// TILES</button>
+                <a href="https://zakknowlton.com" class="back-link mono">~ PORTFOLIO</a>
             </div>
         </header>
 
