@@ -415,7 +415,7 @@
 
         #instructions {
             position: fixed;
-            bottom: 20px;
+            bottom: 36px;
             left: 20px;
             color: #5DC21E;
             font-size: 12px;
@@ -423,6 +423,23 @@
             pointer-events: none;
             font-family: sans-serif;
             opacity: 0.6;
+        }
+
+        #back-link {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #5DC21E;
+            font-size: 11px;
+            z-index: 100;
+            font-family: sans-serif;
+            opacity: 0.4;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        #back-link:hover {
+            opacity: 0.8;
         }
 
         /* --- CUSTOM CURSOR --- */
@@ -606,7 +623,8 @@
 
         <div id="clock">12:00</div>
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
-        <div id="instructions">[~] Toggle Debug Config<br><a href="https://sandbox.zakknowlton.com" style="color: inherit; text-decoration: none; opacity: 0.6;">← back to portfolio</a></div>
+        <div id="instructions">[~] Toggle Debug Config</div>
+        <a id="back-link" href="https://sandbox.zakknowlton.com">← back to portfolio</a>
     </div>
 
     <div id="gui-container"></div>
