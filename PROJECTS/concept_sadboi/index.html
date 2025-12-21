@@ -6,7 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SADBOISOCIAL | CHROME r182</title>
 
-    <link rel="icon" type="image/png" href="./favicon.png?v=2">
+    <link id="favicon" rel="icon" href="data:,">
+    <script>
+        (function () {
+            const link = document.getElementById('favicon');
+            function loadFavicon(src, isFallback = false) {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                    link.href = canvas.toDataURL();
+                };
+                img.onerror = () => {
+                    if (!isFallback) loadFavicon('./thumb.png', true);
+                };
+                img.src = src;
+            }
+            loadFavicon('./favicon.png');
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -113,16 +133,18 @@
             color: #fff;
         }
 
-        .nav-links span {
+        .nav-links a {
             margin-left: 20px;
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 1px;
+            text-decoration: none;
+            color: #fff;
         }
 
-        .nav-links span:hover {
+        .nav-links a:hover {
             color: #fff;
             text-decoration: line-through;
         }
@@ -134,6 +156,10 @@
             width: 80px;
             pointer-events: none;
             z-index: 10;
+            background-image: url('./assets/tileable-floral-barbed.png');
+            background-size: 80px auto;
+            background-repeat: repeat-y;
+            filter: grayscale(100%);
         }
 
         #wire-left {
@@ -146,24 +172,14 @@
             border-left: 1px solid #111;
         }
 
-        .wire-svg {
-            position: absolute;
-            top: -10%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            height: 120%;
-            fill: none;
-            stroke: #333;
-            stroke-width: 1.5;
-        }
-
         /* --- 3. CONTENT & GRID --- */
         main {
             position: relative;
             z-index: 20;
             min-height: 100vh;
         }
+
+
 
         .hero-ui {
             height: 100vh;
@@ -174,7 +190,7 @@
             align-items: center;
             position: relative;
             pointer-events: none;
-            mix-blend-mode: difference;
+            padding-top: 10vh;
         }
 
         .hero-meta {
@@ -205,13 +221,14 @@
             margin: 0;
             line-height: 1;
             color: #fff;
-            mix-blend-mode: exclusion;
+            mix-blend-mode: difference;
+            text-align: center;
         }
 
         .layout {
             max-width: 1600px;
             margin: 0 auto;
-            padding: 0 100px 120px 100px;
+            padding: 60px 100px 120px 100px;
             background: var(--bg);
         }
 
@@ -297,7 +314,7 @@
 
         footer {
             border-top: 2px solid #fff;
-            padding: 60px 40px;
+            padding: 60px 40px 40px;
             background: #000;
             display: flex;
             justify-content: space-between;
@@ -338,7 +355,7 @@
             }
 
             .layout {
-                padding: 0 20px 80px 20px;
+                padding: 40px 20px 80px 20px;
             }
 
             footer {
@@ -353,7 +370,14 @@
 
             #nav-bar {
                 padding: 0 20px;
+                justify-content: space-between;
             }
+
+            .nav-link-item {
+                display: none;
+            }
+
+            /* Keep .nav-links container visible to show Cart, but hide specific items */
 
             .big-f {
                 font-size: 18vw;
@@ -365,7 +389,7 @@
 <body data-barba="wrapper">
 
     <div id="preloader">
-        <div class="loader-text">DOWNLOADING... <span id="pct">0%</span></div>
+        <div class="loader-text">ENTERING SOCIÉTÉ... <span id="pct">0%</span></div>
         <div class="loader-bar">
             <div class="loader-progress" id="prog"></div>
         </div>
@@ -377,28 +401,30 @@
     <nav id="nav-bar">
         <div class="logo gothic">SADBOISOCIAL</div>
         <div class="nav-links">
-            <span onclick="alert('Demo Link')">Rings</span>
-            <span onclick="alert('Demo Link')">Chains</span>
-            <span>Cart (0)</span>
+            <a href="https://www.etsy.com/shop/SADBOISOCIAL" class="nav-link-item">Shop</a>
+            <a href="#collection-04" class="nav-link-item"
+                onclick="event.preventDefault(); document.getElementById('collection-04').scrollIntoView({ behavior: 'smooth' });">Latest
+                Drop</a>
+            <a href="https://www.etsy.com/shop/SADBOISOCIAL">Cart (0)</a>
         </div>
     </nav>
 
-    <div id="wire-left" class="wire-container"><svg id="svg-l" class="wire-svg"></svg></div>
-    <div id="wire-right" class="wire-container"><svg id="svg-r" class="wire-svg"></svg></div>
+    <div id="wire-left" class="wire-container"></div>
+    <div id="wire-right" class="wire-container"></div>
 
     <main data-barba="container" data-barba-namespace="home">
 
         <div class="hero-ui">
-            <h1 class="gothic">SADBOISOCIAL</h1>
-            <p class="up"
+            <h1 class="gothic" id="main-title">SOCIÉTÉ DU SADBOI</h1>
+            <p class="up" id="main-sub"
                 style="margin-top: 10px; color: #fff; letter-spacing: 3px; font-weight: 700; text-shadow: 0 0 10px rgba(255,255,255,0.5);">
-                Exclusive Content & Merch</p>
+                Objets d'Art et Éditions Limitées</p>
         </div>
 
         <div class="hero-meta up">SLC // EST 2026<br>SCROLL TO ENTER</div>
 
         <div class="layout">
-            <div class="controls up">
+            <div class="controls up" id="collection-04" style="scroll-margin-top: 100px;">
                 <span>Collection 04</span>
                 <span>[ Filter ]</span>
             </div>
@@ -409,10 +435,12 @@
         <footer>
             <div class="big-f gothic">SADBOI</div>
             <div class="f-links up">
-                <a href="#">Shipping</a>
-                <a href="#">Returns</a>
-                <a href="#">Insta</a>
-                <a href="#">Email</a>
+                <div style="margin-bottom: 20px; color: #333; letter-spacing: 2px; font-weight: 800;">LOS ANGELES,
+                    CALIFORNIA</div>
+                <a href="https://www.etsy.com/shop/SADBOISOCIAL">Shipping</a>
+                <a href="https://www.etsy.com/shop/SADBOISOCIAL">Returns</a>
+                <a href="https://www.etsy.com/shop/SADBOISOCIAL">Insta</a>
+                <a href="https://www.etsy.com/shop/SADBOISOCIAL">Email</a>
                 <a href="https://sandbox.zakknowlton.com">Sandbox</a>
             </div>
         </footer>
@@ -422,10 +450,10 @@
     <script>
         // --- DATA (Images removed, lightweight) ---
         const products = [
-            { t: "Sad Boi Embroidered Unisex T-Shirt", p: "$25.00", link: "https://www.etsy.com/listing/750511740/sad-boi-embroidered-unisex-t-shirt", img: "https://i.etsystatic.com/21922841/r/il/0eb602/2129482398/il_1588xN.2129482398_qgsf.jpg" },
-            { t: "Sad Boi Embroidered Crew Neck", p: "$34.00", link: "https://www.etsy.com/listing/764395549/sad-boi-embroidered-crew-neck", img: "https://i.etsystatic.com/21922841/r/il/3c73ed/2177052133/il_1588xN.2177052133_tcal.jpg" },
-            { t: "Sad Boi Moon Graphic Tee", p: "$25.00", link: "https://www.etsy.com/listing/797750847/sad-boi-moon-graphic-tee", img: "https://i.etsystatic.com/21922841/r/il/2f0e6b/2271609016/il_1588xN.2271609016_ho1f.jpg" },
-            { t: "Sadboi Embroidered Dad Hat", p: "$28.00", link: "https://www.etsy.com/listing/801670429/sadboi-embroidered-dad-hat-cotton-twill", img: "https://i.etsystatic.com/21922841/r/il/82bd87/2285610690/il_1588xN.2285610690_mg7n.jpg" }
+            { t: "Sad Boi Embroidered Unisex T-Shirt", p: "$25.00", link: "https://www.etsy.com/listing/750511740/sad-boi-embroidered-unisex-t-shirt", img: "./assets/shirt-embroider-iso.png" },
+            { t: "Sad Boi Embroidered Crew Neck", p: "$34.00", link: "https://www.etsy.com/listing/764395549/sad-boi-embroidered-crew-neck", img: "./assets/sadboi-crew-iso.png" },
+            { t: "Sad Boi Moon Graphic Tee", p: "$25.00", link: "https://www.etsy.com/listing/797750847/sad-boi-moon-graphic-tee", img: "./assets/sadboihours-moon-iso.png" },
+            { t: "Sadboi Embroidered Dad Hat", p: "$28.00", link: "https://www.etsy.com/listing/801670429/sadboi-embroidered-dad-hat-cotton-twill", img: "./assets/sadboi-dadhat-iso.png" }
         ];
 
         // --- INIT FUNCTION ---
@@ -436,7 +464,7 @@
                 grid.innerHTML = '';
                 products.forEach(o => {
                     grid.innerHTML += `
-                    <div class="product-card" onclick="window.open('${o.link}', '_blank')">
+                    <div class="product-card" onclick="window.location.href='${o.link}'">
                         ${o.tag ? `<div class="badge">${o.tag}</div>` : ''}
                         <div class="card-visual">
                             ${o.img ? `<img src="${o.img}" style="width: 100%; height: 100%; object-fit: cover;" alt="${o.t}">` : '//'}
@@ -452,30 +480,17 @@
                 const nav = document.getElementById('nav-bar');
                 if (sc > 10) nav.classList.add('visible'); else nav.classList.remove('visible');
 
-                const wl = document.getElementById('svg-l');
-                const wr = document.getElementById('svg-r');
-                if (wl) wl.style.transform = `translateY(${-sc * 0.2}px)`;
-                if (wr) wr.style.transform = `translateY(${-sc * 0.3}px)`;
+                const wl = document.getElementById('wire-left');
+                const wr = document.getElementById('wire-right');
+                if (wl) wl.style.backgroundPosition = `0px ${-sc * 0.2}px`;
+                if (wr) wr.style.backgroundPosition = `0px ${-sc * 0.3}px`;
             });
         }
 
-        // --- WIRE GENERATOR ---
-        function makeWire(id) {
-            const svg = document.getElementById(id);
-            if (!svg) return;
-            let path = "M 40 -50 ";
-            for (let y = 0; y < 2500; y += 50) {
-                let off = Math.random() * 20 - 10;
-                path += `L ${40 + off} ${y} `;
-                if (y % 100 === 0) path += `M ${40 + off} ${y} L ${20 + off} ${y - 10} M ${40 + off} ${y} L ${60 + off} ${y + 10} M ${40 + off} ${y} `;
-            }
-            const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            p.setAttribute("d", path);
-            svg.appendChild(p);
-        }
-        makeWire('svg-l'); makeWire('svg-r');
+
 
         initPage();
+
     </script>
 
     <script type="module">
@@ -515,6 +530,7 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
 
         const container = document.getElementById('hero-canvas');
         const scene = new THREE.Scene();
@@ -542,12 +558,26 @@
         scene.environment = pmremGenerator.fromScene(envScene).texture;
 
         // Object
-        // Object
         let skullModel = null;
         const skullMaterial = new THREE.MeshPhysicalMaterial({
-            color: 0xffffff, metalness: 1.0, roughness: 0.05,
-            clearcoat: 1.0, anisotropy: 0.5, envMapIntensity: 2.5
+            color: 0xffffff,
+            metalness: 0.35,
+            roughness: 0.3,
+            clearcoat: 0.3,
+            anisotropy: 0.1,
+            envMapIntensity: 1.2
         });
+
+        // DEBUG PARAMS
+        const debugParams = {
+            posX: 0,
+            posY: -0.625,
+            posZ: 0,
+            rotX: 0,
+            rotY: Math.PI + 0.35, // 180 + 20 degrees
+            rotZ: 0,
+            visible: false
+        };
 
         const loader = new GLTFLoader();
         loader.load('./misc/domestic_cat_skull.glb', (gltf) => {
@@ -557,8 +587,29 @@
                     child.material = skullMaterial;
                 }
             });
-            skullModel.scale.set(0.25, 0.25, 0.25);
+            skullModel.scale.set(0.08, 0.08, 0.08);
             scene.add(skullModel);
+        });
+
+        // GUI SETUP
+        const gui = new GUI({ width: 300 });
+        gui.domElement.style.display = 'none'; // Hidden by default
+
+        const folderPos = gui.addFolder('Position');
+        folderPos.add(debugParams, 'posX', -5, 5, 0.01);
+        folderPos.add(debugParams, 'posY', -5, 5, 0.01);
+        folderPos.add(debugParams, 'posZ', -5, 5, 0.01);
+
+        const folderRot = gui.addFolder('Rotation (Base)');
+        folderRot.add(debugParams, 'rotX', -Math.PI, Math.PI, 0.01);
+        folderRot.add(debugParams, 'rotY', -Math.PI, Math.PI, 0.01);
+        folderRot.add(debugParams, 'rotZ', -Math.PI, Math.PI, 0.01);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '`' || e.code === 'Backquote') {
+                debugParams.visible = !debugParams.visible;
+                gui.domElement.style.display = debugParams.visible ? 'block' : 'none';
+            }
         });
 
         // Post
@@ -570,24 +621,30 @@
 
         // Anim
         const clock = new THREE.Clock();
-        const mouse = { x: 0, y: 0 };
-        const target = { x: 0, y: 0 };
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-        });
 
         function animate() {
             requestAnimationFrame(animate);
-            const t = clock.getElapsedTime();
-            target.x += (mouse.x - target.x) * 0.05;
-            target.y += (mouse.y - target.y) * 0.05;
+
+            // Scroll Logic
+            const scrollY = window.scrollY;
+            const maxScroll = window.innerHeight * 1.5; // Range over which transition happens
+            const progress = Math.min(scrollY / maxScroll, 1);
 
             if (skullModel) {
-                skullModel.rotation.y = t * 0.1 + (target.x * 0.5);
-                skullModel.rotation.x = (target.y * 0.5);
-                skullModel.position.y = Math.sin(t * 0.5) * 0.1;
+                // Rotation: Base + Scroll Animation
+                const scrollRotX = progress * (Math.PI / 2.2);
+
+                skullModel.rotation.x = debugParams.rotX + scrollRotX;
+                skullModel.rotation.y = debugParams.rotY;
+                skullModel.rotation.z = debugParams.rotZ;
+
+                skullModel.position.set(debugParams.posX, debugParams.posY, debugParams.posZ);
             }
+
+            // Camera Zoom: Start at 8.5, pull back to ~14
+            const targetCamZ = 8.5 + (progress * 6);
+            camera.position.z = targetCamZ;
+
             composer.render();
         }
         animate();

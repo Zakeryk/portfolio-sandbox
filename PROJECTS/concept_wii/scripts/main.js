@@ -188,6 +188,10 @@ window.addEventListener('mousedown', (e) => {
 });
 
 window.addEventListener('mouseup', () => {
+    if (isMobile && INTERSECTED) {
+        // Pop effect: 0.98 -> 1.1 -> 1.0
+        INTERSECTED.userData.scaleVelocity.addScalar(0.25);
+    }
     isDragging = false;
     cursorState.targetScale = INTERSECTED ? 1.3 : 1.0;
 });
@@ -367,8 +371,8 @@ function animate() {
         if (block === INTERSECTED) {
             if (isMobile) {
                 if (isDragging) {
-                    // Tap/Hold on Mobile: Subtle Shrink (0.95)
-                    targetS.set(0.95, 0.95, 1);
+                    // Tap/Hold on Mobile: Subtle Shrink (0.98)
+                    targetS.set(0.98, 0.98, 1);
                 }
             } else {
                 // Hover on Desktop: Gentle Grow
@@ -378,8 +382,8 @@ function animate() {
 
         // Spring Physics
         // F = -k * (x - target) - d * v
-        const k = 0.25; // stiffness (higher = faster snap)
-        const d = 0.55; // damping (lower = more bounce)
+        const k = isMobile ? 0.6 : 0.25; // Mobile: Fast/Snappy | Desktop: Gentle
+        const d = isMobile ? 0.3 : 0.55; // Mobile: Bouncy | Desktop: Smooth
 
         // X Axis
         const fx = -k * (block.scale.x - targetS.x) - d * block.userData.scaleVelocity.x;

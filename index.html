@@ -5,7 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROJECTS | ZAK KNOWLTON</title>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link id="favicon" rel="icon" href="data:,">
+    <script>
+        (function () {
+            const link = document.getElementById('favicon');
+            function loadFavicon(src, isFallback = false) {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                    link.href = canvas.toDataURL();
+                };
+                img.onerror = () => {
+                    if (!isFallback) loadFavicon('thumb.png', true);
+                };
+                img.src = src;
+            }
+            loadFavicon('favicon.png');
+        })();
+    </script>
     <style>
         /* --- KOJIMA CORE --- */
         :root {
@@ -419,7 +439,7 @@
             </div>
         </header>
 
-        <div class="grid list-mode" id="project-grid"></div>
+        <div class="grid tile-mode" id="project-grid"></div>
 
         <div class="accordion-wrapper"
             style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 20px;">
@@ -628,9 +648,8 @@
         const toggleBtn = document.getElementById('view-toggle');
         const gridContainer = document.getElementById('project-grid');
 
-        // Logic: Default to TILES on desktop (>768px), LIST on mobile
-        const isMobile = window.innerWidth < 768;
-        let isList = isMobile; // If mobile, start as list. If desktop, start as tiles.
+        // Logic: Default to TILES (desktop & mobile)
+        let isList = false;
 
         function updateView() {
             if (isList) {
@@ -668,14 +687,23 @@
                     const now = new Date();
                     const diffMs = now - lastEventDate;
                     const diffHours = diffMs / (1000 * 60 * 60);
+                    const diffDays = Math.floor(diffHours / 24);
 
-                    if (diffHours < 12) {
-                        // ONLINE
+                    if (diffHours < 1) {
+                        // ACTIVE NOW
                         opDot.classList.add('online');
                         opText.innerText = "ZAK: ONLINE";
+                        opText.style.color = "#33ff33";
+                    } else if (diffHours < 24) {
+                        // ONLINE TODAY
+                        opDot.classList.add('online');
+                        opText.innerText = `ZAK: ONLINE (${Math.floor(diffHours)}H AGO)`;
                         opText.style.color = "#eee";
+                    } else if (diffDays === 1) {
+                        opText.innerText = "LAST SEEN: YESTERDAY";
+                    } else if (diffDays < 7) {
+                        opText.innerText = `LAST SEEN: ${diffDays}D AGO`;
                     } else {
-                        // OFFLINE
                         const mm = (lastEventDate.getMonth() + 1).toString().padStart(2, '0');
                         const dd = lastEventDate.getDate().toString().padStart(2, '0');
                         opText.innerText = `LAST LOG: ${mm}.${dd}`;

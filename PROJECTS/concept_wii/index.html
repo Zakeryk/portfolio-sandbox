@@ -5,7 +5,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Wii OS Concept</title>
-    <link rel="icon" type="image/png" href="assets/wiicursor_sprite.png">
+    <link id="favicon" rel="icon" href="data:,">
+    <script>
+        (function () {
+            const link = document.getElementById('favicon');
+            function loadFavicon(src, isFallback = false) {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                    link.href = canvas.toDataURL();
+                };
+                img.onerror = () => {
+                    dFavicon('./thumb.png', true);
+                };
+                img.src = src;
+            }
+            loadFavicon('./favicon.png');
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap"
@@ -484,11 +504,11 @@
 
             #clock {
                 font-size: 1.5rem;
-                bottom: 15px;
+                bottom: 35px;
             }
 
             #footer-text {
-                bottom: 4px;
+                bottom: 18px;
                 font-size: 8px;
             }
 
@@ -685,7 +705,9 @@
 
             if (isMobile) {
                 setTimeout(() => {
-                    document.getElementById('scroll-hint').classList.add('visible');
+                    if (scrollState.target < 0.2) {
+                        document.getElementById('scroll-hint').classList.add('visible');
+                    }
                 }, 500);
             }
 
@@ -725,7 +747,7 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             // FIXED: Mobile split UP to 0.78
-            const splitFactor = isMobile ? 0.92 : PARAMS.splitHeight;
+            const splitFactor = isMobile ? 0.88 : PARAMS.splitHeight;
             const splitY = h * splitFactor;
             document.getElementById('mask-path-el').setAttribute('d', `M 0,0 L ${w},0 L ${w},${splitY} L 0,${splitY} Z`);
             document.getElementById('border-path-el').setAttribute('d', `M 0,${splitY} L ${w},${splitY}`);
@@ -885,15 +907,21 @@
 
         window.addEventListener('wheel', (e) => {
             if (isMobile) {
-                document.getElementById('scroll-hint').classList.remove('visible');
                 scrollState.target += e.deltaY * 0.005;
                 scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
+
+                if (scrollState.target < 0.2) {
+                    document.getElementById('scroll-hint').classList.add('visible');
+                } else {
+                    document.getElementById('scroll-hint').classList.remove('visible');
+                }
             }
         });
 
         window.addEventListener('touchstart', (e) => {
             if (!isMobile) return;
-            document.getElementById('scroll-hint').classList.remove('visible');
+            // Removed unconditional hide
+
 
             scrollState.isScrolling = false;
             scrollState.lastTouchY = e.touches[0].clientY;
@@ -925,6 +953,12 @@
             scrollState.target += delta * 0.018;
             scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
             scrollState.lastTouchY = touchY;
+
+            if (scrollState.target < 0.2) {
+                document.getElementById('scroll-hint').classList.add('visible');
+            } else {
+                document.getElementById('scroll-hint').classList.remove('visible');
+            }
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
@@ -1005,10 +1039,10 @@
                 });
             }
 
-            const SPRING_TENSION = 0.25;
-            const SPRING_DAMPING = 0.80;
+            const SPRING_TENSION = isMobile ? 0.6 : 0.25;
+            const SPRING_DAMPING = isMobile ? 0.5 : 0.80;
             const OVERSHOOT_SCALE = 1.03;
-            const LERP_CLICK = 0.2;
+            const LERP_CLICK = isMobile ? 0.4 : 0.2;
             const LERP_NORMAL = 0.08;
 
             channelBlocks.forEach(b => {
@@ -1017,7 +1051,7 @@
 
                 if (activeTarget) {
                     if (isMouseDown) {
-                        targetS = 0.95;
+                        targetS = isMobile ? 0.99 : 0.95;
                         b.userData.isSpringing = false;
                         b.userData.velocity.set(0, 0, 0);
                     } else {
