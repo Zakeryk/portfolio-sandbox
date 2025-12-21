@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PROJECTS | ZAK KNOWLTON</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link id="favicon" rel="icon" href="data:,">
     <script>
         (function () {
@@ -43,10 +46,48 @@
 
         @font-face {
             font-family: 'TechMono';
-            src: local('Courier New');
+            src: local('IBM Plex Mono'), local('Courier New');
         }
 
-        /* SCANLINE OVERLAY - EXTREMELY SUBTLE (2%) */
+        /* --- KOJIMA GLITCH EFFECTS --- */
+        @keyframes glitch {
+            0%, 100% { text-shadow: none; }
+            20% { text-shadow: -2px 0 #ff0040, 2px 0 #00ffff; }
+            40% { text-shadow: 2px 0 #ff0040, -2px 0 #00ffff; }
+            60% { text-shadow: none; }
+        }
+
+        @keyframes glitch-subtle {
+            0%, 90%, 100% { transform: translate(0); filter: none; }
+            92% { transform: translate(-2px, 0); filter: hue-rotate(90deg); }
+            94% { transform: translate(2px, 0); }
+            96% { transform: translate(-1px, 1px); filter: none; }
+        }
+
+        @keyframes border-flow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes corner-draw {
+            0% { width: 0; height: 0; opacity: 0; }
+            50% { width: 8px; height: 0; opacity: 1; }
+            100% { width: 8px; height: 8px; opacity: 1; }
+        }
+
+        @keyframes fade-slide-in {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes status-flicker {
+            0%, 95%, 100% { opacity: 1; }
+            96% { opacity: 0.3; }
+            97% { opacity: 0.8; }
+            98% { opacity: 0.4; }
+        }
+
+        /* SCANLINE OVERLAY - ENHANCED CRT EFFECT */
         body::after {
             content: "";
             position: fixed;
@@ -54,10 +95,23 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.02) 50%);
-            background-size: 100% 4px;
+            background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.04) 50%);
+            background-size: 100% 3px;
             pointer-events: none;
             z-index: 9999;
+        }
+
+        /* VIGNETTE + CHROMATIC ABERRATION OVERLAY */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 60%, rgba(0,0,0,0.4) 100%);
+            pointer-events: none;
+            z-index: 9998;
         }
 
         body {
@@ -99,6 +153,20 @@
             justify-content: space-between;
             align-items: flex-end;
             padding-top: 10px;
+            position: relative;
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--text-dim), var(--accent), var(--text-dim), transparent);
+            background-size: 200% 100%;
+            animation: border-flow 4s linear infinite;
+            opacity: 0.3;
         }
 
         .header-left {
@@ -144,12 +212,31 @@
             display: inline-block;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0);
             transition: all 0.3s;
+            position: relative;
+        }
+
+        .status-dot::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: 12px;
+            height: 12px;
+            border: 1px solid var(--idle);
+            opacity: 0;
+            transition: all 0.3s;
         }
 
         .status-dot.online {
             background-color: var(--success);
             box-shadow: 0 0 8px var(--success);
             animation: pulse-green 1.5s infinite;
+        }
+
+        .status-dot.online::before {
+            border-color: var(--success);
+            opacity: 0.5;
+            animation: pulse-green 1.5s infinite 0.2s;
         }
 
         /* CONTROLS */
@@ -202,8 +289,20 @@
             color: inherit;
             display: flex;
             position: relative;
-            transition: opacity 0.2s;
+            transition: all 0.25s ease-out;
+            opacity: 0;
+            animation: fade-slide-in 0.5s ease-out forwards;
         }
+
+        /* Stagger entrance animation */
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+        .card:nth-child(6) { animation-delay: 0.3s; }
+        .card:nth-child(7) { animation-delay: 0.35s; }
+        .card:nth-child(8) { animation-delay: 0.4s; }
 
         /* TACTICAL CORNERS */
         .card::before,
@@ -212,7 +311,7 @@
             position: absolute;
             width: 6px;
             height: 6px;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0.3;
         }
 
@@ -233,13 +332,20 @@
         .card:hover {
             background: #111;
             z-index: 10;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
         .card:hover::before,
         .card:hover::after {
             border-color: var(--accent);
             opacity: 1;
-            animation: blink 0.2s forwards;
+            width: 10px;
+            height: 10px;
+        }
+
+        .card:hover .card-title {
+            animation: glitch 0.3s ease-out;
         }
 
         .card-title {
@@ -356,11 +462,13 @@
         .grid.tile-mode .card-img-inner {
             background-size: contain;
             opacity: 0.8;
-            transition: opacity 0.2s;
+            transition: opacity 0.3s, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .grid.tile-mode .card:hover .card-img-inner {
             opacity: 1;
+            transform: scale(1.28);
+            animation: glitch-subtle 0.4s ease-out;
         }
 
         .grid.tile-mode .card-info {
