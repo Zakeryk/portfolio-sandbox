@@ -379,6 +379,13 @@
             opacity: 1;
         }
 
+        /* Larger corners for cards without thumbnails */
+        .card.no-thumbnail::before,
+        .card.no-thumbnail::after {
+            width: 12px;
+            height: 12px;
+        }
+
         .card-title {
             font-family: 'Helvetica Neue', sans-serif;
             font-size: 12px;
@@ -461,7 +468,7 @@
 
         .grid.list-mode .card-img-inner {
             background-size: cover;
-            transform: scale(0.7);
+            transform: scale(0.85);
         }
 
         .grid.list-mode .card-info {
@@ -495,7 +502,7 @@
             background-size: contain;
             opacity: 0.8;
             transition: opacity 0.2s;
-            transform: scale(0.7);
+            transform: scale(0.85);
         }
 
         .grid.tile-mode .card:hover .card-img-inner {
@@ -767,9 +774,8 @@
                 visibleProjects.forEach(p => {
                     const card = document.createElement('a');
                     card.href = p.path;
-                    card.className = 'card';
-
                     const hasImage = p.image && p.image !== null;
+                    card.className = hasImage ? 'card' : 'card no-thumbnail';
                     const imgContent = hasImage ? '' : '<span style="color:#333; font-size: 14px; font-family: monospace; font-weight: bold;">//</span>';
                     const imgStyle = hasImage ? `background-image: url('${p.image}')` : '';
                     const noImgClass = hasImage ? '' : 'background-color: #0c0c0c;';
