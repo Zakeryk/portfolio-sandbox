@@ -100,14 +100,11 @@
     // scene setup
     let scene, camera, renderer;
     let kioskModel;
-    let kioskMaterial;
     let clock = new THREE.Clock();
 
     // debug params
     const params = {
       rotationSpeed: 0.005,
-      metalness: 0.2,
-      roughness: 0.4,
       envMapIntensity: 1.0
     };
 
@@ -132,14 +129,6 @@
 
       // lighting setup - PMREM with white environment
       setupLighting();
-
-      // material for model
-      kioskMaterial = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
-        metalness: params.metalness,
-        roughness: params.roughness,
-        envMapIntensity: params.envMapIntensity
-      });
 
       // load model
       loadModel();
@@ -211,25 +200,32 @@
       loader.load(
         './assets/kiosk-demo.glb',
         (gltf) => {
-          kioskModel = gltf.scene;
+          const model = gltf.scene;
 
-          // auto-center and scale model
-          const box = new THREE.Box3().setFromObject(kioskModel);
+          // get bounding box before any transforms
+          const box = new THREE.Box3().setFromObject(model);
           const center = box.getCenter(new THREE.Vector3());
           const size = box.getSize(new THREE.Vector3());
-
-          // center the model
-          kioskModel.position.sub(center);
 
           // scale to fit (target size ~2 units)
           const maxDim = Math.max(size.x, size.y, size.z);
           const scale = 2 / maxDim;
-          kioskModel.scale.setScalar(scale);
+          model.scale.setScalar(scale);
 
-          // apply material to all meshes
-          kioskModel.traverse((child) => {
+          // create wrapper group for proper centering
+          kioskModel = new THREE.Group();
+          kioskModel.add(model);
+
+          // center by offsetting the model within the group
+          model.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+
+          // keep original materials from glb
+          model.traverse((child) => {
             if (child.isMesh) {
-              child.material = kioskMaterial;
+              if (child.material) {
+                child.material.envMapIntensity = params.envMapIntensity;
+                child.material.needsUpdate = true;
+              }
             }
           });
 
@@ -255,21 +251,13 @@
 
       gui.add(params, 'rotationSpeed', 0, 0.02, 0.001).name('rotation speed');
 
-      gui.add(params, 'metalness', 0, 1, 0.01).onChange((value) => {
-        if (kioskMaterial) {
-          kioskMaterial.metalness = value;
-        }
-      });
-
-      gui.add(params, 'roughness', 0, 1, 0.01).onChange((value) => {
-        if (kioskMaterial) {
-          kioskMaterial.roughness = value;
-        }
-      });
-
-      gui.add(params, 'envMapIntensity', 0, 3, 0.1).onChange((value) => {
-        if (kioskMaterial) {
-          kioskMaterial.envMapIntensity = value;
+      gui.add(params, 'envMapIntensity', 0, 3, 0.1).name('env map intensity').onChange((value) => {
+        if (kioskModel) {
+          kioskModel.traverse((child) => {
+            if (child.isMesh && child.material) {
+              child.material.envMapIntensity = value;
+            }
+          });
         }
       });
     }
