@@ -490,4 +490,11 @@ function animate() {
         renderer.render(scene, camera);
     }
 }
+
+// Hide preloader after brief delay
+setTimeout(() => {
+    const preloader = document.getElementById('preloader');
+    if (preloader) preloader.classList.add('hidden');
+}, 800);
+
 animate();
