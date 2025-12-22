@@ -767,9 +767,10 @@
                     card.href = p.path;
                     card.className = 'card';
 
-                    const imgContent = '<span style="color:#333; font-size: 14px; font-family: monospace; font-weight: bold;">//</span>';
-                    const imgStyle = '';
-                    const noImgClass = 'background-color: #0c0c0c;';
+                    const hasImage = p.image && p.image !== null;
+                    const imgContent = hasImage ? '' : '<span style="color:#333; font-size: 14px; font-family: monospace; font-weight: bold;">//</span>';
+                    const imgStyle = hasImage ? `background-image: url('${p.image}')` : '';
+                    const noImgClass = hasImage ? '' : 'background-color: #0c0c0c;';
 
                     const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
 
