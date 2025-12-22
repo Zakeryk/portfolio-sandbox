@@ -1001,7 +1001,9 @@
                     ? 4 * progress * progress * progress
                     : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
-                camera.position.x = startX + (endX - startX) * eased;
+                const newX = startX + (endX - startX) * eased;
+                camera.position.x = newX;
+                PARAMS.camX = newX; // Keep PARAMS in sync
 
                 if (progress < 1) {
                     requestAnimationFrame(animateCamera);
