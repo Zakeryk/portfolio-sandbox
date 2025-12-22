@@ -51,7 +51,7 @@
   "projects/concept_wii/styles/style.css": 1765593374771.713,
   "projects/concept_wii/thumb.jpg": 1765565040253.485,
   "index.html": 1766428921747.0803,
-  "data.json": 1766431752110.798,
+  "data.json": 1766442397059.818,
   ".htaccess": 1765567405134.0796,
   "favicon.png": 1765565663277.8105,
   "projects/HIDDEN/concept_dark_3d/Daylight_Box_0.png": 1763666671360.729,
@@ -131,5 +131,8 @@
   "projects/concept_xbox/scripts/main.js": 1766344905800.0298,
   "projects/concept_xbox/styles/style.css": 1766344905799.4863,
   "projects/concept_xbox/thumb.jpg": 1766344905838.2954,
-  "projects/concept_xbox/thumb.png": 1766344905832.6548
+  "projects/concept_xbox/thumb.png": 1766344905832.6548,
+  "projects/concept_kiosk/assets/kiosk-demo.glb": 1766441967078.2073,
+  "projects/concept_kiosk/index.html": 1766442326100.6697,
+  "projects/concept_kiosk/kiosk-demo.glb": 1766441967078.2073
 }
