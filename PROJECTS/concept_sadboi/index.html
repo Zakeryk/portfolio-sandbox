@@ -387,6 +387,14 @@
 </head>
 
 <body data-barba="wrapper">
+    <script>
+        // ESC to return to portfolio if coming from sandbox
+        if (document.referrer && document.referrer.includes('sandbox.zakknowlton.com')) {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') window.location.href = document.referrer;
+            });
+        }
+    </script>
 
     <div id="preloader">
         <div class="loader-text">Entering Shop... <span id="pct">0%</span></div>
