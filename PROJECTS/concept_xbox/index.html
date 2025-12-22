@@ -557,6 +557,66 @@
         body.debug-mode .tile-index-label {
             display: block;
         }
+
+        /* Multi-page Navigation Controls */
+        #nav-controls {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+            font-family: 'Orbitron', sans-serif;
+            color: #5DC21E;
+        }
+
+        .nav-arrow {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #5DC21E;
+            background: rgba(26, 47, 26, 0.8);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-arrow:hover:not(:disabled) {
+            background: rgba(93, 194, 30, 0.2);
+            transform: scale(1.1);
+        }
+
+        .nav-arrow:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-arrow svg {
+            width: 24px;
+            height: 24px;
+            fill: #5DC21E;
+        }
+
+        #page-indicator {
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            #nav-controls {
+                bottom: 100px;
+                gap: 15px;
+            }
+
+            .nav-arrow {
+                width: 40px;
+                height: 40px;
+            }
+        }
     </style>
 </head>
 
@@ -656,21 +716,38 @@
         import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
         import { GUI } from 'dat.gui';
 
-        const ASSETS = {
-            0: null,
-            1: null,
-            2: null,
-            3: null,
-            4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
-        };
-
-        const LINKS = {
-            0: null,
-            1: null,
-            2: null,
-            3: null,
-            4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
-        };
+        // Multi-page tile system
+        const PAGES = [
+            {
+                tiles: [
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null }
+                ]
+            },
+            {
+                tiles: [
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null },
+                    { asset: null, link: null }
+                ]
+            },
+            {
+                tiles: []  // empty page example
+            }
+        ];
 
         const PARAMS = {
             camX: 0, camY: -1.5, camZ: 10,
@@ -682,6 +759,14 @@
             borderRadius: 0.018,
             activeSlot: 1,
             splitHeight: 0.86,
+        };
+
+        const pageState = {
+            currentPage: 0,
+            targetPage: 0,
+            isTransitioning: false,
+            pageOffset: 12.0,
+            transitionDuration: 800
         };
 
         const cursorState = {
@@ -790,59 +875,65 @@
         const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
         const MAX_TILES = 12;
 
-        for (let i = 0; i < MAX_TILES; i++) {
-            const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
-            let mat = new THREE.MeshPhongMaterial({
-                color: 0x1a2f1a, specular: 0x5DC21E, shininess: 15
+        // Create tiles for all pages
+        PAGES.forEach((page, pageIndex) => {
+            page.tiles.forEach((tileData, tileIndex) => {
+                if (tileIndex >= MAX_TILES) return;
+
+                const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
+                let mat = new THREE.MeshPhongMaterial({
+                    color: 0x1a2f1a, specular: 0x5DC21E, shininess: 15
+                });
+
+                if (tileData.asset) {
+                    textureLoader.load(tileData.asset, (tex) => {
+                        tex.colorSpace = THREE.SRGBColorSpace;
+                        tex.wrapS = THREE.RepeatWrapping;
+                        tex.wrapT = THREE.RepeatWrapping;
+
+                        const ZOOM_FACTOR = 0.9;
+                        const imageAspect = tex.image.width / tex.image.height;
+                        const tileAspect = TILE_ASPECT;
+
+                        let rX = 1, rY = 1;
+                        if (imageAspect / tileAspect > 1) {
+                            rX = tileAspect / imageAspect;
+                        } else {
+                            rY = imageAspect / tileAspect;
+                        }
+
+                        tex.repeat.set(rX * ZOOM_FACTOR, rY * ZOOM_FACTOR);
+                        tex.offset.set(
+                            0.5 - (rX * ZOOM_FACTOR) / 2,
+                            0.5 - (rY * ZOOM_FACTOR) / 2
+                        );
+
+                        mat.map = tex;
+                        mat.needsUpdate = true;
+                    }, undefined, (err) => { mat.color.setHex(0x1a2f1a); mat.needsUpdate = true; });
+                }
+
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.userData.index = tileIndex;
+                mesh.userData.pageIndex = pageIndex;
+                mesh.userData.tileData = tileData;
+                mesh.userData.velocity = new THREE.Vector3();
+                mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
+                mesh.userData.wasClicked = false;
+                mesh.userData.isSpringing = false;
+                mesh.userData.baseX = 0;
+                mesh.userData.baseY = 0;
+
+                scene.add(mesh);
+                channelBlocks.push(mesh);
+
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'tile-index-label';
+                labelDiv.textContent = `P${pageIndex}:${tileIndex}`;
+                labelContainer.appendChild(labelDiv);
+                mesh.userData.label = labelDiv;
             });
-
-            if (ASSETS[i]) {
-                textureLoader.load(ASSETS[i], (tex) => {
-                    tex.colorSpace = THREE.SRGBColorSpace;
-                    tex.wrapS = THREE.RepeatWrapping;
-                    tex.wrapT = THREE.RepeatWrapping;
-
-                    const ZOOM_FACTOR = 0.9;
-                    const imageAspect = tex.image.width / tex.image.height;
-                    const tileAspect = TILE_ASPECT;
-
-                    let rX = 1, rY = 1;
-                    if (imageAspect / tileAspect > 1) {
-                        rX = tileAspect / imageAspect;
-                    } else {
-                        rY = imageAspect / tileAspect;
-                    }
-
-                    tex.repeat.set(rX * ZOOM_FACTOR, rY * ZOOM_FACTOR);
-                    tex.offset.set(
-                        0.5 - (rX * ZOOM_FACTOR) / 2,
-                        0.5 - (rY * ZOOM_FACTOR) / 2
-                    );
-
-                    mat.map = tex;
-                    mat.needsUpdate = true;
-                }, undefined, (err) => { mat.color.setHex(0x1a2f1a); mat.needsUpdate = true; });
-            }
-
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.userData.index = i;
-            mesh.userData.velocity = new THREE.Vector3();
-            mesh.userData.targetScale = new THREE.Vector3(1, 1, 1);
-            mesh.userData.wasClicked = false;
-            mesh.userData.isSpringing = false;
-            // Store base positions for magnetic effect
-            mesh.userData.baseX = 0;
-            mesh.userData.baseY = 0;
-
-            scene.add(mesh);
-            channelBlocks.push(mesh);
-
-            const labelDiv = document.createElement('div');
-            labelDiv.className = 'tile-index-label';
-            labelDiv.textContent = i;
-            labelContainer.appendChild(labelDiv);
-            mesh.userData.label = labelDiv;
-        }
+        });
 
         function updateGrid() {
             isMobile = window.innerWidth <= 768;
@@ -863,7 +954,7 @@
             const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
             scrollState.max = isMobile ? Math.max(0, totalContentHeight - 3.5) : 0;
 
-            channelBlocks.forEach((b, i) => {
+            channelBlocks.forEach((b) => {
                 b.visible = true;
                 if (b.userData.label) b.userData.label.classList.remove('tile-hidden');
 
@@ -874,10 +965,13 @@
                 // FIXED: Mobile Start Y adjusted to -0.4 (refined from -0.6)
                 const startY = isMobile ? -0.4 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
 
-                const col = i % COLS;
-                const row = Math.floor(i / COLS);
+                const col = b.userData.index % COLS;
+                const row = Math.floor(b.userData.index / COLS);
 
-                b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
+                // Add page offset to x position
+                const pageOffsetX = b.userData.pageIndex * pageState.pageOffset;
+
+                b.userData.baseX = pageOffsetX + xOffset + col * PARAMS.gridSpacing * scaleFactor;
                 b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
 
                 b.position.set(b.userData.baseX, b.userData.baseY, 0);
@@ -885,6 +979,62 @@
         }
 
         updateGrid();
+
+        // --- PAGE TRANSITION SYSTEM ---
+        function transitionToPage(targetPageIndex) {
+            if (pageState.isTransitioning) return;
+            if (targetPageIndex < 0 || targetPageIndex >= PAGES.length) return;
+
+            pageState.isTransitioning = true;
+            pageState.targetPage = targetPageIndex;
+
+            const startX = camera.position.x;
+            const endX = targetPageIndex * pageState.pageOffset;
+            const startTime = performance.now();
+
+            function animateCamera(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / pageState.transitionDuration, 1);
+
+                // Cubic ease-in-out for swooping motion
+                const eased = progress < 0.5
+                    ? 4 * progress * progress * progress
+                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                camera.position.x = startX + (endX - startX) * eased;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateCamera);
+                } else {
+                    pageState.currentPage = targetPageIndex;
+                    pageState.isTransitioning = false;
+                    updateNavigationUI();
+                }
+            }
+
+            requestAnimationFrame(animateCamera);
+        }
+
+        function updateNavigationUI() {
+            const prevBtn = document.getElementById('nav-prev');
+            const nextBtn = document.getElementById('nav-next');
+
+            if (prevBtn && nextBtn) {
+                prevBtn.disabled = pageState.currentPage === 0;
+                nextBtn.disabled = pageState.currentPage === PAGES.length - 1;
+
+                document.getElementById('current-page').textContent = pageState.currentPage + 1;
+                document.getElementById('total-pages').textContent = PAGES.length;
+            }
+        }
+
+        // Swipe gesture state
+        const swipeState = {
+            startX: 0,
+            startY: 0,
+            threshold: 50,
+            isHorizontalSwipe: false
+        };
 
         // --- INPUT & SCROLL LOGIC ---
         window.addEventListener('resize', () => {
@@ -899,6 +1049,12 @@
         window.addEventListener('keydown', (e) => {
             if (e.key === '`' || e.key === '~') {
                 document.body.classList.toggle('debug-mode');
+            }
+            // Page navigation with arrow keys
+            if (e.key === 'ArrowLeft') {
+                transitionToPage(pageState.currentPage - 1);
+            } else if (e.key === 'ArrowRight') {
+                transitionToPage(pageState.currentPage + 1);
             }
         });
 
@@ -916,7 +1072,7 @@
             cursorState.targetScale = 1.0;
 
             if (INTERSECTED) {
-                const targetLink = LINKS[INTERSECTED.userData.index];
+                const targetLink = INTERSECTED.userData.tileData?.link;
                 if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
                 INTERSECTED.userData.wasClicked = true;
             }
@@ -950,6 +1106,9 @@
             if (!isMobile) return;
             // Removed unconditional hide
 
+            swipeState.startX = e.touches[0].clientX;
+            swipeState.startY = e.touches[0].clientY;
+            swipeState.isHorizontalSwipe = false;
 
             scrollState.isScrolling = false;
             scrollState.lastTouchY = e.touches[0].clientY;
@@ -969,29 +1128,64 @@
 
         window.addEventListener('touchmove', (e) => {
             if (!isMobile) return;
-            const touchY = e.touches[0].clientY;
-            const delta = scrollState.lastTouchY - touchY;
 
-            if (Math.abs(delta) > 5) {
-                scrollState.isScrolling = true;
-                isMouseDown = false;
-                INTERSECTED = null;
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const deltaX = touchX - swipeState.startX;
+            const deltaY = touchY - swipeState.startY;
+
+            // Detect horizontal swipe intent
+            if (!swipeState.isHorizontalSwipe && !scrollState.isScrolling) {
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                    swipeState.isHorizontalSwipe = true;
+                    e.preventDefault();
+                }
             }
 
-            scrollState.target += delta * 0.018;
-            scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
-            scrollState.lastTouchY = touchY;
+            // Handle vertical scrolling if not horizontal swipe
+            if (!swipeState.isHorizontalSwipe) {
+                const delta = scrollState.lastTouchY - touchY;
 
-            if (scrollState.target < 0.2) {
-                document.getElementById('scroll-hint').classList.add('visible');
-            } else {
-                document.getElementById('scroll-hint').classList.remove('visible');
+                if (Math.abs(delta) > 5) {
+                    scrollState.isScrolling = true;
+                    isMouseDown = false;
+                    INTERSECTED = null;
+                }
+
+                scrollState.target += delta * 0.018;
+                scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
+                scrollState.lastTouchY = touchY;
+
+                if (scrollState.target < 0.2) {
+                    document.getElementById('scroll-hint').classList.add('visible');
+                } else {
+                    document.getElementById('scroll-hint').classList.remove('visible');
+                }
             }
         }, { passive: false });
 
-        window.addEventListener('touchend', () => {
+        window.addEventListener('touchend', (e) => {
             if (!isMobile) return;
 
+            // Handle horizontal swipe for page navigation
+            if (swipeState.isHorizontalSwipe) {
+                const endX = e.changedTouches[0].clientX;
+                const deltaX = endX - swipeState.startX;
+
+                if (Math.abs(deltaX) > swipeState.threshold) {
+                    if (deltaX > 0) {
+                        transitionToPage(pageState.currentPage - 1); // swipe right = prev
+                    } else {
+                        transitionToPage(pageState.currentPage + 1); // swipe left = next
+                    }
+                }
+                swipeState.isHorizontalSwipe = false;
+                isMouseDown = false;
+                setTimeout(() => { INTERSECTED = null; }, 300);
+                return;
+            }
+
+            // Handle tile tap if not scrolling or swiping
             if (!scrollState.isScrolling && INTERSECTED) {
                 isMouseDown = false;
 
@@ -999,7 +1193,7 @@
                 const popForce = 0.05;
                 INTERSECTED.userData.velocity.x += popForce;
 
-                const targetLink = LINKS[INTERSECTED.userData.index];
+                const targetLink = INTERSECTED.userData.tileData?.link;
                 if (targetLink) setTimeout(() => { window.location.href = targetLink; }, 300);
             }
 
@@ -1011,6 +1205,12 @@
         // --- ANIMATION ---
         function animate() {
             requestAnimationFrame(animate);
+
+            // Tile culling optimization - only render tiles within visible range
+            channelBlocks.forEach(tile => {
+                const distanceFromCamera = Math.abs(tile.position.x - camera.position.x);
+                tile.visible = distanceFromCamera < pageState.pageOffset * 2;
+            });
 
             if (isMobile) {
                 scrollState.current += (scrollState.target - scrollState.current) * 0.1;
@@ -1134,6 +1334,9 @@
         }
         animate();
 
+        // Initialize navigation UI
+        updateNavigationUI();
+
         const cursorEl = document.getElementById('custom-cursor');
         const IDLE_TIMEOUT = 300;
 
@@ -1188,6 +1391,26 @@
 
         folder.open();
     </script>
+
+    <!-- Multi-page Navigation Controls -->
+    <div id="nav-controls">
+        <button id="nav-prev" class="nav-arrow" onclick="transitionToPage(pageState.currentPage - 1)">
+            <svg viewBox="0 0 24 24">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+
+        <div id="page-indicator">
+            <span id="current-page">1</span> / <span id="total-pages">1</span>
+        </div>
+
+        <button id="nav-next" class="nav-arrow" onclick="transitionToPage(pageState.currentPage + 1)">
+            <svg viewBox="0 0 24 24">
+                <path d="M9 6l6 6-6 6"/>
+            </svg>
+        </button>
+    </div>
+
 </body>
 
 </html>
