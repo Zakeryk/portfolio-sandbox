@@ -661,6 +661,14 @@
                 return;
             }
 
+            // return all other spilled contents first
+            const allDocs = document.querySelectorAll('.document');
+            allDocs.forEach(otherDoc => {
+                if (otherDoc !== doc && state.spilledFolders.has(otherDoc.dataset.index)) {
+                    gatherImagesToFolder(otherDoc);
+                }
+            });
+
             const images = JSON.parse(doc.dataset.images);
             const docRect = doc.getBoundingClientRect();
             const containerRect = document.getElementById('desk-container').getBoundingClientRect();
