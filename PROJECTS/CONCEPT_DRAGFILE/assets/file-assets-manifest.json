@@ -1,6 +1,10 @@
 {
   "Reveo": [],
-  "Snowie": [],
+  "Snowie": [
+    "./assets/file-assets/snowie-01.png",
+    "./assets/file-assets/snowie-02.png",
+    "./assets/file-assets/snowie-03.png"
+  ],
   "Green Philosophy Co": [],
   "Raveyard Sounds": [
     "./assets/file-assets/raveyardsounds-01.png",
