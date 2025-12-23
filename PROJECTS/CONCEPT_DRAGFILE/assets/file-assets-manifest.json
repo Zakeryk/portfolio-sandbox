@@ -23,7 +23,11 @@
     "./assets/file-assets/beatsecrets-package.png",
     "./assets/file-assets/beatsecrets-style.png"
   ],
-  "us2": [],
+  "us2": [
+    "./assets/file-assets/us2-01.png",
+    "./assets/file-assets/us2-02.png",
+    "./assets/file-assets/us2-03.png"
+  ],
   "Polar Culture": [],
   "Lil Dusty G": [],
   "School of Bass": [],
