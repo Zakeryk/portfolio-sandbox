@@ -408,6 +408,49 @@
             cursor: pointer;
         }
 
+        /* === LIGHTBOX THUMBNAIL GALLERY === */
+        #lightbox-thumbnails {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1002;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        #lightbox-thumbnails.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .lightbox-thumb {
+            width: 100px;
+            height: 78px;
+            background: #fff;
+            border: 6px solid #f4f4f4;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.3;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        }
+
+        .lightbox-thumb:hover {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+
+        .lightbox-thumb.active {
+            opacity: 1;
+            border-color: #e8dfc4;
+            box-shadow: 0 8px 20px rgba(244, 234, 213, 0.8);
+        }
+
         /* === RESPONSIVE === */
         @media (max-width: 768px) {
             .document {
@@ -521,6 +564,9 @@
 
     <!-- lightbox overlay -->
     <div id="lightbox-overlay"></div>
+
+    <!-- lightbox thumbnail gallery -->
+    <div id="lightbox-thumbnails"></div>
 
     <!-- gsap cdn -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -1677,6 +1723,10 @@
         function enterLightbox(img) {
             if (state.activeLightboxImage) return; // already active
 
+            // Hide filing area
+            const filingArea = document.getElementById('filing-area');
+            filingArea.classList.remove('visible');
+
             // Disable drag on original
             const dragInstance = Draggable.get(img);
             if (dragInstance) dragInstance.disable();
@@ -1754,7 +1804,7 @@
             // Swap URL to high-res
             const highResUrl = getHighResUrl(img.style.backgroundImage.slice(5, -2)); // strip url("...")
 
-            // Preload high res? Or just set it. 
+            // Preload high res? Or just set it.
             // Setting it might flick, but let's try just setting it.
             // Ideally we keep the low res as background and add high res on top or swap.
             // Simple swap for now:
@@ -1770,6 +1820,92 @@
                 duration: 0.5,
                 ease: 'power3.inOut'
             });
+
+            // Create thumbnail gallery for sibling images
+            createLightboxThumbnails(img);
+        }
+
+        function createLightboxThumbnails(currentImg) {
+            const parentIndex = currentImg.dataset.parent;
+            const allImages = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
+
+            if (allImages.length <= 1) return; // no siblings to show
+
+            const thumbnailContainer = document.getElementById('lightbox-thumbnails');
+            thumbnailContainer.innerHTML = ''; // clear existing
+
+            allImages.forEach(img => {
+                const thumb = document.createElement('div');
+                thumb.className = 'lightbox-thumb';
+                thumb.style.backgroundImage = img.style.backgroundImage;
+                thumb.dataset.originalImg = img; // store reference to original image element
+
+                // mark active thumbnail
+                if (img === currentImg) {
+                    thumb.classList.add('active');
+                }
+
+                // click to switch focused image
+                thumb.addEventListener('click', (e) => {
+                    e.stopPropagation(); // prevent lightbox from closing
+                    switchLightboxImage(img);
+                });
+
+                thumbnailContainer.appendChild(thumb);
+            });
+
+            // show thumbnail container
+            setTimeout(() => {
+                thumbnailContainer.classList.add('visible');
+            }, 300); // delay for smooth entrance
+        }
+
+        function switchLightboxImage(newImg) {
+            if (!state.lightboxClone || newImg === state.activeLightboxImage) return;
+
+            const clone = state.lightboxClone;
+
+            // update active thumbnail
+            const thumbnails = document.querySelectorAll('.lightbox-thumb');
+            thumbnails.forEach(thumb => {
+                thumb.classList.remove('active');
+                // find matching thumbnail (compare background images)
+                if (thumb.style.backgroundImage === newImg.style.backgroundImage) {
+                    thumb.classList.add('active');
+                }
+            });
+
+            // swap high-res image on clone
+            const highResUrl = getHighResUrl(newImg.style.backgroundImage.slice(5, -2));
+
+            // fade out, swap, fade in
+            gsap.to(clone, {
+                opacity: 0.3,
+                duration: 0.2,
+                onComplete: () => {
+                    clone.style.backgroundImage = `url(${highResUrl})`;
+
+                    // restore previous active image
+                    if (state.activeLightboxImage) {
+                        gsap.set(state.activeLightboxImage, { opacity: 1 });
+                        const dragInstance = Draggable.get(state.activeLightboxImage);
+                        if (dragInstance) dragInstance.enable();
+                    }
+
+                    // hide new active image
+                    gsap.set(newImg, { opacity: 0 });
+                    const newDragInstance = Draggable.get(newImg);
+                    if (newDragInstance) newDragInstance.disable();
+
+                    // update state
+                    state.activeLightboxImage = newImg;
+
+                    gsap.to(clone, {
+                        opacity: 1,
+                        duration: 0.2
+                    });
+                }
+            });
         }
 
         function exitLightbox() {
@@ -1780,6 +1916,13 @@
 
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
+
+            // Hide and clear thumbnails
+            const thumbnailContainer = document.getElementById('lightbox-thumbnails');
+            thumbnailContainer.classList.remove('visible');
+            setTimeout(() => {
+                thumbnailContainer.innerHTML = '';
+            }, 400);
 
             // Get original's CURRENT position (it shouldn't have moved, but just in case)
             // Since original is Opacity 0, it's still there.
