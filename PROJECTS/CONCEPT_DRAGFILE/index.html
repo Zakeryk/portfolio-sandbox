@@ -888,12 +888,6 @@
                         duration: 0.2
                     });
 
-                    // gather spilled contents when picking up folder
-                    const folderIndex = this.target.dataset.index;
-                    if (state.spilledFolders.has(folderIndex)) {
-                        gatherImagesToFolder(this.target);
-                    }
-
                     // Reset shake context
                     state.shakeContext.history = [];
                     state.shakeContext.lastX = this.x;
@@ -1059,12 +1053,6 @@
                         });
                         state.selectedDoc = this.target;
 
-                        // gather spilled contents when picking up folder
-                        const folderIndex = this.target.dataset.index;
-                        if (state.spilledFolders.has(folderIndex)) {
-                            gatherImagesToFolder(this.target);
-                        }
-
                         // Reset shake context
                         state.shakeContext.history = [];
                         state.shakeContext.lastX = this.x;
@@ -1166,6 +1154,12 @@
             const category = leaderDoc.dataset.category;
             const allDocs = document.querySelectorAll('.document');
 
+            // gather spilled contents from leader when stacking
+            const leaderIndex = leaderDoc.dataset.index;
+            if (state.spilledFolders.has(leaderIndex)) {
+                gatherImagesToFolder(leaderDoc);
+            }
+
             // Find valid siblings on the desk
             const siblings = Array.from(allDocs).filter(doc =>
                 doc !== leaderDoc &&
@@ -1174,6 +1168,14 @@
             );
 
             if (siblings.length === 0) return;
+
+            // gather spilled contents from siblings too
+            siblings.forEach(doc => {
+                const siblingIndex = doc.dataset.index;
+                if (state.spilledFolders.has(siblingIndex)) {
+                    gatherImagesToFolder(doc);
+                }
+            });
 
             // Animate them to the leader
             siblings.forEach((doc, i) => {
