@@ -4,7 +4,9 @@
   "Green Philosophy Co": [],
   "Raveyard Sounds": [],
   "Shockwav Sound Co": [],
-  "gothparade": [],
+  "gothparade": [
+    "./assets/file-assets/gothparade-poster-01.jpg"
+  ],
   "Rave Water": [],
   "Glass Heart": [],
   "Beat Secrets": [],
