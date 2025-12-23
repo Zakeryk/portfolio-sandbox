@@ -625,10 +625,6 @@
                 images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300']
             },
             {
-                title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo', year: '2021',
-                images: ['https://picsum.photos/seed/dusty1/400/300', 'https://picsum.photos/seed/dusty2/400/300', 'https://picsum.photos/seed/dusty3/400/300', 'https://picsum.photos/seed/dusty4/400/300']
-            },
-            {
                 title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo', year: '2020',
                 images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300']
             },
@@ -892,6 +888,12 @@
                         duration: 0.2
                     });
 
+                    // gather spilled contents when picking up folder
+                    const folderIndex = this.target.dataset.index;
+                    if (state.spilledFolders.has(folderIndex)) {
+                        gatherImagesToFolder(this.target);
+                    }
+
                     // Reset shake context
                     state.shakeContext.history = [];
                     state.shakeContext.lastX = this.x;
@@ -1056,6 +1058,12 @@
                             duration: 0.2
                         });
                         state.selectedDoc = this.target;
+
+                        // gather spilled contents when picking up folder
+                        const folderIndex = this.target.dataset.index;
+                        if (state.spilledFolders.has(folderIndex)) {
+                            gatherImagesToFolder(this.target);
+                        }
 
                         // Reset shake context
                         state.shakeContext.history = [];
