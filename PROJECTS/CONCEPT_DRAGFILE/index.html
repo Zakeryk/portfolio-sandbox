@@ -363,22 +363,13 @@
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
-            width: 162px;
-            height: 126px;
-            background: #2a2418;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            max-width: 162px;
+            max-height: 126px;
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
             cursor: pointer;
             will-change: transform;
             z-index: 50;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #999;
-            font-weight: 700;
+            object-fit: contain;
         }
 
         .spilled-image:active {
@@ -428,16 +419,13 @@
         }
 
         .lightbox-thumb {
-            width: 100px;
-            height: 78px;
-            background: #fff;
-            border: 6px solid #f4f4f4;
-            background-size: cover;
-            background-position: center;
+            max-width: 100px;
+            max-height: 78px;
             cursor: pointer;
             transition: all 0.3s ease;
             opacity: 0.3;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            object-fit: contain;
         }
 
         .lightbox-thumb:hover {
@@ -1421,9 +1409,9 @@
             state.spilledImages[folderIndex] = [];
 
             images.forEach((imgUrl, i) => {
-                const img = document.createElement('div');
+                const img = document.createElement('img');
                 img.className = 'spilled-image';
-                img.style.backgroundImage = `url(${imgUrl})`;
+                img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
                 // start position (at document center)
@@ -1862,13 +1850,8 @@
             const maxWidth = window.innerWidth * 0.9;
             const maxHeight = window.innerHeight * 0.9;
 
-            // Dimensions of the element (not the image natural size, but the div)
-            // The div is 180x140 base size usually, but scaled.
-            // Let's rely on the clone's current dimensions as starting point.
-            // Actually, we want to scale up from the base size.
-
-            // Calculate target dimensions maintaining aspect ratio of 162/126
-            const aspect = 162 / 126;
+            // Get actual image dimensions to preserve aspect ratio
+            const aspect = clone.naturalWidth / clone.naturalHeight;
             let targetWidth = maxWidth;
             let targetHeight = targetWidth / aspect;
 
@@ -1885,13 +1868,8 @@
             document.getElementById('lightbox-overlay').classList.add('visible');
 
             // Swap URL to high-res
-            const highResUrl = getHighResUrl(img.style.backgroundImage.slice(5, -2)); // strip url("...")
-
-            // Preload high res? Or just set it.
-            // Setting it might flick, but let's try just setting it.
-            // Ideally we keep the low res as background and add high res on top or swap.
-            // Simple swap for now:
-            clone.style.backgroundImage = `url(${highResUrl})`;
+            const highResUrl = getHighResUrl(img.src);
+            clone.src = highResUrl;
 
             // Animate CLONE
             gsap.to(clone, {
@@ -1918,9 +1896,12 @@
             thumbnailContainer.innerHTML = ''; // clear existing
 
             allImages.forEach(img => {
-                const thumb = document.createElement('div');
+                // skip if this is the lightbox clone
+                if (img.id === 'lightbox-clone') return;
+
+                const thumb = document.createElement('img');
                 thumb.className = 'lightbox-thumb';
-                thumb.style.backgroundImage = img.style.backgroundImage;
+                thumb.src = img.src;
                 thumb.dataset.originalImg = img; // store reference to original image element
 
                 // mark active thumbnail
@@ -1952,21 +1933,21 @@
             const thumbnails = document.querySelectorAll('.lightbox-thumb');
             thumbnails.forEach(thumb => {
                 thumb.classList.remove('active');
-                // find matching thumbnail (compare background images)
-                if (thumb.style.backgroundImage === newImg.style.backgroundImage) {
+                // find matching thumbnail (compare src)
+                if (thumb.src === newImg.src) {
                     thumb.classList.add('active');
                 }
             });
 
             // swap high-res image on clone
-            const highResUrl = getHighResUrl(newImg.style.backgroundImage.slice(5, -2));
+            const highResUrl = getHighResUrl(newImg.src);
 
             // fade out, swap, fade in
             gsap.to(clone, {
                 opacity: 0.3,
                 duration: 0.2,
                 onComplete: () => {
-                    clone.style.backgroundImage = `url(${highResUrl})`;
+                    clone.src = highResUrl;
 
                     // restore previous active image
                     if (state.activeLightboxImage) {
