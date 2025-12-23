@@ -202,8 +202,8 @@
 
         .document {
             position: absolute;
-            width: 252px;
-            height: 180px;
+            width: 220px;
+            height: 160px;
             background: linear-gradient(135deg, rgba(20, 25, 40, 0.95) 0%, rgba(25, 20, 35, 0.95) 100%);
             border-radius: 4px;
             border: 1px solid rgba(100, 255, 218, 0.3);
@@ -211,7 +211,7 @@
             cursor: pointer;
             transition: box-shadow 0.3s ease;
             will-change: transform;
-            padding: 18px;
+            padding: 16px;
         }
 
         .document:active {
@@ -856,8 +856,8 @@
             const mouseY = e.clientY - containerRect.top;
 
             gsap.set(doc, {
-                x: mouseX - 126,
-                y: mouseY - 90,
+                x: mouseX - 110,
+                y: mouseY - 80,
                 rotation: 0,
                 zIndex: state.currentZIndex++
             });
@@ -1895,6 +1895,42 @@
 
             // Create thumbnail gallery for sibling images
             createLightboxThumbnails(img);
+
+            // Add keyboard navigation
+            setupLightboxKeyboardNav();
+        }
+
+        function setupLightboxKeyboardNav() {
+            // Store the handler so we can remove it later
+            state.lightboxKeyHandler = (e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateLightboxThumbnails(e.key === 'ArrowLeft' ? -1 : 1);
+                }
+            };
+            document.addEventListener('keydown', state.lightboxKeyHandler);
+        }
+
+        function navigateLightboxThumbnails(direction) {
+            const thumbnails = Array.from(document.querySelectorAll('.lightbox-thumb'));
+            if (thumbnails.length === 0) return;
+
+            const activeIndex = thumbnails.findIndex(thumb => thumb.classList.contains('active'));
+            if (activeIndex === -1) return;
+
+            let newIndex = activeIndex + direction;
+            // wrap around
+            if (newIndex < 0) newIndex = thumbnails.length - 1;
+            if (newIndex >= thumbnails.length) newIndex = 0;
+
+            // find the original image corresponding to this thumbnail
+            const parentIndex = state.activeLightboxImage.dataset.parent;
+            const allImages = Array.from(document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`))
+                .filter(img => img.id !== 'lightbox-clone');
+
+            if (allImages[newIndex]) {
+                switchLightboxImage(allImages[newIndex]);
+            }
         }
 
         function createLightboxThumbnails(currentImg) {
@@ -1988,6 +2024,12 @@
 
             const img = state.activeLightboxImage;
             const clone = state.lightboxClone;
+
+            // Remove keyboard navigation
+            if (state.lightboxKeyHandler) {
+                document.removeEventListener('keydown', state.lightboxKeyHandler);
+                state.lightboxKeyHandler = null;
+            }
 
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
