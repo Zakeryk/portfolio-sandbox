@@ -968,10 +968,10 @@
             const direction = Math.sign(delta);
 
             // Only count significant moves
-            if (Math.abs(delta) > 15) { // Increased threshold to avoid accidental triggers
+            if (Math.abs(delta) > 10) { // Reduced threshold for sensitivity
                 if (direction !== ctx.direction && ctx.direction !== 0) {
                     // Direction reversal detected
-                    if (now - ctx.lastReversalTime < 300) { // Must be quick
+                    if (now - ctx.lastReversalTime < 400) { // Increased window slightly
                         ctx.reversals++;
                     } else {
                         ctx.reversals = 1;
@@ -985,7 +985,7 @@
 
             // Trigger shake if reversals threshold met
             // Reset reversals immediately to prevent multi-trigger
-            if (ctx.reversals >= 5 && state.heldStack.length === 0) {
+            if (ctx.reversals >= 3 && state.heldStack.length === 0) { // Reduced to 3
                 collectSiblings(draggable.target);
                 ctx.reversals = 0;
             }
@@ -1013,13 +1013,13 @@
                 // Add to stack
                 state.heldStack.push({
                     el: doc,
-                    offsetX: (Math.random() * 20 - 10),
-                    offsetY: (Math.random() * 20 - 10) + 10
+                    offsetX: (Math.random() * 10 - 5), // Tighter offset
+                    offsetY: (Math.random() * 10 - 5) + 5
                 });
 
                 // Animate to position
                 gsap.to(doc, {
-                    x: gsap.getProperty(leaderDoc, "x") + (Math.random() * 20 - 10),
+                    x: gsap.getProperty(leaderDoc, "x") + (Math.random() * 10 - 5),
                     y: gsap.getProperty(leaderDoc, "y") + (Math.random() * 20 - 10) + 10,
                     rotation: gsap.getProperty(leaderDoc, "rotation") + (Math.random() * 10 - 5),
                     scale: 1,
@@ -1092,13 +1092,16 @@
             const docRect = doc.getBoundingClientRect();
             const folderRect = targetFolder.getBoundingClientRect();
 
-            // Check overlap with specific folder
-            const isOverlapping = !(
-                docRect.right < folderRect.left ||
-                docRect.left > folderRect.right ||
-                docRect.bottom < folderRect.top ||
-                docRect.top > folderRect.bottom
-            );
+            // QUANTUM PROXIMITY CHECK (Center-to-Center)
+            const docCx = docRect.left + docRect.width / 2;
+            const docCy = docRect.top + docRect.height / 2;
+            const folderCx = folderRect.left + folderRect.width / 2;
+            const folderCy = folderRect.top + folderRect.height / 2;
+
+            const distance = Math.hypot(docCx - folderCx, docCy - folderCy);
+
+            // Only glow if within 150px of center
+            const isOverlapping = distance < 150;
 
             if (isOverlapping) {
                 if (!state.isHoveringParent) {
