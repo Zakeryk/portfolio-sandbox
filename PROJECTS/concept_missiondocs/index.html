@@ -1031,50 +1031,72 @@
             state.heldStack = [];
         }
 
-        // overlap detection for drop zones (lenient - entire filing area)
+        // overlap detection for drop zones (specific parent folder)
         function checkDropZoneOverlap(doc) {
-            const filingArea = document.getElementById('filing-area');
-            const docRect = doc.getBoundingClientRect();
-            const filingRect = filingArea.getBoundingClientRect();
+            const category = doc.dataset.category;
+            const targetFolder = document.querySelector(`.folder-stack[data-category="${category}"]`);
 
-            // check if document overlaps with filing area (lenient zone)
-            const overlapFilingArea = !(
-                docRect.right < filingRect.left ||
-                docRect.left > filingRect.right ||
-                docRect.bottom < filingRect.top ||
-                docRect.top > filingRect.bottom
+            if (!targetFolder) return;
+
+            const docRect = doc.getBoundingClientRect();
+            const folderRect = targetFolder.getBoundingClientRect();
+
+            // Check overlap with specific folder
+            const isOverlapping = !(
+                docRect.right < folderRect.left ||
+                docRect.left > folderRect.right ||
+                docRect.bottom < folderRect.top ||
+                docRect.top > folderRect.bottom
             );
 
-            if (overlapFilingArea) {
-                // highlight the matching category folder
-                const matchingFolder = document.querySelector(`.folder-stack[data-category="${doc.dataset.category}"]`);
-                if (matchingFolder) {
-                    matchingFolder.classList.add('drag-over');
+            if (isOverlapping) {
+                if (!state.isHoveringParent) {
+                    state.isHoveringParent = true;
+                    // SWELL ANIMATION
+                    gsap.to(targetFolder, {
+                        scale: 1.15,
+                        boxShadow: '0 15px 30px rgba(201, 169, 97, 0.4)',
+                        backgroundColor: 'rgba(201, 169, 97, 0.2)',
+                        duration: 0.3,
+                        ease: 'back.out(1.7)'
+                    });
                 }
             } else {
-                // remove all highlights
-                document.querySelectorAll('.folder-stack').forEach(f => f.classList.remove('drag-over'));
+                if (state.isHoveringParent) {
+                    state.isHoveringParent = false;
+                    // RETURN TO NORMAL
+                    gsap.to(targetFolder, {
+                        scale: 1,
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent', // Reset to css default
+                        clearProps: 'backgroundColor,boxShadow', // cleaner reset
+                        duration: 0.2
+                    });
+                }
             }
         }
 
         // snap to drop zone (return to list)
         function handleDropZoneSnap(doc) {
-            const filingArea = document.getElementById('filing-area');
-            const docRect = doc.getBoundingClientRect();
-            const filingRect = filingArea.getBoundingClientRect();
-
-            // check if document overlaps with filing area
-            const overlapFilingArea = !(
-                docRect.right < filingRect.left ||
-                docRect.left > filingRect.right ||
-                docRect.bottom < filingRect.top ||
-                docRect.top > filingRect.bottom
-            );
-
-            if (overlapFilingArea) {
-                // return file to list
+            if (state.isHoveringParent) {
+                // Return main file
                 returnFileToList(doc);
+
+                // Reset folder visual immediately
+                const category = doc.dataset.category;
+                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+                if (folder) {
+                    gsap.to(folder, {
+                        scale: 1,
+                        clearProps: 'all',
+                        duration: 0.3
+                    });
+                }
+
+                state.isHoveringParent = false;
+                return true; // Dropped on parent
             }
+            return false;
         }
 
         // return file to list and remove from desk
