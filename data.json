@@ -1,8 +1,8 @@
 {
   "active": [
     {
-      "id": "CONCEPT_DRAGFILE",
-      "path": "./projects/CONCEPT_DRAGFILE/",
+      "id": "concept_dragfile",
+      "path": "./projects/concept_dragfile/",
       "title": "CONCEPT_DRAGFILE",
       "tags": [
         "Experiment",
