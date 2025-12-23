@@ -79,16 +79,19 @@
         /* === FILING AREA === */
         #filing-area {
             position: fixed;
-            left: -220px; /* mostly off-screen */
-            top: 50%;
-            transform: translateY(-50%);
+            left: -240px; /* mostly off-screen */
+            top: 20px;
+            bottom: 20px;
             display: flex;
             flex-direction: column;
-            gap: 30px;
+            gap: 15px;
             z-index: 1000;
-            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            padding: 20px;
-            width: 280px;
+            transition: left 0.4s ease;
+            padding: 15px;
+            width: 300px;
+            background: rgba(42, 36, 24, 0.95);
+            border-right: 2px solid rgba(201, 169, 97, 0.3);
+            overflow-y: auto;
         }
 
         #filing-area.visible {
@@ -98,33 +101,66 @@
         .folder-stack {
             position: relative;
             width: 100%;
-            min-height: 80px;
-            background: linear-gradient(135deg, rgba(201, 169, 97, 0.6) 0%, rgba(139, 115, 85, 0.4) 100%);
-            border: 2px solid rgba(201, 169, 97, 0.8);
-            border-left: none;
-            border-radius: 0 4px 4px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 12px 15px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #1a1a1a;
-            text-align: left;
-            transition: all 0.3s ease;
-            box-shadow:
-                4px 0 12px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, rgba(201, 169, 97, 0.3) 0%, rgba(139, 115, 85, 0.2) 100%);
+            border: 1px solid rgba(201, 169, 97, 0.5);
+            border-radius: 4px;
+            padding: 0;
+            transition: all 0.2s ease;
             cursor: pointer;
+            overflow: hidden;
         }
 
-        .folder-stack::before {
-            content: attr(data-category);
+        .folder-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            font-size: 10px;
-            opacity: 0.8;
-            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            color: #e8dfc4;
+        }
+
+        .folder-stack:hover {
+            background: linear-gradient(135deg, rgba(201, 169, 97, 0.4) 0%, rgba(139, 115, 85, 0.3) 100%);
+        }
+
+        .file-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .folder-stack.expanded .file-list {
+            max-height: 600px;
+        }
+
+        .file-list-item {
+            padding: 10px 15px;
+            border-top: 1px solid rgba(201, 169, 97, 0.2);
+            cursor: grab;
+            transition: background 0.2s ease;
+            font-size: 11px;
+            color: #e8dfc4;
+        }
+
+        .file-list-item:hover {
+            background: rgba(244, 234, 213, 0.1);
+        }
+
+        .file-list-item:active {
+            cursor: grabbing;
+        }
+
+        .file-item-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .file-item-year {
+            font-size: 9px;
+            opacity: 0.6;
         }
 
         .folder-stack[data-category="saas"] {
@@ -416,13 +452,25 @@
         <!-- filing system (drop zones) -->
         <div id="filing-area">
             <div class="folder-stack" data-category="saas">
-                <span class="file-count">0 files</span>
+                <div class="folder-header">
+                    <span>SAAS</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
             </div>
             <div class="folder-stack" data-category="ecommerce">
-                <span class="file-count">0 files</span>
+                <div class="folder-header">
+                    <span>ECOMMERCE</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
             </div>
             <div class="folder-stack" data-category="design">
-                <span class="file-count">0 files</span>
+                <div class="folder-header">
+                    <span>DESIGN</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
             </div>
         </div>
 
@@ -490,11 +538,8 @@
 
         // initialization
         function init() {
-            generateDocuments();
-            setupDraggables();
-            addKeyboardShortcuts();
-            startIdleAnimation();
             setupFilingAreaInteractions();
+            addKeyboardShortcuts();
 
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
@@ -511,71 +556,146 @@
 
                 const distanceFromLeft = e.clientX;
 
-                // show when mouse within 250px of left edge
-                if (distanceFromLeft < 250) {
+                // show when mouse within 300px of left edge
+                if (distanceFromLeft < 300) {
                     filingArea.classList.add('visible');
-                } else if (distanceFromLeft > 350) {
+                } else if (distanceFromLeft > 400) {
                     filingArea.classList.remove('visible');
                 }
             });
 
-            // hover each bucket to fan out its files
+            // click folder header to toggle expand/collapse
             folders.forEach(folder => {
-                folder.addEventListener('mouseenter', () => {
-                    if (state.isMobile) return;
-                    const category = folder.dataset.category;
-                    fanOutFiles(category);
-                });
-
-                folder.addEventListener('mouseleave', () => {
-                    if (state.isMobile) return;
-                    const category = folder.dataset.category;
-                    collapseFiles(category);
+                const header = folder.querySelector('.folder-header');
+                header.addEventListener('click', () => {
+                    folder.classList.toggle('expanded');
                 });
             });
+
+            // populate file lists
+            populateFileLists();
         }
 
-        // fan out files within a category bucket
-        function fanOutFiles(category) {
-            const docs = document.querySelectorAll(`.document[data-category="${category}"]`);
+        // populate file lists in buckets
+        function populateFileLists() {
+            WORK_ITEMS.forEach(item => {
+                const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
+                const fileList = folder.querySelector('.file-list');
 
-            docs.forEach((doc, i) => {
-                const fanAngle = -30 + (i * 60 / Math.max(docs.length - 1, 1)); // spread from -30 to +30 degrees
-                const fanDistance = 150 + (i * 30); // stagger outward
+                const listItem = document.createElement('div');
+                listItem.className = 'file-list-item';
+                listItem.dataset.index = WORK_ITEMS.indexOf(item);
+                listItem.dataset.category = item.category;
+                listItem.dataset.url = item.url;
+                listItem.dataset.images = JSON.stringify(item.images);
+                listItem.dataset.title = item.title;
+                listItem.dataset.year = item.year;
 
-                gsap.to(doc, {
-                    x: `+=${Math.cos(fanAngle * Math.PI / 180) * fanDistance}`,
-                    y: `+=${Math.sin(fanAngle * Math.PI / 180) * fanDistance}`,
-                    rotation: fanAngle * 0.5,
-                    scale: 1,
-                    duration: 0.4,
-                    ease: 'power2.out',
-                    zIndex: 100 + i
+                listItem.innerHTML = `
+                    <div class="file-item-title">${item.title}</div>
+                    <div class="file-item-year">${item.year}</div>
+                `;
+
+                // make list item draggable - creates document on drag
+                listItem.addEventListener('mousedown', (e) => {
+                    createDocumentFromListItem(listItem, e);
                 });
+
+                fileList.appendChild(listItem);
             });
+
+            updateFileCounts();
         }
 
-        // collapse files back into bucket
-        function collapseFiles(category) {
-            const docs = document.querySelectorAll(`.document[data-category="${category}"]`);
-            const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
-            const folderRect = folder.getBoundingClientRect();
-            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+        // create draggable document from list item
+        function createDocumentFromListItem(listItem, e) {
+            const container = document.getElementById('documents-area');
+            const containerRect = container.getBoundingClientRect();
 
-            docs.forEach((doc, i) => {
-                const baseX = folderRect.left - containerRect.left + 20;
-                const baseY = folderRect.top - containerRect.top + 40;
-                const stackOffset = i * 2;
+            const doc = document.createElement('div');
+            const item = WORK_ITEMS[listItem.dataset.index];
+            doc.className = `document ${item.type}-style`;
+            doc.dataset.category = listItem.dataset.category;
+            doc.dataset.url = listItem.dataset.url;
+            doc.dataset.index = listItem.dataset.index;
+            doc.dataset.images = listItem.dataset.images;
 
-                gsap.to(doc, {
-                    x: baseX + stackOffset,
-                    y: baseY + stackOffset,
-                    rotation: 0,
-                    scale: 0.6,
-                    duration: 0.4,
-                    ease: 'power2.in'
-                });
+            // position at mouse
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            gsap.set(doc, {
+                x: mouseX - 140,
+                y: mouseY - 100,
+                rotation: 0,
+                zIndex: state.currentZIndex++
             });
+
+            doc.innerHTML = `
+                <div class="doc-content">
+                    <h3 class="doc-title">${listItem.dataset.title}</h3>
+                    <div class="doc-year">${listItem.dataset.year}</div>
+                    <div class="category-tag ${listItem.dataset.category}">${listItem.dataset.category.toUpperCase()}</div>
+                </div>
+            `;
+
+            container.appendChild(doc);
+
+            // setup draggable immediately
+            const draggable = Draggable.create(doc, {
+                type: 'x,y',
+                bounds: '#desk-container',
+                inertia: state.isMobile ? false : true,
+                edgeResistance: 0.8,
+
+                onPress: function() {
+                    state.currentZIndex++;
+                    gsap.to(this.target, {
+                        zIndex: state.currentZIndex,
+                        scale: 1.05,
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
+                        duration: 0.2
+                    });
+                },
+
+                onDrag: function() {
+                    checkDropZoneOverlap(this.target);
+                },
+
+                onDragEnd: function() {
+                    gsap.to(this.target, {
+                        scale: 1,
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                        duration: 0.3
+                    });
+                    handleDropZoneSnap(this.target);
+                },
+
+                onClick: function() {
+                    let clickCount = this.clickCount || 0;
+                    clickCount++;
+                    this.clickCount = clickCount;
+
+                    if (clickCount === 1) {
+                        setTimeout(() => {
+                            if (this.clickCount === 1) {
+                                spillImages(this.target);
+                            }
+                            this.clickCount = 0;
+                        }, 300);
+                    } else if (clickCount === 2) {
+                        openDocument(this.target);
+                        this.clickCount = 0;
+                    }
+                }
+            })[0];
+
+            // trigger drag immediately
+            draggable.startDrag(e);
+
+            // remove from list
+            listItem.remove();
+            updateFileCounts();
         }
 
         // generate document divs dynamically
@@ -641,14 +761,14 @@
         function updateFileCounts() {
             const counts = { saas: 0, ecommerce: 0, design: 0 };
 
-            document.querySelectorAll('.document').forEach(doc => {
-                counts[doc.dataset.category]++;
+            document.querySelectorAll('.file-list-item').forEach(item => {
+                counts[item.dataset.category]++;
             });
 
             Object.keys(counts).forEach(category => {
                 const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
                 const countSpan = folder.querySelector('.file-count');
-                countSpan.textContent = `${counts[category]} ${counts[category] === 1 ? 'file' : 'files'}`;
+                countSpan.textContent = counts[category];
             });
         }
 
