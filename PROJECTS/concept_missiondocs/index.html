@@ -661,6 +661,13 @@
             folders.forEach(folder => {
                 const header = folder.querySelector('.folder-header');
                 header.addEventListener('click', () => {
+                    // close other folders
+                    folders.forEach(f => {
+                        if (f !== folder) {
+                            f.classList.remove('expanded');
+                        }
+                    });
+
                     folder.classList.toggle('expanded');
                 });
             });
