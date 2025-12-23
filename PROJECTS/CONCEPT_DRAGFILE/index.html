@@ -576,9 +576,17 @@
         // register gsap plugin
         gsap.registerPlugin(Draggable);
 
+        // placeholders (used if no real images found in manifest)
+        const PLACEHOLDER_BASE = 'https://picsum.photos/seed/';
+        const PLACEHOLDER_SIZE = '/400/300';
+
+        function getPlaceholder(seed) {
+            return PLACEHOLDER_BASE + seed + PLACEHOLDER_SIZE;
+        }
+
         // work data (14 items from main index.html)
-        // placeholder images: using picsum.photos for now, replace with real images later
-        const WORK_ITEMS = [
+        // images will be loaded from manifest if available, otherwise use placeholders
+        let WORK_ITEMS = [
             {
                 title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder', year: '2024',
                 images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300']
@@ -637,6 +645,30 @@
             }
         ];
 
+        // load manifest and replace placeholder images with real ones
+        async function loadImageManifest() {
+            try {
+                const response = await fetch('./assets/file-assets-manifest.json');
+                if (!response.ok) throw new Error('Manifest not found');
+
+                const manifest = await response.json();
+
+                // update each work item with real images if available
+                WORK_ITEMS.forEach(item => {
+                    if (manifest[item.title] && manifest[item.title].length > 0) {
+                        // replace placeholders with real images
+                        item.images = manifest[item.title];
+                        console.log(`✓ Loaded ${item.images.length} real image(s) for ${item.title}`);
+                    } else {
+                        console.log(`  Using placeholders for ${item.title}`);
+                    }
+                });
+
+            } catch (error) {
+                console.log('No manifest found, using placeholder images');
+            }
+        }
+
         // state management
         const state = {
             draggables: [],
@@ -670,7 +702,10 @@
         };
 
         // initialization
-        function init() {
+        async function init() {
+            // load real images from manifest first
+            await loadImageManifest();
+
             setupFilingAreaInteractions();
             addKeyboardShortcuts();
 
