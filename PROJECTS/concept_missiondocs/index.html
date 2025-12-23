@@ -79,40 +79,52 @@
         /* === FILING AREA === */
         #filing-area {
             position: fixed;
-            left: -140px; /* mostly off-screen, 40px visible */
+            left: -220px; /* mostly off-screen */
             top: 50%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 30px;
             z-index: 1000;
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 20px;
+            width: 280px;
         }
 
         #filing-area.visible {
-            left: 20px;
+            left: 0px;
         }
 
         .folder-stack {
-            width: 180px;
-            height: 160px;
-            background: linear-gradient(135deg, rgba(201, 169, 97, 0.4) 0%, rgba(139, 115, 85, 0.3) 100%);
-            border: 2px solid rgba(201, 169, 97, 0.6);
-            border-radius: 4px;
+            position: relative;
+            width: 100%;
+            min-height: 80px;
+            background: linear-gradient(135deg, rgba(201, 169, 97, 0.6) 0%, rgba(139, 115, 85, 0.4) 100%);
+            border: 2px solid rgba(201, 169, 97, 0.8);
+            border-left: none;
+            border-radius: 0 4px 4px 0;
             display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            padding: 20px;
-            font-size: 14px;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 12px 15px;
+            font-size: 11px;
             font-weight: 700;
             color: #1a1a1a;
-            text-align: center;
+            text-align: left;
             transition: all 0.3s ease;
             box-shadow:
-                0 4px 12px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+                4px 0 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
             cursor: pointer;
+        }
+
+        .folder-stack::before {
+            content: attr(data-category);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 10px;
+            opacity: 0.8;
+            margin-bottom: 8px;
         }
 
         .folder-stack[data-category="saas"] {
@@ -138,6 +150,13 @@
             box-shadow:
                 0 8px 20px rgba(244, 234, 213, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .file-count {
+            font-size: 9px;
+            opacity: 0.6;
+            font-weight: 400;
+            letter-spacing: 1px;
         }
 
         /* === DOCUMENTS AREA === */
@@ -396,9 +415,15 @@
     <div id="desk-container">
         <!-- filing system (drop zones) -->
         <div id="filing-area">
-            <div class="folder-stack" data-category="saas">SAAS</div>
-            <div class="folder-stack" data-category="ecommerce">ECOMMERCE</div>
-            <div class="folder-stack" data-category="design">DESIGN</div>
+            <div class="folder-stack" data-category="saas">
+                <span class="file-count">0 files</span>
+            </div>
+            <div class="folder-stack" data-category="ecommerce">
+                <span class="file-count">0 files</span>
+            </div>
+            <div class="folder-stack" data-category="design">
+                <span class="file-count">0 files</span>
+            </div>
         </div>
 
         <!-- draggable documents container -->
@@ -479,7 +504,6 @@
         function setupFilingAreaInteractions() {
             const filingArea = document.getElementById('filing-area');
             const folders = document.querySelectorAll('.folder-stack');
-            let isFannedOut = false;
 
             // mouse proximity detection - show filing area when mouse near left edge
             document.addEventListener('mousemove', (e) => {
@@ -487,55 +511,69 @@
 
                 const distanceFromLeft = e.clientX;
 
-                // show when mouse within 200px of left edge
-                if (distanceFromLeft < 200) {
+                // show when mouse within 250px of left edge
+                if (distanceFromLeft < 250) {
                     filingArea.classList.add('visible');
-                } else if (distanceFromLeft > 300) {
+                } else if (distanceFromLeft > 350) {
                     filingArea.classList.remove('visible');
-                    // unfan when mouse leaves area
-                    if (isFannedOut) {
-                        unfanFolders(folders);
-                        isFannedOut = false;
-                    }
                 }
             });
 
-            // fan out effect on hover
-            filingArea.addEventListener('mouseenter', () => {
-                if (state.isMobile) return;
-                fanOutFolders(folders);
-                isFannedOut = true;
-            });
+            // hover each bucket to fan out its files
+            folders.forEach(folder => {
+                folder.addEventListener('mouseenter', () => {
+                    if (state.isMobile) return;
+                    const category = folder.dataset.category;
+                    fanOutFiles(category);
+                });
 
-            filingArea.addEventListener('mouseleave', () => {
-                if (state.isMobile) return;
-                unfanFolders(folders);
-                isFannedOut = false;
-            });
-        }
-
-        // fan out folders like cards
-        function fanOutFolders(folders) {
-            folders.forEach((folder, i) => {
-                gsap.to(folder, {
-                    x: i * 15, // slight horizontal spread
-                    rotation: (i - 1) * 8, // -8, 0, 8 degrees
-                    scale: 1.05,
-                    duration: 0.3,
-                    ease: 'power2.out'
+                folder.addEventListener('mouseleave', () => {
+                    if (state.isMobile) return;
+                    const category = folder.dataset.category;
+                    collapseFiles(category);
                 });
             });
         }
 
-        // return folders to stack
-        function unfanFolders(folders) {
-            folders.forEach(folder => {
-                gsap.to(folder, {
-                    x: 0,
-                    rotation: 0,
+        // fan out files within a category bucket
+        function fanOutFiles(category) {
+            const docs = document.querySelectorAll(`.document[data-category="${category}"]`);
+
+            docs.forEach((doc, i) => {
+                const fanAngle = -30 + (i * 60 / Math.max(docs.length - 1, 1)); // spread from -30 to +30 degrees
+                const fanDistance = 150 + (i * 30); // stagger outward
+
+                gsap.to(doc, {
+                    x: `+=${Math.cos(fanAngle * Math.PI / 180) * fanDistance}`,
+                    y: `+=${Math.sin(fanAngle * Math.PI / 180) * fanDistance}`,
+                    rotation: fanAngle * 0.5,
                     scale: 1,
-                    duration: 0.3,
-                    ease: 'power2.out'
+                    duration: 0.4,
+                    ease: 'power2.out',
+                    zIndex: 100 + i
+                });
+            });
+        }
+
+        // collapse files back into bucket
+        function collapseFiles(category) {
+            const docs = document.querySelectorAll(`.document[data-category="${category}"]`);
+            const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+            const folderRect = folder.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+            docs.forEach((doc, i) => {
+                const baseX = folderRect.left - containerRect.left + 20;
+                const baseY = folderRect.top - containerRect.top + 40;
+                const stackOffset = i * 2;
+
+                gsap.to(doc, {
+                    x: baseX + stackOffset,
+                    y: baseY + stackOffset,
+                    rotation: 0,
+                    scale: 0.6,
+                    duration: 0.4,
+                    ease: 'power2.in'
                 });
             });
         }
@@ -544,13 +582,15 @@
         function generateDocuments() {
             const container = document.getElementById('documents-area');
 
-            // scatter files across desk center area
-            const bounds = {
-                minX: state.isMobile ? 20 : 300,
-                maxX: window.innerWidth - (state.isMobile ? 240 : 320),
-                minY: state.isMobile ? 20 : 100,
-                maxY: window.innerHeight - (state.isMobile ? 200 : 250)
+            // get folder positions
+            const folders = {
+                saas: document.querySelector('.folder-stack[data-category="saas"]'),
+                ecommerce: document.querySelector('.folder-stack[data-category="ecommerce"]'),
+                design: document.querySelector('.folder-stack[data-category="design"]')
             };
+
+            // track count per category
+            const counts = { saas: 0, ecommerce: 0, design: 0 };
 
             WORK_ITEMS.forEach((item, index) => {
                 const doc = document.createElement('div');
@@ -562,17 +602,24 @@
                 // store images data
                 doc.dataset.images = JSON.stringify(item.images);
 
-                // random position across desk
-                const randomX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
-                const randomY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
-                const randomRot = (Math.random() - 0.5) * 15;
+                // position in category bucket (stacked)
+                const folder = folders[item.category];
+                const folderRect = folder.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+                const stackOffset = counts[item.category] * 2;
+                const baseX = folderRect.left - containerRect.left + 20;
+                const baseY = folderRect.top - containerRect.top + 40;
 
                 gsap.set(doc, {
-                    x: randomX,
-                    y: randomY,
-                    rotation: randomRot,
+                    x: baseX + stackOffset,
+                    y: baseY + stackOffset,
+                    rotation: 0,
+                    scale: 0.6, // smaller in bucket
                     zIndex: 10 + index
                 });
+
+                counts[item.category]++;
 
                 // content structure
                 doc.innerHTML = `
@@ -584,6 +631,24 @@
                 `;
 
                 container.appendChild(doc);
+            });
+
+            // update file counts
+            updateFileCounts();
+        }
+
+        // update file count displays
+        function updateFileCounts() {
+            const counts = { saas: 0, ecommerce: 0, design: 0 };
+
+            document.querySelectorAll('.document').forEach(doc => {
+                counts[doc.dataset.category]++;
+            });
+
+            Object.keys(counts).forEach(category => {
+                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+                const countSpan = folder.querySelector('.file-count');
+                countSpan.textContent = `${counts[category]} ${counts[category] === 1 ? 'file' : 'files'}`;
             });
         }
 
