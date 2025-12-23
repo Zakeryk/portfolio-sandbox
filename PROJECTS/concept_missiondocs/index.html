@@ -556,10 +556,10 @@
 
                 const distanceFromLeft = e.clientX;
 
-                // show when mouse within 300px of left edge
-                if (distanceFromLeft < 300) {
+                // show when mouse within 80px of left edge (much tighter to avoid stealing clicks)
+                if (distanceFromLeft < 80) {
                     filingArea.classList.add('visible');
-                } else if (distanceFromLeft > 400) {
+                } else if (distanceFromLeft > 350) {
                     filingArea.classList.remove('visible');
                 }
             });
@@ -865,7 +865,7 @@
             }
         }
 
-        // snap to drop zone (lenient - anywhere in filing area)
+        // snap to drop zone (return to list)
         function handleDropZoneSnap(doc) {
             const filingArea = document.getElementById('filing-area');
             const docRect = doc.getBoundingClientRect();
@@ -880,37 +880,62 @@
             );
 
             if (overlapFilingArea) {
-                // snap to matching category folder
-                const zone = document.querySelector(`.folder-stack[data-category="${doc.dataset.category}"]`);
-                if (zone) {
-                    const zoneRect = zone.getBoundingClientRect();
-                    const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-                    const targetX = zoneRect.left - containerRect.left + (zoneRect.width - docRect.width) / 2;
-                    const targetY = zoneRect.top - containerRect.top + (zoneRect.height - docRect.height) / 2;
-
-                    // snap animation
-                    gsap.to(doc, {
-                        x: targetX,
-                        y: targetY,
-                        rotation: 0,
-                        duration: 0.5,
-                        ease: 'power3.out'
-                    });
-
-                    zone.classList.remove('drag-over');
-
-                    // visual feedback
-                    gsap.to(zone, {
-                        scale: 1.1,
-                        yoyo: true,
-                        repeat: 1,
-                        duration: 0.2
-                    });
-
-                    // gather spilled images back to folder
-                    gatherImagesToFolder(doc);
-                }
+                // return file to list
+                returnFileToList(doc);
             }
+        }
+
+        // return file to list and remove from desk
+        function returnFileToList(doc) {
+            const category = doc.dataset.category;
+            const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+            const fileList = folder.querySelector('.file-list');
+
+            // gather spilled images first
+            gatherImagesToFolder(doc);
+
+            // create list item
+            const listItem = document.createElement('div');
+            listItem.className = 'file-list-item';
+            listItem.dataset.index = doc.dataset.index;
+            listItem.dataset.category = doc.dataset.category;
+            listItem.dataset.url = doc.dataset.url;
+            listItem.dataset.images = doc.dataset.images;
+            listItem.dataset.title = doc.querySelector('.doc-title').textContent;
+            listItem.dataset.year = doc.querySelector('.doc-year').textContent;
+
+            listItem.innerHTML = `
+                <div class="file-item-title">${listItem.dataset.title}</div>
+                <div class="file-item-year">${listItem.dataset.year}</div>
+            `;
+
+            // make draggable
+            listItem.addEventListener('mousedown', (e) => {
+                createDocumentFromListItem(listItem, e);
+            });
+
+            // animate document to list position then remove
+            const listRect = fileList.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const targetX = listRect.left - containerRect.left;
+            const targetY = listRect.bottom - containerRect.top;
+
+            gsap.to(doc, {
+                x: targetX,
+                y: targetY,
+                scale: 0.5,
+                opacity: 0,
+                duration: 0.4,
+                ease: 'power3.in',
+                onComplete: () => {
+                    doc.remove();
+                    fileList.appendChild(listItem);
+                    updateFileCounts();
+
+                    // expand folder to show file was added
+                    folder.classList.add('expanded');
+                }
+            });
         }
 
         // spill images out from document (toggle behavior)
