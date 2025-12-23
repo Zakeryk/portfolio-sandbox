@@ -851,13 +851,15 @@
             doc.dataset.index = listItem.dataset.index;
             doc.dataset.images = listItem.dataset.images;
 
-            // position at mouse
-            const mouseX = e.clientX - containerRect.left;
-            const mouseY = e.clientY - containerRect.top;
+            // spawn in center with slight variation
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const variationX = (Math.random() - 0.5) * 100; // ±50px variation
+            const variationY = (Math.random() - 0.5) * 100;
 
             gsap.set(doc, {
-                x: mouseX - 110,
-                y: mouseY - 80,
+                x: centerX + variationX - 110, // center minus half doc width (220/2)
+                y: centerY + variationY - 80,  // center minus half doc height (160/2)
                 rotation: 0,
                 zIndex: state.currentZIndex++
             });
