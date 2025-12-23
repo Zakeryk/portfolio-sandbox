@@ -260,6 +260,31 @@
             color: #fff;
         }
 
+        /* === SPILLED IMAGES === */
+        .spilled-image {
+            position: absolute;
+            width: 180px;
+            height: 140px;
+            background: #fff;
+            border: 8px solid #f4f4f4;
+            box-shadow:
+                0 6px 14px rgba(0, 0, 0, 0.4),
+                inset 0 0 30px rgba(0, 0, 0, 0.1);
+            cursor: grab;
+            will-change: transform;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #999;
+            font-weight: 700;
+        }
+
+        .spilled-image:active {
+            cursor: grabbing;
+        }
+
         /* === RESPONSIVE === */
         @media (max-width: 768px) {
             .document {
@@ -334,7 +359,7 @@
 
     <!-- ui overlay -->
     <div id="ui-overlay">
-        <div id="filter-hint">drag to folders • click to open</div>
+        <div id="filter-hint">click to spill • double-click to open • drag anywhere</div>
         <div id="back-link"><a href="/">← back</a></div>
     </div>
 
@@ -347,21 +372,36 @@
         gsap.registerPlugin(Draggable);
 
         // work data (14 items from main index.html)
+        // placeholder images: using picsum.photos for now, replace with real images later
         const WORK_ITEMS = [
-            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder' },
-            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder' },
-            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder' },
-            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder' },
-            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder' },
-            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo' },
-            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo' },
-            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo' },
-            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo' },
-            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo' },
-            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo' },
-            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo' },
-            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo' },
-            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo' }
+            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder',
+              images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300'] },
+            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder',
+              images: ['https://picsum.photos/seed/snowie1/400/300', 'https://picsum.photos/seed/snowie2/400/300', 'https://picsum.photos/seed/snowie3/400/300', 'https://picsum.photos/seed/snowie4/400/300'] },
+            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder',
+              images: ['https://picsum.photos/seed/green1/400/300', 'https://picsum.photos/seed/green2/400/300', 'https://picsum.photos/seed/green3/400/300'] },
+            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder',
+              images: ['https://picsum.photos/seed/raveyard1/400/300', 'https://picsum.photos/seed/raveyard2/400/300', 'https://picsum.photos/seed/raveyard3/400/300', 'https://picsum.photos/seed/raveyard4/400/300'] },
+            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder',
+              images: ['https://picsum.photos/seed/shockwav1/400/300', 'https://picsum.photos/seed/shockwav2/400/300', 'https://picsum.photos/seed/shockwav3/400/300'] },
+            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/goth1/400/300', 'https://picsum.photos/seed/goth2/400/300', 'https://picsum.photos/seed/goth3/400/300', 'https://picsum.photos/seed/goth4/400/300'] },
+            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/ravewater1/400/300', 'https://picsum.photos/seed/ravewater2/400/300', 'https://picsum.photos/seed/ravewater3/400/300'] },
+            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/glass1/400/300', 'https://picsum.photos/seed/glass2/400/300', 'https://picsum.photos/seed/glass3/400/300', 'https://picsum.photos/seed/glass4/400/300'] },
+            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/beat1/400/300', 'https://picsum.photos/seed/beat2/400/300', 'https://picsum.photos/seed/beat3/400/300'] },
+            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/us2a/400/300', 'https://picsum.photos/seed/us2b/400/300', 'https://picsum.photos/seed/us2c/400/300', 'https://picsum.photos/seed/us2d/400/300'] },
+            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300'] },
+            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/dusty1/400/300', 'https://picsum.photos/seed/dusty2/400/300', 'https://picsum.photos/seed/dusty3/400/300', 'https://picsum.photos/seed/dusty4/400/300'] },
+            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300'] },
+            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo',
+              images: ['https://picsum.photos/seed/crywolf1/400/300', 'https://picsum.photos/seed/crywolf2/400/300', 'https://picsum.photos/seed/crywolf3/400/300', 'https://picsum.photos/seed/crywolf4/400/300'] }
         ];
 
         // state management
@@ -384,12 +424,16 @@
         // generate document divs dynamically
         function generateDocuments() {
             const container = document.getElementById('documents-area');
-            const bounds = {
-                minX: state.isMobile ? 20 : 250,
-                maxX: window.innerWidth - (state.isMobile ? 240 : 320),
-                minY: state.isMobile ? 20 : 50,
-                maxY: window.innerHeight - (state.isMobile ? 200 : 250)
+
+            // get folder positions for each category
+            const folders = {
+                saas: document.querySelector('.folder-stack[data-category="saas"]'),
+                ecommerce: document.querySelector('.folder-stack[data-category="ecommerce"]'),
+                design: document.querySelector('.folder-stack[data-category="design"]')
             };
+
+            // track stack count per category for offset
+            const stackCount = { saas: 0, ecommerce: 0, design: 0 };
 
             WORK_ITEMS.forEach((item, index) => {
                 const doc = document.createElement('div');
@@ -398,17 +442,26 @@
                 doc.dataset.url = item.url;
                 doc.dataset.index = index;
 
-                // random initial position (scattered across desk)
-                const randomX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
-                const randomY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
-                const randomRot = (Math.random() - 0.5) * 15; // -7.5 to 7.5 deg
+                // store images data
+                doc.dataset.images = JSON.stringify(item.images);
+
+                // position in category folder with slight stack offset
+                const folder = folders[item.category];
+                const folderRect = folder.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+                const stackOffset = stackCount[item.category] * 3; // 3px offset per item
+                const baseX = folderRect.left - containerRect.left + (folderRect.width - 280) / 2;
+                const baseY = folderRect.top - containerRect.top + (folderRect.height - 200) / 2;
 
                 gsap.set(doc, {
-                    x: randomX,
-                    y: randomY,
-                    rotation: randomRot,
+                    x: baseX + stackOffset,
+                    y: baseY + stackOffset,
+                    rotation: stackOffset * 0.3, // slight rotation
                     zIndex: 10 + index
                 });
+
+                stackCount[item.category]++;
 
                 // content structure
                 doc.innerHTML = `
@@ -542,65 +595,174 @@
             });
         }
 
-        // click to open link
+        // click handlers: single = spill images, double = open url
         function setupClickHandlers() {
             const docs = document.querySelectorAll('.document');
-            let clickStartTime = 0;
+            let clickTimeout = null;
+            let clickCount = 0;
             let clickStartPos = { x: 0, y: 0 };
+            let isDragging = false;
 
             docs.forEach(doc => {
                 doc.addEventListener('mousedown', (e) => {
-                    clickStartTime = Date.now();
                     clickStartPos = { x: e.clientX, y: e.clientY };
+                    isDragging = false;
                 });
 
-                doc.addEventListener('touchstart', (e) => {
-                    clickStartTime = Date.now();
-                    const touch = e.touches[0];
-                    clickStartPos = { x: touch.clientX, y: touch.clientY };
-                });
-
-                doc.addEventListener('mouseup', (e) => {
-                    const timeDiff = Date.now() - clickStartTime;
+                doc.addEventListener('mousemove', (e) => {
                     const distance = Math.sqrt(
                         Math.pow(e.clientX - clickStartPos.x, 2) +
                         Math.pow(e.clientY - clickStartPos.y, 2)
                     );
+                    if (distance > 10) isDragging = true;
+                });
 
-                    // if quick click without much movement, treat as click
-                    if (timeDiff < 300 && distance < 10) {
+                doc.addEventListener('mouseup', (e) => {
+                    if (isDragging) return; // ignore if was dragging
+
+                    clickCount++;
+
+                    if (clickCount === 1) {
+                        clickTimeout = setTimeout(() => {
+                            // single click = spill images
+                            spillImages(doc);
+                            clickCount = 0;
+                        }, 300);
+                    } else if (clickCount === 2) {
+                        // double click = open url
+                        clearTimeout(clickTimeout);
                         openDocument(doc);
+                        clickCount = 0;
                     }
                 });
 
-                doc.addEventListener('touchend', (e) => {
-                    const timeDiff = Date.now() - clickStartTime;
-                    const touch = e.changedTouches[0];
+                // touch support
+                doc.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    clickStartPos = { x: touch.clientX, y: touch.clientY };
+                    isDragging = false;
+                });
+
+                doc.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
                     const distance = Math.sqrt(
                         Math.pow(touch.clientX - clickStartPos.x, 2) +
                         Math.pow(touch.clientY - clickStartPos.y, 2)
                     );
+                    if (distance > 10) isDragging = true;
+                });
 
-                    if (timeDiff < 300 && distance < 10) {
+                doc.addEventListener('touchend', (e) => {
+                    if (isDragging) return;
+
+                    clickCount++;
+
+                    if (clickCount === 1) {
+                        clickTimeout = setTimeout(() => {
+                            spillImages(doc);
+                            clickCount = 0;
+                        }, 300);
+                    } else if (clickCount === 2) {
+                        clearTimeout(clickTimeout);
                         openDocument(doc);
+                        clickCount = 0;
                     }
                 });
             });
         }
 
-        function openDocument(doc) {
-            const url = doc.dataset.url;
+        // spill images out from document
+        function spillImages(doc) {
+            const images = JSON.parse(doc.dataset.images);
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const container = document.getElementById('documents-area');
 
-            // click animation
+            images.forEach((imgUrl, i) => {
+                const img = document.createElement('div');
+                img.className = 'spilled-image';
+                img.style.backgroundImage = `url(${imgUrl})`;
+                img.style.backgroundSize = 'cover';
+                img.style.backgroundPosition = 'center';
+                img.dataset.parent = doc.dataset.index;
+
+                // start position (at document center)
+                const startX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+
+                // random spill direction
+                const angle = (Math.random() * 360) * (Math.PI / 180);
+                const distance = 100 + Math.random() * 150;
+                const endX = startX + Math.cos(angle) * distance;
+                const endY = startY + Math.sin(angle) * distance;
+                const randomRot = (Math.random() - 0.5) * 30;
+
+                // set initial position
+                gsap.set(img, {
+                    x: startX,
+                    y: startY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    zIndex: 50 + i
+                });
+
+                container.appendChild(img);
+
+                // animate spill out
+                gsap.to(img, {
+                    x: endX,
+                    y: endY,
+                    rotation: randomRot,
+                    scale: 1,
+                    opacity: 1,
+                    duration: 0.5,
+                    delay: i * 0.1,
+                    ease: 'back.out(1.7)',
+                    onComplete: () => {
+                        makeImageDraggable(img);
+                    }
+                });
+            });
+
+            // hide parent document temporarily
             gsap.to(doc, {
+                opacity: 0.3,
                 scale: 0.95,
-                duration: 0.1,
-                yoyo: true,
-                repeat: 1,
-                onComplete: () => {
-                    window.open(url, '_blank');
+                duration: 0.3
+            });
+        }
+
+        // make spilled image draggable
+        function makeImageDraggable(img) {
+            Draggable.create(img, {
+                type: 'x,y',
+                bounds: '#desk-container',
+                inertia: state.isMobile ? false : true,
+                edgeResistance: 0.8,
+
+                onPress: function() {
+                    state.currentZIndex++;
+                    gsap.to(this.target, {
+                        zIndex: state.currentZIndex,
+                        scale: 1.05,
+                        duration: 0.2
+                    });
+                },
+
+                onDragEnd: function() {
+                    gsap.to(this.target, {
+                        scale: 1,
+                        duration: 0.3
+                    });
                 }
             });
+        }
+
+        // double-click to open original url
+        function openDocument(doc) {
+            const url = doc.dataset.url;
+            window.open(url, '_blank');
         }
 
         // idle animation (subtle paper movement)
