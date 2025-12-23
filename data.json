@@ -1,6 +1,17 @@
 {
   "active": [
     {
+      "id": "concept_react",
+      "path": "./projects/concept_react/",
+      "title": "REACT BASICS",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": null,
+      "date": "2025-12-23T18:55:39.009Z"
+    },
+    {
       "id": "concept_dragfile",
       "path": "./projects/concept_dragfile/",
       "title": "CONCEPT_DRAGFILE",
