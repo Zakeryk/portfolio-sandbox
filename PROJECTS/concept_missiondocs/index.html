@@ -260,6 +260,34 @@
             color: #fff;
         }
 
+        #cleanup-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(107, 142, 35, 0.9);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 4px;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        #cleanup-btn:hover {
+            background: rgba(107, 142, 35, 1);
+            transform: scale(1.05);
+        }
+
+        #cleanup-btn:active {
+            transform: scale(0.95);
+        }
+
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
@@ -361,6 +389,7 @@
     <div id="ui-overlay">
         <div id="filter-hint">click to spill • double-click to open • drag anywhere</div>
         <div id="back-link"><a href="/">← back</a></div>
+        <button id="cleanup-btn">clean up desk</button>
     </div>
 
     <!-- gsap cdn -->
@@ -409,7 +438,9 @@
             draggables: [],
             currentZIndex: 10,
             selectedDoc: null,
-            isMobile: window.innerWidth <= 768
+            isMobile: window.innerWidth <= 768,
+            spilledFolders: new Set(), // track which folders have spilled
+            spilledImages: {} // map folder index to array of spilled image elements
         };
 
         // initialization
@@ -418,6 +449,9 @@
             setupDraggables();
             addKeyboardShortcuts();
             startIdleAnimation();
+
+            // cleanup button
+            document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
         }
 
         // generate document divs dynamically
@@ -601,16 +635,29 @@
                         repeat: 1,
                         duration: 0.2
                     });
+
+                    // gather spilled images back to folder
+                    gatherImagesToFolder(doc);
                 }
             });
         }
 
         // spill images out from document
         function spillImages(doc) {
+            const folderIndex = doc.dataset.index;
+
+            // check if already spilled
+            if (state.spilledFolders.has(folderIndex)) {
+                return; // don't spill again
+            }
+
             const images = JSON.parse(doc.dataset.images);
             const docRect = doc.getBoundingClientRect();
             const containerRect = document.getElementById('desk-container').getBoundingClientRect();
             const container = document.getElementById('documents-area');
+
+            // track spilled images for this folder
+            state.spilledImages[folderIndex] = [];
 
             images.forEach((imgUrl, i) => {
                 const img = document.createElement('div');
@@ -618,7 +665,7 @@
                 img.style.backgroundImage = `url(${imgUrl})`;
                 img.style.backgroundSize = 'cover';
                 img.style.backgroundPosition = 'center';
-                img.dataset.parent = doc.dataset.index;
+                img.dataset.parent = folderIndex;
 
                 // start position (at document center)
                 const startX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
@@ -643,6 +690,9 @@
 
                 container.appendChild(img);
 
+                // track this image
+                state.spilledImages[folderIndex].push(img);
+
                 // animate spill out
                 gsap.to(img, {
                     x: endX,
@@ -658,6 +708,9 @@
                     }
                 });
             });
+
+            // mark as spilled
+            state.spilledFolders.add(folderIndex);
 
             // hide parent document temporarily
             gsap.to(doc, {
@@ -697,6 +750,55 @@
         function openDocument(doc) {
             const url = doc.dataset.url;
             window.open(url, '_blank');
+        }
+
+        // gather spilled images back to folder
+        function gatherImagesToFolder(doc) {
+            const folderIndex = doc.dataset.index;
+            const spilledImgs = state.spilledImages[folderIndex];
+
+            if (!spilledImgs || spilledImgs.length === 0) return;
+
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const targetX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
+            const targetY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+
+            spilledImgs.forEach((img, i) => {
+                gsap.to(img, {
+                    x: targetX,
+                    y: targetY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    duration: 0.5,
+                    delay: i * 0.05,
+                    ease: 'power3.in',
+                    onComplete: () => {
+                        img.remove();
+                    }
+                });
+            });
+
+            // restore folder appearance
+            gsap.to(doc, {
+                opacity: 1,
+                scale: 1,
+                duration: 0.3
+            });
+
+            // clear tracking
+            state.spilledImages[folderIndex] = [];
+            state.spilledFolders.delete(folderIndex);
+        }
+
+        // cleanup all spilled images
+        function cleanupAllImages() {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach(doc => {
+                gatherImagesToFolder(doc);
+            });
         }
 
         // idle animation (subtle paper movement)
