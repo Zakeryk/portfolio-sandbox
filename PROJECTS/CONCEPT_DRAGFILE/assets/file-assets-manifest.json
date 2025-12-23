@@ -1,5 +1,9 @@
 {
-  "Reveo": [],
+  "Reveo": [
+    "./assets/file-assets/reveo-01.png",
+    "./assets/file-assets/reveo-02.png",
+    "./assets/file-assets/reveo-03.png"
+  ],
   "Snowie": [
     "./assets/file-assets/snowie-01.png",
     "./assets/file-assets/snowie-02.png",
