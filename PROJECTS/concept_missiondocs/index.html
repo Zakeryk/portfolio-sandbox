@@ -618,7 +618,9 @@
                 direction: 0,
                 reversals: 0,
                 lastReversalTime: 0
-            }
+            },
+            isHoveringParentDoc: false, // tracks if image is hovering over its parent document
+            hoveredParentDoc: null // the parent document being hovered
         };
 
         // initialization
@@ -1377,6 +1379,9 @@
 
                     // Move collected stack if any
                     updateHeldImageStackPosition(this.target);
+
+                    // Check if hovering over parent document
+                    checkParentDocOverlap(this.target);
                 },
 
                 onDragEnd: function () {
@@ -1388,8 +1393,13 @@
                         duration: 0.3
                     });
 
-                    // Release image stack
-                    releaseImageStack();
+                    // Check if dropped on parent document
+                    const droppedOnParent = handleParentDocSnap(this.target);
+
+                    // Release image stack if not dropped on parent
+                    if (!droppedOnParent) {
+                        releaseImageStack();
+                    }
                 },
 
                 onClick: function () {
@@ -1512,6 +1522,124 @@
             });
 
             state.heldImageStack = [];
+        }
+
+        // Check if image is over its parent document
+        function checkParentDocOverlap(img) {
+            const parentIndex = img.dataset.parent;
+            const parentDoc = document.querySelector(`.document[data-index="${parentIndex}"]`);
+
+            if (!parentDoc) {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+                return;
+            }
+
+            const imgRect = img.getBoundingClientRect();
+            const docRect = parentDoc.getBoundingClientRect();
+
+            // Center-to-center distance check
+            const imgCx = imgRect.left + imgRect.width / 2;
+            const imgCy = imgRect.top + imgRect.height / 2;
+            const docCx = docRect.left + docRect.width / 2;
+            const docCy = docRect.top + docRect.height / 2;
+
+            const distance = Math.hypot(imgCx - docCx, imgCy - docCy);
+
+            // Hovering if within 150px of document center
+            const isOverlapping = distance < 150;
+
+            if (isOverlapping) {
+                if (!state.isHoveringParentDoc) {
+                    state.isHoveringParentDoc = true;
+                    state.hoveredParentDoc = parentDoc;
+                    // Swell animation
+                    gsap.to(parentDoc, {
+                        scale: 1.15,
+                        opacity: 1,
+                        boxShadow: '0 20px 40px rgba(244, 234, 213, 0.6)',
+                        duration: 0.3,
+                        ease: 'back.out(1.7)'
+                    });
+                }
+            } else {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+            }
+        }
+
+        // Reset parent document visual state
+        function resetParentDocState() {
+            if (state.hoveredParentDoc) {
+                gsap.to(state.hoveredParentDoc, {
+                    scale: 1,
+                    opacity: 0.3,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                    duration: 0.2
+                });
+            }
+            state.isHoveringParentDoc = false;
+            state.hoveredParentDoc = null;
+        }
+
+        // Handle drop on parent document
+        function handleParentDocSnap(img) {
+            if (state.isHoveringParentDoc && state.hoveredParentDoc) {
+                const parentDoc = state.hoveredParentDoc;
+
+                // Gather the leader image
+                const imagesToGather = [img];
+
+                // Add all stacked images
+                state.heldImageStack.forEach(item => {
+                    imagesToGather.push(item.el);
+                });
+
+                // Animate all images back to parent
+                const docRect = parentDoc.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+                const targetX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
+                const targetY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+
+                imagesToGather.forEach((image, i) => {
+                    gsap.to(image, {
+                        x: targetX,
+                        y: targetY,
+                        rotation: 0,
+                        scale: 0.3,
+                        opacity: 0,
+                        duration: 0.3,
+                        delay: i * 0.02,
+                        ease: 'power3.in',
+                        onComplete: () => {
+                            image.remove();
+                        }
+                    });
+                });
+
+                // Clear the stack
+                state.heldImageStack = [];
+
+                // Check if all images are gathered, if so mark folder as not spilled
+                const parentIndex = img.dataset.parent;
+                const remainingImages = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
+
+                setTimeout(() => {
+                    const stillRemaining = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
+                    if (stillRemaining.length === 0) {
+                        state.spilledFolders.delete(parentIndex);
+                        state.spilledImages[parentIndex] = [];
+                    }
+                }, imagesToGather.length * 20 + 300);
+
+                // Reset parent doc state
+                resetParentDocState();
+
+                return true;
+            }
+            return false;
         }
 
         // === LIGHTBOX LOGIC ===
