@@ -206,8 +206,8 @@
 
         .document {
             position: absolute;
-            width: 280px;
-            height: 200px;
+            width: 252px;
+            height: 180px;
             background: #e8dfc4;
             border-radius: 2px;
             box-shadow:
@@ -216,7 +216,7 @@
             cursor: pointer;
             transition: box-shadow 0.3s ease;
             will-change: transform;
-            padding: 20px;
+            padding: 18px;
         }
 
         .document:active {
@@ -363,13 +363,13 @@
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
-            width: 180px;
-            height: 140px;
-            background: #fff;
-            border: 8px solid #f4f4f4;
-            box-shadow:
-                0 6px 14px rgba(0, 0, 0, 0.4),
-                inset 0 0 30px rgba(0, 0, 0, 0.1);
+            width: 162px;
+            height: 126px;
+            background: #2a2418;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
             cursor: pointer;
             will-change: transform;
             z-index: 50;
@@ -863,8 +863,8 @@
             const mouseY = e.clientY - containerRect.top;
 
             gsap.set(doc, {
-                x: mouseX - 140,
-                y: mouseY - 100,
+                x: mouseX - 126,
+                y: mouseY - 90,
                 rotation: 0,
                 zIndex: state.currentZIndex++
             });
@@ -1424,13 +1424,11 @@
                 const img = document.createElement('div');
                 img.className = 'spilled-image';
                 img.style.backgroundImage = `url(${imgUrl})`;
-                img.style.backgroundSize = 'cover';
-                img.style.backgroundPosition = 'center';
                 img.dataset.parent = folderIndex;
 
                 // start position (at document center)
-                const startX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
-                const startY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
 
                 // random spill direction
                 const angle = (Math.random() * 360) * (Math.PI / 180);
@@ -1746,8 +1744,8 @@
                 // Animate all images back to parent
                 const docRect = parentDoc.getBoundingClientRect();
                 const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-                const targetX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
-                const targetY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+                const targetX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const targetY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
 
                 imagesToGather.forEach((image, i) => {
                     gsap.to(image, {
@@ -1869,8 +1867,8 @@
             // Let's rely on the clone's current dimensions as starting point.
             // Actually, we want to scale up from the base size.
 
-            // Calculate target dimensions maintaining aspect ratio of 180/140
-            const aspect = 180 / 140;
+            // Calculate target dimensions maintaining aspect ratio of 162/126
+            const aspect = 162 / 126;
             let targetWidth = maxWidth;
             let targetHeight = targetWidth / aspect;
 
@@ -2061,8 +2059,8 @@
 
             const docRect = doc.getBoundingClientRect();
             const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-            const targetX = docRect.left - containerRect.left + (docRect.width - 180) / 2;
-            const targetY = docRect.top - containerRect.top + (docRect.height - 140) / 2;
+            const targetX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+            const targetY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
 
             spilledImgs.forEach((img, i) => {
                 gsap.to(img, {
