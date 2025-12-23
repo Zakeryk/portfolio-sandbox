@@ -140,7 +140,7 @@
         .file-list-item {
             padding: 10px 15px;
             border-top: 1px solid rgba(201, 169, 97, 0.2);
-            cursor: grab;
+            cursor: pointer;
             transition: background 0.2s ease;
             font-size: 11px;
             color: #e8dfc4;
@@ -151,7 +151,7 @@
         }
 
         .file-list-item:active {
-            cursor: grabbing;
+            cursor: grabbing !important;
         }
 
         .file-item-title {
@@ -213,14 +213,14 @@
             box-shadow:
                 0 8px 16px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            cursor: grab;
+            cursor: pointer;
             transition: box-shadow 0.3s ease;
             will-change: transform;
             padding: 20px;
         }
 
         .document:active {
-            cursor: grabbing;
+            cursor: grabbing !important;
         }
 
         .document.folder-style {
@@ -369,7 +369,7 @@
             box-shadow:
                 0 6px 14px rgba(0, 0, 0, 0.4),
                 inset 0 0 30px rgba(0, 0, 0, 0.1);
-            cursor: grab;
+            cursor: pointer;
             will-change: transform;
             z-index: 50;
             display: flex;
@@ -381,7 +381,30 @@
         }
 
         .spilled-image:active {
-            cursor: grabbing;
+            cursor: grabbing !important;
+        }
+
+
+        /* === LIGHTBOX OVERLAY === */
+        #lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 900;
+            transition: opacity 0.4s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+
+        #lightbox-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+            cursor: pointer;
         }
 
         /* === RESPONSIVE === */
@@ -487,6 +510,9 @@
         <button id="cleanup-btn">clean up desk</button>
     </div>
 
+    <!-- lightbox overlay -->
+    <div id="lightbox-overlay"></div>
+
     <!-- gsap cdn -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
@@ -573,7 +599,9 @@
                 lastReversalTime: 0
             },
             isHoveringParent: false, // tracks if currently hovering valid parent folder
-            hoveredParentId: null // tracks which folder is being hovered
+            hoveredParentId: null, // tracks which folder is being hovered
+            activeLightboxImage: null, // currently focused image in lightbox
+            savedImageState: null // stores gsap state before lightbox
         };
 
         // initialization
@@ -584,6 +612,9 @@
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
 
+            // lightbox dismissal
+            document.getElementById('lightbox-overlay').addEventListener('click', exitLightbox);
+
             // click on desk background to cleanup
             document.getElementById('desk-container').addEventListener('click', (e) => {
                 // only if clicking directly on the desk or background elements
@@ -591,8 +622,16 @@
                     e.target.id === 'desk-light' ||
                     e.target.id === 'grain-overlay' ||
                     e.target.id === 'documents-area') {
-                    cleanupAllImages();
+                    gatherAllContents();
                 }
+            });
+        }
+
+        // gather all spilled contents back to their documents (without removing documents)
+        function gatherAllContents() {
+            const docs = document.querySelectorAll('.document');
+            docs.forEach(doc => {
+                gatherImagesToFolder(doc);
             });
         }
 
@@ -1257,12 +1296,106 @@
                 },
 
                 onDragEnd: function () {
+                    // if dragged enough, don't treat as click
+                    this.isDragging = false;
+
                     gsap.to(this.target, {
                         scale: 1,
                         duration: 0.3
                     });
+                },
+
+                onClick: function () {
+                    // enter lightbox on click
+                    enterLightbox(this.target);
                 }
             });
+        }
+
+        // === LIGHTBOX LOGIC ===
+
+        function enterLightbox(img) {
+            if (state.activeLightboxImage) return; // already active
+
+            // Disable drag temporarily
+            const dragInstance = Draggable.get(img);
+            if (dragInstance) dragInstance.disable();
+
+            state.activeLightboxImage = img;
+
+            // Save state
+            state.savedImageState = {
+                x: gsap.getProperty(img, "x"),
+                y: gsap.getProperty(img, "y"),
+                rotation: gsap.getProperty(img, "rotation"),
+                scale: gsap.getProperty(img, "scale"),
+                zIndex: gsap.getProperty(img, "zIndex"),
+                parent: img.parentNode
+            };
+
+            // Calculate center position
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+            // "Fill screen" calculation - large but contained
+            // Since images vary, we'll aim for 80% of smallest dimension
+            const maxWidth = window.innerWidth * 0.9;
+            const maxHeight = window.innerHeight * 0.9;
+
+            // Current aspect is roughly 180x140 (landscape)
+            // We want it to be large. Let's say we scale to fit within our box.
+            // Since we use scale for size, we need to calculate target scale.
+            // Base size is 180x140.
+            const scaleX = maxWidth / 180;
+            const scaleY = maxHeight / 140;
+            const targetScale = Math.min(scaleX, scaleY);
+
+            // Center coords relative to container
+            const centerX = (window.innerWidth / 2) - containerRect.left - 90; // 90 is half width
+            const centerY = (window.innerHeight / 2) - containerRect.top - 70; // 70 is half height
+
+            // Show overlay
+            document.getElementById('lightbox-overlay').classList.add('visible');
+
+            // Animate image
+            gsap.to(img, {
+                x: centerX,
+                y: centerY,
+                rotation: 0,
+                scale: targetScale,
+                zIndex: 1000, // Above everything
+                duration: 0.5,
+                ease: 'power3.inOut'
+            });
+        }
+
+        function exitLightbox() {
+            if (!state.activeLightboxImage) return;
+
+            const img = state.activeLightboxImage;
+            const saved = state.savedImageState;
+
+            // Hide overlay
+            document.getElementById('lightbox-overlay').classList.remove('visible');
+
+            // Animate back
+            gsap.to(img, {
+                x: saved.x,
+                y: saved.y,
+                rotation: saved.rotation,
+                scale: saved.scale, // should use saved scale (usually 1 or slightly scaled)
+                zIndex: saved.zIndex, // restore original z-index layered in pill
+                duration: 0.4,
+                ease: 'power3.out',
+                onComplete: () => {
+                    // Re-enable drag
+                    const dragInstance = Draggable.get(img);
+                    if (dragInstance) dragInstance.enable();
+                }
+            });
+
+            // Clear state
+            state.activeLightboxImage = null;
+            state.savedImageState = null;
         }
 
         // double-click to open original url
@@ -1358,9 +1491,16 @@
         // keyboard shortcuts
         function addKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
+                // ESC: Exit lightbox OR navigate home
                 if (e.key === 'Escape') {
-                    window.location.href = '/';
+                    if (state.activeLightboxImage) {
+                        exitLightbox();
+                    } else {
+                        window.location.href = '/';
+                    }
                 }
+
+                if (state.activeLightboxImage) return; // disable others while in lightbox
 
                 // category filter shortcuts
                 if (e.key === '1') filterByCategory('saas');
