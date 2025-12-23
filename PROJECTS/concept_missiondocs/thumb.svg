@@ -1,0 +1,28 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- desk background -->
+  <rect width="400" height="300" fill="#2a2418"/>
+  
+  <!-- light gradient -->
+  <ellipse cx="200" cy="150" rx="200" ry="120" fill="rgba(255,243,210,0.15)"/>
+  
+  <!-- scattered documents -->
+  <rect x="80" y="100" width="100" height="80" fill="#e8dfc4" transform="rotate(-8 130 140)" rx="2"/>
+  <rect x="220" y="120" width="100" height="80" fill="#e8dfc4" transform="rotate(5 270 160)" rx="2"/>
+  <rect x="150" y="80" width="100" height="80" fill="#e8dfc4" transform="rotate(-3 200 120)" rx="2"/>
+  
+  <!-- title on top document -->
+  <text x="200" y="110" font-family="Courier, monospace" font-size="14" font-weight="bold" fill="#1a1a1a" text-anchor="middle" transform="rotate(-3 200 110)">MISSION DOCS</text>
+  <text x="200" y="130" font-family="Courier, monospace" font-size="10" fill="#1a1a1a" text-anchor="middle" transform="rotate(-3 200 130)">case files</text>
+  
+  <!-- film grain overlay -->
+  <rect width="400" height="300" fill="url(#grain)" opacity="0.1"/>
+  
+  <defs>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/>
+    </filter>
+    <pattern id="grain" width="100%" height="100%">
+      <rect width="100%" height="100%" filter="url(#noise)"/>
+    </pattern>
+  </defs>
+</svg>

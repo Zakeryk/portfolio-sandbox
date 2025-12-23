@@ -1,5 +1,17 @@
 [
   {
+    "id": "concept_missiondocs",
+    "path": "./projects/concept_missiondocs/",
+    "title": "MISSION DOCS",
+    "tags": [
+      "Experiment",
+      "Interactive"
+    ],
+    "active": true,
+    "image": null,
+    "date": "2025-12-23T03:20:47.798Z"
+  },
+  {
     "id": "concept_kiosk",
     "path": "./projects/concept_kiosk/",
     "title": "CONCEPT_KIOSK",

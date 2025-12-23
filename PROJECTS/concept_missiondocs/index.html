@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>mission docs - case files</title>
+    <link id="favicon" rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* === RESET === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #2a2418;
+            font-family: 'Courier Prime', monospace;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+
+        /* === FILM GRAIN OVERLAY === */
+        #grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: overlay;
+        }
+
+        /* === DESK LAMP LIGHTING === */
+        #desk-light {
+            position: absolute;
+            top: -10%;
+            left: 20%;
+            width: 60%;
+            height: 70%;
+            background: radial-gradient(
+                ellipse 50% 40% at 30% 30%,
+                rgba(255, 243, 210, 0.3) 0%,
+                rgba(255, 243, 210, 0.1) 40%,
+                transparent 70%
+            );
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: overlay;
+        }
+
+        /* === DESK CONTAINER === */
+        #desk-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background:
+                radial-gradient(ellipse 60% 50% at 40% 30%,
+                    rgba(244, 234, 213, 0.12) 0%,
+                    transparent 50%),
+                #2a2418;
+            overflow: hidden;
+        }
+
+        /* === FILING AREA === */
+        #filing-area {
+            position: absolute;
+            left: 5%;
+            top: 15%;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            z-index: 1;
+        }
+
+        .folder-stack {
+            width: 180px;
+            height: 160px;
+            background: linear-gradient(135deg, rgba(201, 169, 97, 0.4) 0%, rgba(139, 115, 85, 0.3) 100%);
+            border: 2px solid rgba(201, 169, 97, 0.6);
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .folder-stack[data-category="saas"] {
+            background: linear-gradient(135deg, rgba(58, 124, 165, 0.3) 0%, rgba(48, 104, 145, 0.2) 100%);
+            border-color: rgba(58, 124, 165, 0.5);
+            color: #3a7ca5;
+        }
+
+        .folder-stack[data-category="ecommerce"] {
+            background: linear-gradient(135deg, rgba(201, 85, 77, 0.3) 0%, rgba(181, 65, 57, 0.2) 100%);
+            border-color: rgba(201, 85, 77, 0.5);
+            color: #c9554d;
+        }
+
+        .folder-stack[data-category="design"] {
+            background: linear-gradient(135deg, rgba(107, 142, 35, 0.3) 0%, rgba(87, 122, 25, 0.2) 100%);
+            border-color: rgba(107, 142, 35, 0.5);
+            color: #6b8e23;
+        }
+
+        .folder-stack.drag-over {
+            transform: scale(1.08);
+            box-shadow:
+                0 8px 20px rgba(244, 234, 213, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        /* === DOCUMENTS AREA === */
+        #documents-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .document {
+            position: absolute;
+            width: 280px;
+            height: 200px;
+            background: #e8dfc4;
+            border-radius: 2px;
+            box-shadow:
+                0 8px 16px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            cursor: grab;
+            transition: box-shadow 0.3s ease;
+            will-change: transform;
+            padding: 20px;
+        }
+
+        .document:active {
+            cursor: grabbing;
+        }
+
+        .document.folder-style {
+            background: linear-gradient(to bottom, #e8dfc4 0%, #d4c9a8 100%);
+            border-top: 30px solid rgba(201, 169, 97, 0.8);
+        }
+
+        .document.photo-style {
+            background: #f4f4f4;
+            border: 12px solid #f4f4f4;
+            box-shadow:
+                0 8px 20px rgba(0, 0, 0, 0.5),
+                inset 0 0 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .document.photo-style .doc-content {
+            background: #e8dfc4;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+        }
+
+        .doc-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .category-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 4px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            transform: rotate(3deg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        .category-tag.saas {
+            background: rgba(58, 124, 165, 0.9);
+        }
+
+        .category-tag.ecommerce {
+            background: rgba(201, 85, 77, 0.9);
+        }
+
+        .category-tag.design {
+            background: rgba(107, 142, 35, 0.9);
+        }
+
+        /* === UI OVERLAY === */
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #filter-hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #e8dfc4;
+            padding: 10px 20px;
+            font-size: 12px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        #back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: all;
+        }
+
+        #back-link a {
+            color: #e8dfc4;
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        #back-link a:hover {
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .document {
+                width: 220px;
+                height: 160px;
+                padding: 15px;
+            }
+
+            .document.photo-style {
+                border: 8px solid #f4f4f4;
+            }
+
+            .doc-title {
+                font-size: 14px;
+            }
+
+            #filing-area {
+                left: 50%;
+                transform: translateX(-50%);
+                top: auto;
+                bottom: 5%;
+                flex-direction: row;
+                width: auto;
+                gap: 15px;
+            }
+
+            .folder-stack {
+                width: 100px;
+                height: 120px;
+                font-size: 10px;
+                padding: 10px;
+            }
+
+            #filter-hint {
+                font-size: 10px;
+                padding: 8px 12px;
+                bottom: 140px;
+                right: 10px;
+            }
+
+            #back-link {
+                top: 10px;
+                left: 10px;
+            }
+
+            #back-link a {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- film grain overlay -->
+    <div id="grain-overlay"></div>
+
+    <!-- desk lamp light cone -->
+    <div id="desk-light"></div>
+
+    <!-- desk surface -->
+    <div id="desk-container">
+        <!-- filing system (drop zones) -->
+        <div id="filing-area">
+            <div class="folder-stack" data-category="saas">SAAS</div>
+            <div class="folder-stack" data-category="ecommerce">ECOMMERCE</div>
+            <div class="folder-stack" data-category="design">DESIGN</div>
+        </div>
+
+        <!-- draggable documents container -->
+        <div id="documents-area"></div>
+    </div>
+
+    <!-- ui overlay -->
+    <div id="ui-overlay">
+        <div id="filter-hint">drag to folders • click to open</div>
+        <div id="back-link"><a href="/">← back</a></div>
+    </div>
+
+    <!-- gsap cdn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+
+    <script>
+        // register gsap plugin
+        gsap.registerPlugin(Draggable);
+
+        // work data (14 items from main index.html)
+        const WORK_ITEMS = [
+            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder' },
+            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder' },
+            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder' },
+            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder' },
+            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder' },
+            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo' },
+            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo' },
+            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo' },
+            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo' },
+            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo' },
+            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo' },
+            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo' },
+            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo' },
+            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo' }
+        ];
+
+        // state management
+        const state = {
+            draggables: [],
+            currentZIndex: 10,
+            selectedDoc: null,
+            isMobile: window.innerWidth <= 768
+        };
+
+        // initialization
+        function init() {
+            generateDocuments();
+            setupDraggables();
+            setupClickHandlers();
+            addKeyboardShortcuts();
+            startIdleAnimation();
+        }
+
+        // generate document divs dynamically
+        function generateDocuments() {
+            const container = document.getElementById('documents-area');
+            const bounds = {
+                minX: state.isMobile ? 20 : 250,
+                maxX: window.innerWidth - (state.isMobile ? 240 : 320),
+                minY: state.isMobile ? 20 : 50,
+                maxY: window.innerHeight - (state.isMobile ? 200 : 250)
+            };
+
+            WORK_ITEMS.forEach((item, index) => {
+                const doc = document.createElement('div');
+                doc.className = `document ${item.type}-style`;
+                doc.dataset.category = item.category;
+                doc.dataset.url = item.url;
+                doc.dataset.index = index;
+
+                // random initial position (scattered across desk)
+                const randomX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+                const randomY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+                const randomRot = (Math.random() - 0.5) * 15; // -7.5 to 7.5 deg
+
+                gsap.set(doc, {
+                    x: randomX,
+                    y: randomY,
+                    rotation: randomRot,
+                    zIndex: 10 + index
+                });
+
+                // content structure
+                doc.innerHTML = `
+                    <div class="doc-content">
+                        <h3 class="doc-title">${item.title}</h3>
+                        <div class="category-tag ${item.category}">${item.category.toUpperCase()}</div>
+                    </div>
+                `;
+
+                container.appendChild(doc);
+            });
+        }
+
+        // gsap draggable setup
+        function setupDraggables() {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach(doc => {
+                const draggable = Draggable.create(doc, {
+                    type: 'x,y',
+                    bounds: '#desk-container',
+                    inertia: state.isMobile ? false : true,
+                    edgeResistance: 0.8,
+
+                    onPress: function() {
+                        // bring to front
+                        state.currentZIndex++;
+                        gsap.to(this.target, {
+                            zIndex: state.currentZIndex,
+                            scale: 1.05,
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
+                            duration: 0.2
+                        });
+                        state.selectedDoc = this.target;
+                    },
+
+                    onDrag: function() {
+                        // check overlap with drop zones
+                        checkDropZoneOverlap(this.target);
+                    },
+
+                    onDragEnd: function() {
+                        // reset scale
+                        gsap.to(this.target, {
+                            scale: 1,
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            duration: 0.3,
+                            ease: 'power2.out'
+                        });
+
+                        // snap to drop zone if overlapping
+                        handleDropZoneSnap(this.target);
+                    },
+
+                    onRelease: function() {
+                        // subtle rotation wobble on release
+                        gsap.to(this.target, {
+                            rotation: '+=2',
+                            yoyo: true,
+                            repeat: 1,
+                            duration: 0.15
+                        });
+                    }
+                })[0];
+
+                state.draggables.push(draggable);
+            });
+        }
+
+        // overlap detection for drop zones
+        function checkDropZoneOverlap(doc) {
+            const zones = document.querySelectorAll('.folder-stack');
+            const docRect = doc.getBoundingClientRect();
+
+            zones.forEach(zone => {
+                const zoneRect = zone.getBoundingClientRect();
+                const overlap = !(
+                    docRect.right < zoneRect.left ||
+                    docRect.left > zoneRect.right ||
+                    docRect.bottom < zoneRect.top ||
+                    docRect.top > zoneRect.bottom
+                );
+
+                if (overlap && doc.dataset.category === zone.dataset.category) {
+                    zone.classList.add('drag-over');
+                } else {
+                    zone.classList.remove('drag-over');
+                }
+            });
+        }
+
+        // snap to drop zone
+        function handleDropZoneSnap(doc) {
+            const zones = document.querySelectorAll('.folder-stack');
+            const docRect = doc.getBoundingClientRect();
+
+            zones.forEach(zone => {
+                const zoneRect = zone.getBoundingClientRect();
+                const overlap = !(
+                    docRect.right < zoneRect.left ||
+                    docRect.left > zoneRect.right ||
+                    docRect.bottom < zoneRect.top ||
+                    docRect.top > zoneRect.bottom
+                );
+
+                if (overlap && doc.dataset.category === zone.dataset.category) {
+                    // calculate center position
+                    const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+                    const targetX = zoneRect.left - containerRect.left + (zoneRect.width - docRect.width) / 2;
+                    const targetY = zoneRect.top - containerRect.top + (zoneRect.height - docRect.height) / 2;
+
+                    // snap animation
+                    gsap.to(doc, {
+                        x: targetX,
+                        y: targetY,
+                        rotation: 0,
+                        duration: 0.5,
+                        ease: 'power3.out'
+                    });
+
+                    zone.classList.remove('drag-over');
+
+                    // visual feedback
+                    gsap.to(zone, {
+                        scale: 1.1,
+                        yoyo: true,
+                        repeat: 1,
+                        duration: 0.2
+                    });
+                }
+            });
+        }
+
+        // click to open link
+        function setupClickHandlers() {
+            const docs = document.querySelectorAll('.document');
+            let clickStartTime = 0;
+            let clickStartPos = { x: 0, y: 0 };
+
+            docs.forEach(doc => {
+                doc.addEventListener('mousedown', (e) => {
+                    clickStartTime = Date.now();
+                    clickStartPos = { x: e.clientX, y: e.clientY };
+                });
+
+                doc.addEventListener('touchstart', (e) => {
+                    clickStartTime = Date.now();
+                    const touch = e.touches[0];
+                    clickStartPos = { x: touch.clientX, y: touch.clientY };
+                });
+
+                doc.addEventListener('mouseup', (e) => {
+                    const timeDiff = Date.now() - clickStartTime;
+                    const distance = Math.sqrt(
+                        Math.pow(e.clientX - clickStartPos.x, 2) +
+                        Math.pow(e.clientY - clickStartPos.y, 2)
+                    );
+
+                    // if quick click without much movement, treat as click
+                    if (timeDiff < 300 && distance < 10) {
+                        openDocument(doc);
+                    }
+                });
+
+                doc.addEventListener('touchend', (e) => {
+                    const timeDiff = Date.now() - clickStartTime;
+                    const touch = e.changedTouches[0];
+                    const distance = Math.sqrt(
+                        Math.pow(touch.clientX - clickStartPos.x, 2) +
+                        Math.pow(touch.clientY - clickStartPos.y, 2)
+                    );
+
+                    if (timeDiff < 300 && distance < 10) {
+                        openDocument(doc);
+                    }
+                });
+            });
+        }
+
+        function openDocument(doc) {
+            const url = doc.dataset.url;
+
+            // click animation
+            gsap.to(doc, {
+                scale: 0.95,
+                duration: 0.1,
+                yoyo: true,
+                repeat: 1,
+                onComplete: () => {
+                    window.open(url, '_blank');
+                }
+            });
+        }
+
+        // idle animation (subtle paper movement)
+        function startIdleAnimation() {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach((doc, i) => {
+                gsap.to(doc, {
+                    y: '+=3',
+                    rotation: '+=0.5',
+                    duration: 3 + Math.random() * 2,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut',
+                    delay: i * 0.2
+                });
+            });
+        }
+
+        // keyboard shortcuts
+        function addKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    window.location.href = '/';
+                }
+
+                // category filter shortcuts
+                if (e.key === '1') filterByCategory('saas');
+                if (e.key === '2') filterByCategory('ecommerce');
+                if (e.key === '3') filterByCategory('design');
+                if (e.key === '0') showAllDocuments();
+            });
+        }
+
+        // category filtering
+        function filterByCategory(category) {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach(doc => {
+                if (doc.dataset.category === category) {
+                    gsap.to(doc, { opacity: 1, scale: 1, duration: 0.3 });
+                } else {
+                    gsap.to(doc, { opacity: 0.2, scale: 0.9, duration: 0.3 });
+                }
+            });
+        }
+
+        function showAllDocuments() {
+            const docs = document.querySelectorAll('.document');
+            gsap.to(docs, { opacity: 1, scale: 1, duration: 0.3, stagger: 0.05 });
+        }
+
+        // init on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
