@@ -775,9 +775,22 @@
                         boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
                         duration: 0.2
                     });
+
+                    // Reset shake context
+                    state.shakeContext.history = [];
+                    state.shakeContext.lastX = this.x;
+                    state.shakeContext.reversals = 0;
+                    state.shakeContext.direction = 0;
                 },
 
                 onDrag: function () {
+                    // Check for shake gesture
+                    checkShake(this);
+
+                    // Move collected stack if any
+                    updateHeldStackPosition(this.target);
+
+                    // Check drop zone overlap
                     checkDropZoneOverlap(this.target);
                 },
 
@@ -788,7 +801,12 @@
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
                         duration: 0.3
                     });
-                    handleDropZoneSnap(this.target);
+
+                    // Check if dropped on parent
+                    const droppedOnParent = handleDropZoneSnap(this.target);
+
+                    // Release stack (scatter or return to list)
+                    releaseStack(droppedOnParent);
                 },
 
                 onClick: function () {
