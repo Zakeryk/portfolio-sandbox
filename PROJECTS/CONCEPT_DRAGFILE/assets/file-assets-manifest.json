@@ -17,7 +17,12 @@
     "./assets/file-assets/glassheart-02.png",
     "./assets/file-assets/glassheart-03.jpg"
   ],
-  "Beat Secrets": [],
+  "Beat Secrets": [
+    "./assets/file-assets/beatsecrets-icons.png",
+    "./assets/file-assets/beatsecrets-logo.png",
+    "./assets/file-assets/beatsecrets-package.png",
+    "./assets/file-assets/beatsecrets-style.png"
+  ],
   "us2": [],
   "Polar Culture": [],
   "Lil Dusty G": [],
