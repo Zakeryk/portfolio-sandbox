@@ -8,7 +8,10 @@
     "./assets/file-assets/gothparade-poster-01.jpg",
     "./assets/file-assets/gothparade-poster-02.jpg"
   ],
-  "Rave Water": [],
+  "Rave Water": [
+    "./assets/file-assets/ravewater-01.png",
+    "./assets/file-assets/ravewater-02.png"
+  ],
   "Glass Heart": [],
   "Beat Secrets": [],
   "us2": [],
