@@ -2,7 +2,13 @@
   "Reveo": [],
   "Snowie": [],
   "Green Philosophy Co": [],
-  "Raveyard Sounds": [],
+  "Raveyard Sounds": [
+    "./assets/file-assets/raveyardsounds-01.png",
+    "./assets/file-assets/raveyardsounds-02.jpg",
+    "./assets/file-assets/raveyardsounds-03.png",
+    "./assets/file-assets/raveyardsounds-04.png",
+    "./assets/file-assets/raveyardsounds-05.png"
+  ],
   "Shockwav Sound Co": [
     "./assets/file-assets/shockwavsoundco-01.png",
     "./assets/file-assets/shockwavsoundco-02.png",
