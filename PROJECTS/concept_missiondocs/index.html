@@ -1342,10 +1342,11 @@
             // mark as spilled
             state.spilledFolders.add(folderIndex);
 
-            // hide parent document temporarily
+            // hide parent document temporarily and send to back
             gsap.to(doc, {
                 opacity: 0.3,
                 scale: 0.95,
+                zIndex: 5, // send opened files to back
                 duration: 0.3
             });
         }
@@ -1586,8 +1587,14 @@
 
         // Handle drop on parent document
         function handleParentDocSnap(img) {
+            // Only accept stacks, not single images
+            if (state.heldImageStack.length === 0) {
+                return false;
+            }
+
             if (state.isHoveringParentDoc && state.hoveredParentDoc) {
                 const parentDoc = state.hoveredParentDoc;
+                const parentIndex = img.dataset.parent;
 
                 // Gather the leader image
                 const imagesToGather = [img];
@@ -1622,15 +1629,21 @@
                 // Clear the stack
                 state.heldImageStack = [];
 
-                // Check if all images are gathered, if so mark folder as not spilled
-                const parentIndex = img.dataset.parent;
-                const remainingImages = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
-
+                // Check if all images are gathered, if so restore document to unopened state
                 setTimeout(() => {
                     const stillRemaining = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
                     if (stillRemaining.length === 0) {
+                        // Mark as not spilled
                         state.spilledFolders.delete(parentIndex);
                         state.spilledImages[parentIndex] = [];
+
+                        // Restore document to unopened state
+                        gsap.to(parentDoc, {
+                            opacity: 1,
+                            scale: 1,
+                            zIndex: state.currentZIndex++,
+                            duration: 0.3
+                        });
                     }
                 }, imagesToGather.length * 20 + 300);
 
