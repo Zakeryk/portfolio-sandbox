@@ -12,7 +12,11 @@
     "./assets/file-assets/ravewater-01.png",
     "./assets/file-assets/ravewater-02.png"
   ],
-  "Glass Heart": [],
+  "Glass Heart": [
+    "./assets/file-assets/glassheart-01.png",
+    "./assets/file-assets/glassheart-02.png",
+    "./assets/file-assets/glassheart-03.jpg"
+  ],
   "Beat Secrets": [],
   "us2": [],
   "Polar Culture": [],
