@@ -299,7 +299,8 @@
         #filter-hint {
             position: absolute;
             bottom: 20px;
-            right: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.8);
             color: #e8dfc4;
             padding: 10px 20px;
@@ -311,7 +312,7 @@
         #back-link {
             position: absolute;
             top: 20px;
-            left: 20px;
+            right: 20px;
             pointer-events: all;
         }
 
@@ -334,7 +335,7 @@
         #cleanup-btn {
             position: absolute;
             bottom: 20px;
-            left: 20px;
+            right: 20px;
             background: rgba(107, 142, 35, 0.9);
             color: #fff;
             border: none;
@@ -449,17 +450,25 @@
                 font-size: 10px;
                 padding: 8px 12px;
                 bottom: 140px;
-                right: 10px;
+                left: 50%;
+                transform: translateX(-50%);
             }
 
             #back-link {
                 top: 10px;
-                left: 10px;
+                right: 10px;
             }
 
             #back-link a {
                 font-size: 12px;
                 padding: 6px 12px;
+            }
+
+            #cleanup-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 18px;
+                font-size: 12px;
             }
         }
     </style>
@@ -601,7 +610,8 @@
             isHoveringParent: false, // tracks if currently hovering valid parent folder
             hoveredParentId: null, // tracks which folder is being hovered
             activeLightboxImage: null, // currently focused image in lightbox
-            savedImageState: null // stores gsap state before lightbox
+            savedImageState: null, // stores gsap state before lightbox
+            isDragging: false // tracks if currently dragging a document
         };
 
         // initialization
@@ -640,16 +650,16 @@
             const filingArea = document.getElementById('filing-area');
             const folders = document.querySelectorAll('.folder-stack');
 
-            // mouse proximity detection - show filing area when mouse near left edge
+            // mouse proximity detection - show filing area when mouse near left edge or dragging
             document.addEventListener('mousemove', (e) => {
                 if (state.isMobile) return;
 
                 const distanceFromLeft = e.clientX;
 
-                // show when mouse within 80px of left edge (much tighter to avoid stealing clicks)
-                if (distanceFromLeft < 80) {
+                // show when mouse within 200px of left edge OR when dragging a document
+                if (distanceFromLeft < 200 || state.isDragging) {
                     filingArea.classList.add('visible');
-                } else if (distanceFromLeft > 350) {
+                } else if (distanceFromLeft > 350 && !state.isDragging) {
                     if (filingArea.classList.contains('visible')) {
                         filingArea.classList.remove('visible');
                         resetFolderStates();
@@ -750,6 +760,7 @@
                 edgeResistance: 0.8,
 
                 onPress: function () {
+                    state.isDragging = true;
                     state.currentZIndex++;
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
@@ -764,6 +775,7 @@
                 },
 
                 onDragEnd: function () {
+                    state.isDragging = false;
                     gsap.to(this.target, {
                         scale: 1,
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
@@ -890,6 +902,7 @@
 
                     onPress: function () {
                         // bring to front
+                        state.isDragging = true;
                         state.currentZIndex++;
                         gsap.to(this.target, {
                             zIndex: state.currentZIndex,
@@ -919,6 +932,7 @@
 
                     onDragEnd: function () {
                         // reset scale
+                        state.isDragging = false;
                         gsap.to(this.target, {
                             scale: 1,
                             boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
@@ -1100,8 +1114,8 @@
 
             const distance = Math.hypot(docCx - folderCx, docCy - folderCy);
 
-            // Only glow if within 150px of center
-            const isOverlapping = distance < 150;
+            // Only glow if within 250px of center (increased for easier targeting)
+            const isOverlapping = distance < 250;
 
             if (isOverlapping) {
                 if (!state.isHoveringParent) {
@@ -1545,30 +1559,18 @@
             state.spilledFolders.delete(folderIndex);
         }
 
-        // cleanup all: return images + files to category folders
+        // cleanup all: return images + files to list and remove from desk
         function cleanupAllImages() {
-            const docs = document.querySelectorAll('.document');
+            const docs = Array.from(document.querySelectorAll('.document'));
 
-            docs.forEach(doc => {
-                // gather spilled images back
+            docs.forEach((doc, index) => {
+                // gather spilled images back first
                 gatherImagesToFolder(doc);
 
-                // move file back to category folder
-                const category = doc.dataset.category;
-                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
-                const folderRect = folder.getBoundingClientRect();
-                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-
-                const targetX = folderRect.left - containerRect.left + (folderRect.width - 280) / 2;
-                const targetY = folderRect.top - containerRect.top + (folderRect.height - 200) / 2;
-
-                gsap.to(doc, {
-                    x: targetX,
-                    y: targetY,
-                    rotation: 0,
-                    duration: 0.3,
-                    ease: 'power3.out'
-                });
+                // return file to list with staggered animation
+                setTimeout(() => {
+                    returnFileToList(doc);
+                }, index * 100); // stagger by 100ms each
             });
         }
 
