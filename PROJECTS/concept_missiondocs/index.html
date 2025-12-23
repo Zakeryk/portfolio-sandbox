@@ -78,13 +78,20 @@
 
         /* === FILING AREA === */
         #filing-area {
-            position: absolute;
-            left: 5%;
-            top: 15%;
+            position: fixed;
+            left: -140px; /* mostly off-screen, 40px visible */
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 40px;
-            z-index: 1;
+            gap: 20px;
+            z-index: 1000;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+        }
+
+        #filing-area.visible {
+            left: 20px;
         }
 
         .folder-stack {
@@ -337,14 +344,19 @@
                 font-size: 14px;
             }
 
+            /* mobile: show folders at bottom, always visible */
             #filing-area {
-                left: 50%;
-                transform: translateX(-50%);
-                top: auto;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                top: auto !important;
                 bottom: 5%;
                 flex-direction: row;
                 width: auto;
                 gap: 15px;
+            }
+
+            #filing-area.visible {
+                left: 50% !important;
             }
 
             .folder-stack {
@@ -457,24 +469,88 @@
             setupDraggables();
             addKeyboardShortcuts();
             startIdleAnimation();
+            setupFilingAreaInteractions();
 
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
+        }
+
+        // filing area mouse interactions
+        function setupFilingAreaInteractions() {
+            const filingArea = document.getElementById('filing-area');
+            const folders = document.querySelectorAll('.folder-stack');
+            let isFannedOut = false;
+
+            // mouse proximity detection - show filing area when mouse near left edge
+            document.addEventListener('mousemove', (e) => {
+                if (state.isMobile) return;
+
+                const distanceFromLeft = e.clientX;
+
+                // show when mouse within 200px of left edge
+                if (distanceFromLeft < 200) {
+                    filingArea.classList.add('visible');
+                } else if (distanceFromLeft > 300) {
+                    filingArea.classList.remove('visible');
+                    // unfan when mouse leaves area
+                    if (isFannedOut) {
+                        unfanFolders(folders);
+                        isFannedOut = false;
+                    }
+                }
+            });
+
+            // fan out effect on hover
+            filingArea.addEventListener('mouseenter', () => {
+                if (state.isMobile) return;
+                fanOutFolders(folders);
+                isFannedOut = true;
+            });
+
+            filingArea.addEventListener('mouseleave', () => {
+                if (state.isMobile) return;
+                unfanFolders(folders);
+                isFannedOut = false;
+            });
+        }
+
+        // fan out folders like cards
+        function fanOutFolders(folders) {
+            folders.forEach((folder, i) => {
+                gsap.to(folder, {
+                    x: i * 15, // slight horizontal spread
+                    rotation: (i - 1) * 8, // -8, 0, 8 degrees
+                    scale: 1.05,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            });
+        }
+
+        // return folders to stack
+        function unfanFolders(folders) {
+            folders.forEach(folder => {
+                gsap.to(folder, {
+                    x: 0,
+                    rotation: 0,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            });
         }
 
         // generate document divs dynamically
         function generateDocuments() {
             const container = document.getElementById('documents-area');
 
-            // get folder positions for each category
-            const folders = {
-                saas: document.querySelector('.folder-stack[data-category="saas"]'),
-                ecommerce: document.querySelector('.folder-stack[data-category="ecommerce"]'),
-                design: document.querySelector('.folder-stack[data-category="design"]')
+            // scatter files across desk center area
+            const bounds = {
+                minX: state.isMobile ? 20 : 300,
+                maxX: window.innerWidth - (state.isMobile ? 240 : 320),
+                minY: state.isMobile ? 20 : 100,
+                maxY: window.innerHeight - (state.isMobile ? 200 : 250)
             };
-
-            // track stack count per category for offset
-            const stackCount = { saas: 0, ecommerce: 0, design: 0 };
 
             WORK_ITEMS.forEach((item, index) => {
                 const doc = document.createElement('div');
@@ -486,23 +562,17 @@
                 // store images data
                 doc.dataset.images = JSON.stringify(item.images);
 
-                // position in category folder with slight stack offset
-                const folder = folders[item.category];
-                const folderRect = folder.getBoundingClientRect();
-                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-
-                const stackOffset = stackCount[item.category] * 3; // 3px offset per item
-                const baseX = folderRect.left - containerRect.left + (folderRect.width - 280) / 2;
-                const baseY = folderRect.top - containerRect.top + (folderRect.height - 200) / 2;
+                // random position across desk
+                const randomX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+                const randomY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+                const randomRot = (Math.random() - 0.5) * 15;
 
                 gsap.set(doc, {
-                    x: baseX + stackOffset,
-                    y: baseY + stackOffset,
-                    rotation: stackOffset * 0.3, // slight rotation
+                    x: randomX,
+                    y: randomY,
+                    rotation: randomRot,
                     zIndex: 10 + index
                 });
-
-                stackCount[item.category]++;
 
                 // content structure
                 doc.innerHTML = `
@@ -584,44 +654,51 @@
             });
         }
 
-        // overlap detection for drop zones
+        // overlap detection for drop zones (lenient - entire filing area)
         function checkDropZoneOverlap(doc) {
-            const zones = document.querySelectorAll('.folder-stack');
+            const filingArea = document.getElementById('filing-area');
             const docRect = doc.getBoundingClientRect();
+            const filingRect = filingArea.getBoundingClientRect();
 
-            zones.forEach(zone => {
-                const zoneRect = zone.getBoundingClientRect();
-                const overlap = !(
-                    docRect.right < zoneRect.left ||
-                    docRect.left > zoneRect.right ||
-                    docRect.bottom < zoneRect.top ||
-                    docRect.top > zoneRect.bottom
-                );
+            // check if document overlaps with filing area (lenient zone)
+            const overlapFilingArea = !(
+                docRect.right < filingRect.left ||
+                docRect.left > filingRect.right ||
+                docRect.bottom < filingRect.top ||
+                docRect.top > filingRect.bottom
+            );
 
-                if (overlap && doc.dataset.category === zone.dataset.category) {
-                    zone.classList.add('drag-over');
-                } else {
-                    zone.classList.remove('drag-over');
+            if (overlapFilingArea) {
+                // highlight the matching category folder
+                const matchingFolder = document.querySelector(`.folder-stack[data-category="${doc.dataset.category}"]`);
+                if (matchingFolder) {
+                    matchingFolder.classList.add('drag-over');
                 }
-            });
+            } else {
+                // remove all highlights
+                document.querySelectorAll('.folder-stack').forEach(f => f.classList.remove('drag-over'));
+            }
         }
 
-        // snap to drop zone
+        // snap to drop zone (lenient - anywhere in filing area)
         function handleDropZoneSnap(doc) {
-            const zones = document.querySelectorAll('.folder-stack');
+            const filingArea = document.getElementById('filing-area');
             const docRect = doc.getBoundingClientRect();
+            const filingRect = filingArea.getBoundingClientRect();
 
-            zones.forEach(zone => {
-                const zoneRect = zone.getBoundingClientRect();
-                const overlap = !(
-                    docRect.right < zoneRect.left ||
-                    docRect.left > zoneRect.right ||
-                    docRect.bottom < zoneRect.top ||
-                    docRect.top > zoneRect.bottom
-                );
+            // check if document overlaps with filing area
+            const overlapFilingArea = !(
+                docRect.right < filingRect.left ||
+                docRect.left > filingRect.right ||
+                docRect.bottom < filingRect.top ||
+                docRect.top > filingRect.bottom
+            );
 
-                if (overlap && doc.dataset.category === zone.dataset.category) {
-                    // calculate center position
+            if (overlapFilingArea) {
+                // snap to matching category folder
+                const zone = document.querySelector(`.folder-stack[data-category="${doc.dataset.category}"]`);
+                if (zone) {
+                    const zoneRect = zone.getBoundingClientRect();
                     const containerRect = document.getElementById('desk-container').getBoundingClientRect();
                     const targetX = zoneRect.left - containerRect.left + (zoneRect.width - docRect.width) / 2;
                     const targetY = zoneRect.top - containerRect.top + (zoneRect.height - docRect.height) / 2;
@@ -648,7 +725,7 @@
                     // gather spilled images back to folder
                     gatherImagesToFolder(doc);
                 }
-            });
+            }
         }
 
         // spill images out from document (toggle behavior)
