@@ -49,11 +49,16 @@ async function smartDeploy() {
 
         // 3. Gather Files
         let allFiles = getAllFiles("./projects");
-        
+
+        // Add archived projects
+        if(fs.existsSync("./PROJECTS/ARCHIVED")) {
+            allFiles = allFiles.concat(getAllFiles("./PROJECTS/ARCHIVED"));
+        }
+
         // Manual Root Files
         const rootFiles = [
-            "index.html", 
-            "data.json", 
+            "index.html",
+            "data.json",
             ".htaccess",      // <--- Added Security File
             "favicon.png",    // <--- Added Favicon
             "eyeball-favi.jpg"

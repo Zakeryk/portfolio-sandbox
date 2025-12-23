@@ -615,6 +615,17 @@
         <div class="accordion-wrapper"
             style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 20px;">
             <button class="accordion-header">
+                <span class="mono">/// ARCHIVED</span>
+                <span class="acc-icon mono">[+]</span>
+            </button>
+            <div class="accordion-content">
+                <div class="grid tile-mode" id="archived-grid" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+
+        <div class="accordion-wrapper"
+            style="border-top: 1px solid var(--border); padding-top: 20px; padding-bottom: 20px;">
+            <button class="accordion-header">
                 <span class="mono">/// MY WORK</span>
                 <span class="acc-icon mono">[+]</span>
             </button>
@@ -759,14 +770,52 @@
         // CONFIG
         const GITHUB_USERNAME = 'Zakeryk'; // <--- PUT YOUR USERNAME HERE
 
+        // Helper function to create project card
+        function createProjectCard(p) {
+            const card = document.createElement('a');
+            card.href = p.path;
+            const hasImage = p.image && p.image !== null;
+            card.className = hasImage ? 'card' : 'card no-thumbnail';
+            const imgContent = hasImage ? '' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>';
+            const imgStyle = hasImage ? `background-image: url('${p.image}')` : '';
+            const noImgClass = hasImage ? '' : 'background-color: #0c0c0c;';
+
+            const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
+
+            const dateObj = new Date(p.date);
+            const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+            const dd = dateObj.getDate().toString().padStart(2, '0');
+            const yy = dateObj.getFullYear().toString().slice(-2);
+            const dateStr = `${mm}.${dd}.${yy}`;
+
+            const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'RAW';
+
+            card.innerHTML = `
+                ${imgDiv}
+                <div class="card-info">
+                    <div class="card-title">${p.title}</div>
+                    <div class="card-meta">
+                        <span class="tag">${mainTag}</span>
+                        <span class="date">${dateStr}</span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
         // 1. Fetch & Render Data
         fetch('./data.json')
             .then(res => res.json())
             .then(data => {
                 const grid = document.getElementById('project-grid');
+                const archivedGrid = document.getElementById('archived-grid');
                 const status = document.getElementById('status');
 
-                const visibleProjects = data.filter(p => p.active !== false);
+                // Handle new data structure with active and archived
+                const activeProjects = Array.isArray(data) ? data : (data.active || []);
+                const archivedProjects = Array.isArray(data) ? [] : (data.archived || []);
+
+                const visibleProjects = activeProjects.filter(p => p.active !== false);
 
                 const total = visibleProjects.length;
                 status.innerText = `SCANNING...`;
@@ -776,36 +825,14 @@
                     status.style.color = '#fff';
                 }, 400);
 
+                // Render active projects
                 visibleProjects.forEach(p => {
-                    const card = document.createElement('a');
-                    card.href = p.path;
-                    const hasImage = p.image && p.image !== null;
-                    card.className = hasImage ? 'card' : 'card no-thumbnail';
-                    const imgContent = hasImage ? '' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>';
-                    const imgStyle = hasImage ? `background-image: url('${p.image}')` : '';
-                    const noImgClass = hasImage ? '' : 'background-color: #0c0c0c;';
+                    grid.appendChild(createProjectCard(p));
+                });
 
-                    const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
-
-                    const dateObj = new Date(p.date);
-                    const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-                    const dd = dateObj.getDate().toString().padStart(2, '0');
-                    const yy = dateObj.getFullYear().toString().slice(-2);
-                    const dateStr = `${mm}.${dd}.${yy}`;
-
-                    const mainTag = (p.tags && p.tags.length > 0) ? p.tags[0] : 'RAW';
-
-                    card.innerHTML = `
-                        ${imgDiv}
-                        <div class="card-info">
-                            <div class="card-title">${p.title}</div>
-                            <div class="card-meta">
-                                <span class="tag">${mainTag}</span>
-                                <span class="date">${dateStr}</span>
-                            </div>
-                        </div>
-                    `;
-                    grid.appendChild(card);
+                // Render archived projects
+                archivedProjects.forEach(p => {
+                    archivedGrid.appendChild(createProjectCard(p));
                 });
             })
             .catch(err => {
