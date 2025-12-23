@@ -3,7 +3,16 @@
   "Snowie": [],
   "Green Philosophy Co": [],
   "Raveyard Sounds": [],
-  "Shockwav Sound Co": [],
+  "Shockwav Sound Co": [
+    "./assets/file-assets/shockwavsoundco-01.png",
+    "./assets/file-assets/shockwavsoundco-02.png",
+    "./assets/file-assets/shockwavsoundco-03.jpg",
+    "./assets/file-assets/shockwavsoundco-04.png",
+    "./assets/file-assets/shockwavsoundco-05.jpg",
+    "./assets/file-assets/shockwavsoundco-05.png",
+    "./assets/file-assets/shockwavsoundco-06.jpg",
+    "./assets/file-assets/shockwavsoundco-07.jpg"
+  ],
   "gothparade": [
     "./assets/file-assets/gothparade-poster-01.jpg",
     "./assets/file-assets/gothparade-poster-02.jpg"
