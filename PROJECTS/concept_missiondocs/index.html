@@ -184,9 +184,17 @@
             font-size: 16px;
             font-weight: 700;
             color: #1a1a1a;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+        }
+
+        .doc-year {
+            font-size: 12px;
+            font-weight: 400;
+            color: #666;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
         }
 
         .category-tag {
@@ -403,33 +411,33 @@
         // work data (14 items from main index.html)
         // placeholder images: using picsum.photos for now, replace with real images later
         const WORK_ITEMS = [
-            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder',
+            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder', year: '2024',
               images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300'] },
-            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder',
+            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder', year: '2023',
               images: ['https://picsum.photos/seed/snowie1/400/300', 'https://picsum.photos/seed/snowie2/400/300', 'https://picsum.photos/seed/snowie3/400/300', 'https://picsum.photos/seed/snowie4/400/300'] },
-            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder',
+            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder', year: '2023',
               images: ['https://picsum.photos/seed/green1/400/300', 'https://picsum.photos/seed/green2/400/300', 'https://picsum.photos/seed/green3/400/300'] },
-            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder',
+            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder', year: '2022',
               images: ['https://picsum.photos/seed/raveyard1/400/300', 'https://picsum.photos/seed/raveyard2/400/300', 'https://picsum.photos/seed/raveyard3/400/300', 'https://picsum.photos/seed/raveyard4/400/300'] },
-            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder',
+            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder', year: '2022',
               images: ['https://picsum.photos/seed/shockwav1/400/300', 'https://picsum.photos/seed/shockwav2/400/300', 'https://picsum.photos/seed/shockwav3/400/300'] },
-            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo',
+            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo', year: '2024',
               images: ['https://picsum.photos/seed/goth1/400/300', 'https://picsum.photos/seed/goth2/400/300', 'https://picsum.photos/seed/goth3/400/300', 'https://picsum.photos/seed/goth4/400/300'] },
-            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo',
+            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo', year: '2023',
               images: ['https://picsum.photos/seed/ravewater1/400/300', 'https://picsum.photos/seed/ravewater2/400/300', 'https://picsum.photos/seed/ravewater3/400/300'] },
-            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo',
+            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo', year: '2023',
               images: ['https://picsum.photos/seed/glass1/400/300', 'https://picsum.photos/seed/glass2/400/300', 'https://picsum.photos/seed/glass3/400/300', 'https://picsum.photos/seed/glass4/400/300'] },
-            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo',
+            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo', year: '2022',
               images: ['https://picsum.photos/seed/beat1/400/300', 'https://picsum.photos/seed/beat2/400/300', 'https://picsum.photos/seed/beat3/400/300'] },
-            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo',
+            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo', year: '2022',
               images: ['https://picsum.photos/seed/us2a/400/300', 'https://picsum.photos/seed/us2b/400/300', 'https://picsum.photos/seed/us2c/400/300', 'https://picsum.photos/seed/us2d/400/300'] },
-            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo',
+            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo', year: '2021',
               images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300'] },
-            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo',
+            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo', year: '2021',
               images: ['https://picsum.photos/seed/dusty1/400/300', 'https://picsum.photos/seed/dusty2/400/300', 'https://picsum.photos/seed/dusty3/400/300', 'https://picsum.photos/seed/dusty4/400/300'] },
-            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo',
+            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo', year: '2020',
               images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300'] },
-            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo',
+            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo', year: '2020',
               images: ['https://picsum.photos/seed/crywolf1/400/300', 'https://picsum.photos/seed/crywolf2/400/300', 'https://picsum.photos/seed/crywolf3/400/300', 'https://picsum.photos/seed/crywolf4/400/300'] }
         ];
 
@@ -500,6 +508,7 @@
                 doc.innerHTML = `
                     <div class="doc-content">
                         <h3 class="doc-title">${item.title}</h3>
+                        <div class="doc-year">${item.year}</div>
                         <div class="category-tag ${item.category}">${item.category.toUpperCase()}</div>
                     </div>
                 `;
@@ -642,13 +651,14 @@
             });
         }
 
-        // spill images out from document
+        // spill images out from document (toggle behavior)
         function spillImages(doc) {
             const folderIndex = doc.dataset.index;
 
-            // check if already spilled
+            // if already spilled, gather back instead
             if (state.spilledFolders.has(folderIndex)) {
-                return; // don't spill again
+                gatherImagesToFolder(doc);
+                return;
             }
 
             const images = JSON.parse(doc.dataset.images);
@@ -792,12 +802,30 @@
             state.spilledFolders.delete(folderIndex);
         }
 
-        // cleanup all spilled images
+        // cleanup all: return images + files to category folders
         function cleanupAllImages() {
             const docs = document.querySelectorAll('.document');
 
             docs.forEach(doc => {
+                // gather spilled images back
                 gatherImagesToFolder(doc);
+
+                // move file back to category folder
+                const category = doc.dataset.category;
+                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+                const folderRect = folder.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+                const targetX = folderRect.left - containerRect.left + (folderRect.width - 280) / 2;
+                const targetY = folderRect.top - containerRect.top + (folderRect.height - 200) / 2;
+
+                gsap.to(doc, {
+                    x: targetX,
+                    y: targetY,
+                    rotation: 0,
+                    duration: 0.6,
+                    ease: 'power3.out'
+                });
             });
         }
 
