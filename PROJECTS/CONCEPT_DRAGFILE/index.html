@@ -1830,11 +1830,13 @@
                 top: rect.top + 'px',
                 width: rect.width + 'px',
                 height: rect.height + 'px',
-                backgroundColor: '#fff', // ensure background
+                objectFit: 'contain',
                 zIndex: 1001, // Above overlay (900)
                 transform: 'none', // Reset transform on the clone initially
                 margin: 0,
-                pointerEvents: 'none' // Let clicks pass through initially if needed, or handle clicks
+                pointerEvents: 'none',
+                maxWidth: '100vw',
+                maxHeight: '100vh'
             });
 
             // Also copy the background image, but we'll swap it soon
@@ -1851,7 +1853,11 @@
             const maxHeight = window.innerHeight * 0.9;
 
             // Get actual image dimensions to preserve aspect ratio
-            const aspect = clone.naturalWidth / clone.naturalHeight;
+            // Use naturalWidth/Height if available, otherwise use current dimensions
+            const imgWidth = clone.naturalWidth || clone.width || 162;
+            const imgHeight = clone.naturalHeight || clone.height || 126;
+            const aspect = imgWidth / imgHeight;
+
             let targetWidth = maxWidth;
             let targetHeight = targetWidth / aspect;
 
