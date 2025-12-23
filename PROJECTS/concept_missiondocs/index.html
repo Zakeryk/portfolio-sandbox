@@ -714,24 +714,30 @@
 
             const distanceFromLeft = mouseX !== null ? mouseX : -1;
 
-            // conditions to OPEN:
-            // 1. mouse within 200px of left edge (empty hover)
-            // 2. holding a stack of files
-            // 3. dragging a document
+            // check if currently dragging an unopened file (can be filed away)
+            const draggingUnopenedFile = state.isDragging && state.selectedDoc &&
+                !state.spilledFolders.has(state.selectedDoc.dataset.index);
+
+            // check if holding stack of unopened files
+            const holdingUnopenedStack = state.heldStack.length > 0 &&
+                state.heldStack.every(item => !state.spilledFolders.has(item.el.dataset.index));
+
+            // conditions to OPEN (only for filing actions):
+            // 1. mouse within 200px of left edge AND NOT dragging anything (empty cursor)
+            // 2. dragging an unopened file (can be returned to filing)
+            // 3. holding stack of unopened files (can be returned to filing)
             const shouldOpen = (
-                distanceFromLeft < 200 ||
-                state.heldStack.length > 0 ||
-                state.isDragging
+                (distanceFromLeft < 200 && !state.isDragging) ||
+                draggingUnopenedFile ||
+                holdingUnopenedStack
             );
 
             // conditions to CLOSE:
-            // 1. mouse far from left edge
-            // 2. NOT holding a stack
-            // 3. NOT dragging
+            // mouse far from left AND not in any filing action
             const shouldClose = (
                 distanceFromLeft > 350 &&
-                state.heldStack.length === 0 &&
-                !state.isDragging
+                !draggingUnopenedFile &&
+                !holdingUnopenedStack
             );
 
             if (shouldOpen) {
