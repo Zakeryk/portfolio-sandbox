@@ -700,26 +700,58 @@
             });
         }
 
+        // helper to manage filing area visibility based on all states
+        function updateFilingAreaVisibility(mouseX = null) {
+            if (state.isMobile) return;
+
+            const filingArea = document.getElementById('filing-area');
+
+            // NEVER open during lightbox
+            if (state.activeLightboxImage) {
+                filingArea.classList.remove('visible');
+                return;
+            }
+
+            const distanceFromLeft = mouseX !== null ? mouseX : -1;
+
+            // conditions to OPEN:
+            // 1. mouse within 200px of left edge (empty hover)
+            // 2. holding a stack of files
+            // 3. dragging a document
+            const shouldOpen = (
+                distanceFromLeft < 200 ||
+                state.heldStack.length > 0 ||
+                state.isDragging
+            );
+
+            // conditions to CLOSE:
+            // 1. mouse far from left edge
+            // 2. NOT holding a stack
+            // 3. NOT dragging
+            const shouldClose = (
+                distanceFromLeft > 350 &&
+                state.heldStack.length === 0 &&
+                !state.isDragging
+            );
+
+            if (shouldOpen) {
+                filingArea.classList.add('visible');
+            } else if (shouldClose) {
+                if (filingArea.classList.contains('visible')) {
+                    filingArea.classList.remove('visible');
+                    resetFolderStates();
+                }
+            }
+        }
+
         // filing area mouse interactions
         function setupFilingAreaInteractions() {
             const filingArea = document.getElementById('filing-area');
             const folders = document.querySelectorAll('.folder-stack');
 
-            // mouse proximity detection - show filing area when mouse near left edge or dragging
+            // mouse proximity detection
             document.addEventListener('mousemove', (e) => {
-                if (state.isMobile) return;
-
-                const distanceFromLeft = e.clientX;
-
-                // show when mouse within 200px of left edge OR when dragging a document
-                if (distanceFromLeft < 200 || state.isDragging) {
-                    filingArea.classList.add('visible');
-                } else if (distanceFromLeft > 350 && !state.isDragging) {
-                    if (filingArea.classList.contains('visible')) {
-                        filingArea.classList.remove('visible');
-                        resetFolderStates();
-                    }
-                }
+                updateFilingAreaVisibility(e.clientX);
             });
 
             // click folder header to toggle expand/collapse
@@ -844,6 +876,10 @@
 
                 onDragEnd: function () {
                     state.isDragging = false;
+
+                    // Update filing area immediately (no longer dragging)
+                    updateFilingAreaVisibility();
+
                     gsap.to(this.target, {
                         scale: 1,
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
@@ -1006,6 +1042,10 @@
                     onDragEnd: function () {
                         // reset scale
                         state.isDragging = false;
+
+                        // Update filing area immediately (no longer dragging)
+                        updateFilingAreaVisibility();
+
                         gsap.to(this.target, {
                             scale: 1,
                             boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
@@ -1122,7 +1162,8 @@
                 { scale: 1.05, duration: 0.3, ease: "elastic.out(1, 0.3)" }
             );
 
-            // Optional: Haptic or visual cue
+            // Update filing area visibility (stack collected = should open)
+            updateFilingAreaVisibility();
         }
 
         function updateHeldStackPosition(leaderDoc) {
@@ -1167,6 +1208,9 @@
             }
 
             state.heldStack = [];
+
+            // Update filing area visibility (stack released = might close)
+            updateFilingAreaVisibility();
         }
 
         // overlap detection for drop zones (specific parent folder)
