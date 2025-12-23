@@ -9,7 +9,12 @@
     "./assets/file-assets/snowie-02.png",
     "./assets/file-assets/snowie-03.png"
   ],
-  "Green Philosophy Co": [],
+  "Green Philosophy Co": [
+    "./assets/file-assets/greenphilosophyco-01.png",
+    "./assets/file-assets/greenphilosophyco-02.jpeg",
+    "./assets/file-assets/greenphilosophyco-03.jpeg",
+    "./assets/file-assets/greenphilosophyco-04.jpeg"
+  ],
   "Raveyard Sounds": [
     "./assets/file-assets/raveyardsounds-01.png",
     "./assets/file-assets/raveyardsounds-02.jpg",
