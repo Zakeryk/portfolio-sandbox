@@ -140,7 +140,7 @@
         .file-list-item {
             padding: 10px 15px;
             border-top: 1px solid rgba(201, 169, 97, 0.2);
-            cursor: pointer;
+            cursor: grab;
             transition: background 0.2s ease;
             font-size: 11px;
             color: #e8dfc4;
@@ -650,7 +650,10 @@
                 if (distanceFromLeft < 80) {
                     filingArea.classList.add('visible');
                 } else if (distanceFromLeft > 350) {
-                    filingArea.classList.remove('visible');
+                    if (filingArea.classList.contains('visible')) {
+                        filingArea.classList.remove('visible');
+                        resetFolderStates();
+                    }
                 }
             });
 
@@ -734,6 +737,7 @@
             // setup draggable immediately
             const draggable = Draggable.create(doc, {
                 type: 'x,y',
+                cursor: 'pointer',
                 bounds: '#desk-container',
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
@@ -872,6 +876,7 @@
 
                 const draggable = Draggable.create(doc, {
                     type: 'x,y',
+                    cursor: 'pointer',
                     bounds: '#desk-container',
                     inertia: state.isMobile ? false : true,
                     edgeResistance: 0.8,
@@ -1138,6 +1143,22 @@
             return false;
         }
 
+        // reset all folder visuals (called when sidebar hides)
+        function resetFolderStates() {
+            state.isHoveringParent = false;
+            // Clear specific swell states
+            const folders = document.querySelectorAll('.folder-stack');
+            folders.forEach(folder => {
+                gsap.to(folder, {
+                    scale: 1,
+                    boxShadow: 'none',
+                    backgroundColor: 'transparent',
+                    clearProps: 'backgroundColor,boxShadow',
+                    duration: 0.2
+                });
+            });
+        }
+
         // return file to list and remove from desk
         function returnFileToList(doc) {
             const category = doc.dataset.category;
@@ -1282,6 +1303,7 @@
         function makeImageDraggable(img) {
             Draggable.create(img, {
                 type: 'x,y',
+                cursor: 'pointer',
                 bounds: '#desk-container',
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
@@ -1314,16 +1336,26 @@
 
         // === LIGHTBOX LOGIC ===
 
+        function getHighResUrl(url) {
+            // simpler approach: just replace the dimensions if it's picsum
+            // picsum format: .../seed/stuff/400/300
+            if (url.includes('picsum.photos')) {
+                return url.replace('/400/300', '/1600/1200');
+            }
+            return url;
+        }
+
         function enterLightbox(img) {
             if (state.activeLightboxImage) return; // already active
 
-            // Disable drag temporarily
+            // Disable drag on original
             const dragInstance = Draggable.get(img);
             if (dragInstance) dragInstance.disable();
 
-            state.activeLightboxImage = img;
+            // Store ref to original
+            state.activeLightboxImage = img; // This is the original image on desk
 
-            // Save state
+            // Save state of original (to return to it)
             state.savedImageState = {
                 x: gsap.getProperty(img, "x"),
                 y: gsap.getProperty(img, "y"),
@@ -1333,69 +1365,128 @@
                 parent: img.parentNode
             };
 
-            // Calculate center position
-            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            // Get original position relative to viewport
+            const rect = img.getBoundingClientRect();
 
-            // "Fill screen" calculation - large but contained
-            // Since images vary, we'll aim for 80% of smallest dimension
+            // Create CLONE for lightbox
+            const clone = img.cloneNode(true);
+            clone.id = 'lightbox-clone';
+
+            // Set initial state of clone to MATCH the original exactly
+            // We append to body, so we need fixed positioning based on the rect
+            Object.assign(clone.style, {
+                position: 'fixed',
+                left: rect.left + 'px',
+                top: rect.top + 'px',
+                width: rect.width + 'px',
+                height: rect.height + 'px',
+                backgroundColor: '#fff', // ensure background
+                zIndex: 1001, // Above overlay (900)
+                transform: 'none', // Reset transform on the clone initially
+                margin: 0,
+                pointerEvents: 'none' // Let clicks pass through initially if needed, or handle clicks
+            });
+
+            // Also copy the background image, but we'll swap it soon
+            // The cloneNode(true) copies inline styles, so background image is already there.
+
+            document.body.appendChild(clone);
+            state.lightboxClone = clone; // Track the clone
+
+            // Hide original
+            gsap.set(img, { opacity: 0 });
+
+            // "Fill screen" calculation
             const maxWidth = window.innerWidth * 0.9;
             const maxHeight = window.innerHeight * 0.9;
 
-            // Current aspect is roughly 180x140 (landscape)
-            // We want it to be large. Let's say we scale to fit within our box.
-            // Since we use scale for size, we need to calculate target scale.
-            // Base size is 180x140.
-            const scaleX = maxWidth / 180;
-            const scaleY = maxHeight / 140;
-            const targetScale = Math.min(scaleX, scaleY);
+            // Dimensions of the element (not the image natural size, but the div)
+            // The div is 180x140 base size usually, but scaled.
+            // Let's rely on the clone's current dimensions as starting point.
+            // Actually, we want to scale up from the base size.
 
-            // Center coords relative to container
-            const centerX = (window.innerWidth / 2) - containerRect.left - 90; // 90 is half width
-            const centerY = (window.innerHeight / 2) - containerRect.top - 70; // 70 is half height
+            // Calculate target dimensions maintaining aspect ratio of 180/140
+            const aspect = 180 / 140;
+            let targetWidth = maxWidth;
+            let targetHeight = targetWidth / aspect;
+
+            if (targetHeight > maxHeight) {
+                targetHeight = maxHeight;
+                targetWidth = targetHeight * aspect;
+            }
+
+            // Center coords
+            const targetLeft = (window.innerWidth - targetWidth) / 2;
+            const targetTop = (window.innerHeight - targetHeight) / 2;
 
             // Show overlay
             document.getElementById('lightbox-overlay').classList.add('visible');
 
-            // Animate image
-            gsap.to(img, {
-                x: centerX,
-                y: centerY,
+            // Swap URL to high-res
+            const highResUrl = getHighResUrl(img.style.backgroundImage.slice(5, -2)); // strip url("...")
+
+            // Preload high res? Or just set it. 
+            // Setting it might flick, but let's try just setting it.
+            // Ideally we keep the low res as background and add high res on top or swap.
+            // Simple swap for now:
+            clone.style.backgroundImage = `url(${highResUrl})`;
+
+            // Animate CLONE
+            gsap.to(clone, {
+                left: targetLeft,
+                top: targetTop,
+                width: targetWidth,
+                height: targetHeight,
                 rotation: 0,
-                scale: targetScale,
-                zIndex: 1000, // Above everything
                 duration: 0.5,
                 ease: 'power3.inOut'
             });
         }
 
         function exitLightbox() {
-            if (!state.activeLightboxImage) return;
+            if (!state.activeLightboxImage || !state.lightboxClone) return;
 
             const img = state.activeLightboxImage;
-            const saved = state.savedImageState;
+            const clone = state.lightboxClone;
 
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
 
-            // Animate back
-            gsap.to(img, {
-                x: saved.x,
-                y: saved.y,
-                rotation: saved.rotation,
-                scale: saved.scale, // should use saved scale (usually 1 or slightly scaled)
-                zIndex: saved.zIndex, // restore original z-index layered in pill
+            // Get original's CURRENT position (it shouldn't have moved, but just in case)
+            // Since original is Opacity 0, it's still there.
+            const rect = img.getBoundingClientRect();
+
+            // Animate clone back to original's spot
+            gsap.to(clone, {
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height,
+                rotation: 0, // The original might have rotation, but `rect` accounts for bounding box...
+                // Actually, rect is the bounding box of the transformed element. 
+                // Using left/top/width/height against a rotated element's rect might look slightly off if we don't match rotation.
+                // But our clone is 'fixed' and we are animating left/top/width/height.
+                // It's easier to animate back to the VISUAL rect. 
+                // Let's try just using the rect. 
+
                 duration: 0.4,
                 ease: 'power3.out',
                 onComplete: () => {
+                    // Remove clone
+                    clone.remove();
+                    state.lightboxClone = null;
+
+                    // Show original
+                    gsap.set(img, { opacity: 1 });
+
                     // Re-enable drag
                     const dragInstance = Draggable.get(img);
                     if (dragInstance) dragInstance.enable();
+
+                    state.activeLightboxImage = null;
+                    state.savedImageState = null;
                 }
             });
-
-            // Clear state
-            state.activeLightboxImage = null;
-            state.savedImageState = null;
         }
 
         // double-click to open original url
