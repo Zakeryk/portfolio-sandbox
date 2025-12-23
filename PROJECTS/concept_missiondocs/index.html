@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -18,7 +19,8 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body, html {
+        body,
+        html {
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -52,12 +54,10 @@
             left: 20%;
             width: 60%;
             height: 70%;
-            background: radial-gradient(
-                ellipse 50% 40% at 30% 30%,
-                rgba(255, 243, 210, 0.3) 0%,
-                rgba(255, 243, 210, 0.1) 40%,
-                transparent 70%
-            );
+            background: radial-gradient(ellipse 50% 40% at 30% 30%,
+                    rgba(255, 243, 210, 0.3) 0%,
+                    rgba(255, 243, 210, 0.1) 40%,
+                    transparent 70%);
             pointer-events: none;
             z-index: 2;
             mix-blend-mode: overlay;
@@ -79,7 +79,8 @@
         /* === FILING AREA === */
         #filing-area {
             position: fixed;
-            left: -240px; /* mostly off-screen */
+            left: -240px;
+            /* mostly off-screen */
             top: 20px;
             bottom: 20px;
             display: flex;
@@ -440,6 +441,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- film grain overlay -->
     <div id="grain-overlay"></div>
@@ -496,34 +498,62 @@
         // work data (14 items from main index.html)
         // placeholder images: using picsum.photos for now, replace with real images later
         const WORK_ITEMS = [
-            { title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder', year: '2024',
-              images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300'] },
-            { title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder', year: '2023',
-              images: ['https://picsum.photos/seed/snowie1/400/300', 'https://picsum.photos/seed/snowie2/400/300', 'https://picsum.photos/seed/snowie3/400/300', 'https://picsum.photos/seed/snowie4/400/300'] },
-            { title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder', year: '2023',
-              images: ['https://picsum.photos/seed/green1/400/300', 'https://picsum.photos/seed/green2/400/300', 'https://picsum.photos/seed/green3/400/300'] },
-            { title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder', year: '2022',
-              images: ['https://picsum.photos/seed/raveyard1/400/300', 'https://picsum.photos/seed/raveyard2/400/300', 'https://picsum.photos/seed/raveyard3/400/300', 'https://picsum.photos/seed/raveyard4/400/300'] },
-            { title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder', year: '2022',
-              images: ['https://picsum.photos/seed/shockwav1/400/300', 'https://picsum.photos/seed/shockwav2/400/300', 'https://picsum.photos/seed/shockwav3/400/300'] },
-            { title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo', year: '2024',
-              images: ['https://picsum.photos/seed/goth1/400/300', 'https://picsum.photos/seed/goth2/400/300', 'https://picsum.photos/seed/goth3/400/300', 'https://picsum.photos/seed/goth4/400/300'] },
-            { title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo', year: '2023',
-              images: ['https://picsum.photos/seed/ravewater1/400/300', 'https://picsum.photos/seed/ravewater2/400/300', 'https://picsum.photos/seed/ravewater3/400/300'] },
-            { title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo', year: '2023',
-              images: ['https://picsum.photos/seed/glass1/400/300', 'https://picsum.photos/seed/glass2/400/300', 'https://picsum.photos/seed/glass3/400/300', 'https://picsum.photos/seed/glass4/400/300'] },
-            { title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo', year: '2022',
-              images: ['https://picsum.photos/seed/beat1/400/300', 'https://picsum.photos/seed/beat2/400/300', 'https://picsum.photos/seed/beat3/400/300'] },
-            { title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo', year: '2022',
-              images: ['https://picsum.photos/seed/us2a/400/300', 'https://picsum.photos/seed/us2b/400/300', 'https://picsum.photos/seed/us2c/400/300', 'https://picsum.photos/seed/us2d/400/300'] },
-            { title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo', year: '2021',
-              images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300'] },
-            { title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo', year: '2021',
-              images: ['https://picsum.photos/seed/dusty1/400/300', 'https://picsum.photos/seed/dusty2/400/300', 'https://picsum.photos/seed/dusty3/400/300', 'https://picsum.photos/seed/dusty4/400/300'] },
-            { title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo', year: '2020',
-              images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300'] },
-            { title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo', year: '2020',
-              images: ['https://picsum.photos/seed/crywolf1/400/300', 'https://picsum.photos/seed/crywolf2/400/300', 'https://picsum.photos/seed/crywolf3/400/300', 'https://picsum.photos/seed/crywolf4/400/300'] }
+            {
+                title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder', year: '2024',
+                images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300']
+            },
+            {
+                title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder', year: '2023',
+                images: ['https://picsum.photos/seed/snowie1/400/300', 'https://picsum.photos/seed/snowie2/400/300', 'https://picsum.photos/seed/snowie3/400/300', 'https://picsum.photos/seed/snowie4/400/300']
+            },
+            {
+                title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder', year: '2023',
+                images: ['https://picsum.photos/seed/green1/400/300', 'https://picsum.photos/seed/green2/400/300', 'https://picsum.photos/seed/green3/400/300']
+            },
+            {
+                title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder', year: '2022',
+                images: ['https://picsum.photos/seed/raveyard1/400/300', 'https://picsum.photos/seed/raveyard2/400/300', 'https://picsum.photos/seed/raveyard3/400/300', 'https://picsum.photos/seed/raveyard4/400/300']
+            },
+            {
+                title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder', year: '2022',
+                images: ['https://picsum.photos/seed/shockwav1/400/300', 'https://picsum.photos/seed/shockwav2/400/300', 'https://picsum.photos/seed/shockwav3/400/300']
+            },
+            {
+                title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo', year: '2024',
+                images: ['https://picsum.photos/seed/goth1/400/300', 'https://picsum.photos/seed/goth2/400/300', 'https://picsum.photos/seed/goth3/400/300', 'https://picsum.photos/seed/goth4/400/300']
+            },
+            {
+                title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo', year: '2023',
+                images: ['https://picsum.photos/seed/ravewater1/400/300', 'https://picsum.photos/seed/ravewater2/400/300', 'https://picsum.photos/seed/ravewater3/400/300']
+            },
+            {
+                title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo', year: '2023',
+                images: ['https://picsum.photos/seed/glass1/400/300', 'https://picsum.photos/seed/glass2/400/300', 'https://picsum.photos/seed/glass3/400/300', 'https://picsum.photos/seed/glass4/400/300']
+            },
+            {
+                title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo', year: '2022',
+                images: ['https://picsum.photos/seed/beat1/400/300', 'https://picsum.photos/seed/beat2/400/300', 'https://picsum.photos/seed/beat3/400/300']
+            },
+            {
+                title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo', year: '2022',
+                images: ['https://picsum.photos/seed/us2a/400/300', 'https://picsum.photos/seed/us2b/400/300', 'https://picsum.photos/seed/us2c/400/300', 'https://picsum.photos/seed/us2d/400/300']
+            },
+            {
+                title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo', year: '2021',
+                images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300']
+            },
+            {
+                title: 'Lil Dusty G', url: 'https://zakknowlton.com/lil-dusty', category: 'design', type: 'photo', year: '2021',
+                images: ['https://picsum.photos/seed/dusty1/400/300', 'https://picsum.photos/seed/dusty2/400/300', 'https://picsum.photos/seed/dusty3/400/300', 'https://picsum.photos/seed/dusty4/400/300']
+            },
+            {
+                title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo', year: '2020',
+                images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300']
+            },
+            {
+                title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo', year: '2020',
+                images: ['https://picsum.photos/seed/crywolf1/400/300', 'https://picsum.photos/seed/crywolf2/400/300', 'https://picsum.photos/seed/crywolf3/400/300', 'https://picsum.photos/seed/crywolf4/400/300']
+            }
         ];
 
         // state management
@@ -533,7 +563,17 @@
             selectedDoc: null,
             isMobile: window.innerWidth <= 768,
             spilledFolders: new Set(), // track which folders have spilled
-            spilledImages: {} // map folder index to array of spilled image elements
+            spilledImages: {}, // map folder index to array of spilled image elements
+            heldStack: [], // items collected via shake
+            shakeContext: {
+                history: [],
+                lastX: 0,
+                direction: 0, // 1 for right, -1 for left
+                reversals: 0,
+                lastReversalTime: 0
+            },
+            isHoveringParent: false, // tracks if currently hovering valid parent folder
+            hoveredParentId: null // tracks which folder is being hovered
         };
 
         // initialization
@@ -543,6 +583,17 @@
 
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
+
+            // click on desk background to cleanup
+            document.getElementById('desk-container').addEventListener('click', (e) => {
+                // only if clicking directly on the desk or background elements
+                if (e.target.id === 'desk-container' ||
+                    e.target.id === 'desk-light' ||
+                    e.target.id === 'grain-overlay' ||
+                    e.target.id === 'documents-area') {
+                    cleanupAllImages();
+                }
+            });
         }
 
         // filing area mouse interactions
@@ -648,7 +699,7 @@
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
 
-                onPress: function() {
+                onPress: function () {
                     state.currentZIndex++;
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
@@ -658,11 +709,11 @@
                     });
                 },
 
-                onDrag: function() {
+                onDrag: function () {
                     checkDropZoneOverlap(this.target);
                 },
 
-                onDragEnd: function() {
+                onDragEnd: function () {
                     gsap.to(this.target, {
                         scale: 1,
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
@@ -671,7 +722,7 @@
                     handleDropZoneSnap(this.target);
                 },
 
-                onClick: function() {
+                onClick: function () {
                     let clickCount = this.clickCount || 0;
                     clickCount++;
                     this.clickCount = clickCount;
@@ -786,7 +837,7 @@
                     inertia: state.isMobile ? false : true,
                     edgeResistance: 0.8,
 
-                    onPress: function() {
+                    onPress: function () {
                         // bring to front
                         state.currentZIndex++;
                         gsap.to(this.target, {
@@ -796,14 +847,26 @@
                             duration: 0.2
                         });
                         state.selectedDoc = this.target;
+
+                        // Reset shake context
+                        state.shakeContext.history = [];
+                        state.shakeContext.lastX = this.x;
+                        state.shakeContext.reversals = 0;
+                        state.shakeContext.direction = 0;
                     },
 
-                    onDrag: function() {
-                        // check overlap with drop zones
+                    onDrag: function () {
+                        // Check for shake gesture
+                        checkShake(this);
+
+                        // Move collected stack if any
+                        updateHeldStackPosition(this.target);
+
+                        // check overlapping with specific parent folder for swell
                         checkDropZoneOverlap(this.target);
                     },
 
-                    onDragEnd: function() {
+                    onDragEnd: function () {
                         // reset scale
                         gsap.to(this.target, {
                             scale: 1,
@@ -812,11 +875,14 @@
                             ease: 'power2.out'
                         });
 
-                        // snap to drop zone if overlapping
-                        handleDropZoneSnap(this.target);
+                        // Check if dropped on parent
+                        const droppedOnParent = handleDropZoneSnap(this.target);
+
+                        // Release stack (scatter or return to list)
+                        releaseStack(droppedOnParent);
                     },
 
-                    onClick: function() {
+                    onClick: function () {
                         // handle click vs double-click
                         clickCount++;
 
@@ -837,6 +903,132 @@
 
                 state.draggables.push(draggable);
             });
+        }
+
+        // === SHAKE & STACK LOGIC ===
+
+        function checkShake(draggable) {
+            const currentX = draggable.x;
+            const now = Date.now();
+            const ctx = state.shakeContext;
+
+            // Calculate delta and direction
+            const delta = currentX - ctx.lastX;
+            const direction = Math.sign(delta);
+
+            // Only count significant moves
+            if (Math.abs(delta) > 15) { // Increased threshold to avoid accidental triggers
+                if (direction !== ctx.direction && ctx.direction !== 0) {
+                    // Direction reversal detected
+                    if (now - ctx.lastReversalTime < 300) { // Must be quick
+                        ctx.reversals++;
+                    } else {
+                        ctx.reversals = 1;
+                    }
+                    ctx.lastReversalTime = now;
+                }
+                ctx.direction = direction;
+            }
+
+            ctx.lastX = currentX;
+
+            // Trigger shake if reversals threshold met
+            // Reset reversals immediately to prevent multi-trigger
+            if (ctx.reversals >= 5 && state.heldStack.length === 0) {
+                collectSiblings(draggable.target);
+                ctx.reversals = 0;
+            }
+        }
+
+        function collectSiblings(leaderDoc) {
+            const category = leaderDoc.dataset.category;
+            const allDocs = document.querySelectorAll('.document');
+
+            // Find valid siblings on the desk
+            const siblings = Array.from(allDocs).filter(doc =>
+                doc !== leaderDoc &&
+                doc.dataset.category === category &&
+                !state.heldStack.some(item => item.el === doc)
+            );
+
+            if (siblings.length === 0) return;
+
+            // Animate them to the leader
+            siblings.forEach((doc, i) => {
+                // Disable individual dragging for siblings
+                const dragInstance = Draggable.get(doc);
+                if (dragInstance) dragInstance.disable();
+
+                // Add to stack
+                state.heldStack.push({
+                    el: doc,
+                    offsetX: (Math.random() * 20 - 10),
+                    offsetY: (Math.random() * 20 - 10) + 10
+                });
+
+                // Animate to position
+                gsap.to(doc, {
+                    x: gsap.getProperty(leaderDoc, "x") + (Math.random() * 20 - 10),
+                    y: gsap.getProperty(leaderDoc, "y") + (Math.random() * 20 - 10) + 10,
+                    rotation: gsap.getProperty(leaderDoc, "rotation") + (Math.random() * 10 - 5),
+                    scale: 1,
+                    zIndex: state.currentZIndex - 1 - i,
+                    duration: 0.5,
+                    ease: "back.out(1.2)"
+                });
+            });
+
+            // Pulse the leader
+            gsap.fromTo(leaderDoc,
+                { scale: 1.15 },
+                { scale: 1.05, duration: 0.3, ease: "elastic.out(1, 0.3)" }
+            );
+
+            // Optional: Haptic or visual cue
+        }
+
+        function updateHeldStackPosition(leaderDoc) {
+            if (state.heldStack.length === 0) return;
+
+            const leaderX = gsap.getProperty(leaderDoc, "x");
+            const leaderY = gsap.getProperty(leaderDoc, "y");
+
+            state.heldStack.forEach(item => {
+                gsap.to(item.el, {
+                    x: leaderX + item.offsetX,
+                    y: leaderY + item.offsetY,
+                    duration: 0.1, // Slight lag for natural feel
+                    overwrite: "auto"
+                });
+            });
+        }
+
+        function releaseStack(droppedOnParent) {
+            if (state.heldStack.length === 0) return;
+
+            if (droppedOnParent) {
+                // If dropped on parent, return all to list is handled by caller logic usually
+                // But we can double check here
+                state.heldStack.forEach(item => {
+                    returnFileToList(item.el);
+                });
+            } else {
+                // Return to desk state
+                state.heldStack.forEach(item => {
+                    const dragInstance = Draggable.get(item.el);
+                    if (dragInstance) dragInstance.enable();
+
+                    gsap.to(item.el, {
+                        x: "+=" + (Math.random() * 60 - 30),
+                        y: "+=" + (Math.random() * 60 - 30),
+                        rotation: "+=" + (Math.random() * 20 - 10),
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                });
+            }
+
+            state.heldStack = [];
         }
 
         // overlap detection for drop zones (lenient - entire filing area)
@@ -1005,8 +1197,8 @@
                     rotation: randomRot,
                     scale: 1,
                     opacity: 1,
-                    duration: 0.5,
-                    delay: i * 0.1,
+                    duration: 0.2, // much faster
+                    delay: i * 0.02, // very fast stagger
                     ease: 'back.out(1.7)',
                     onComplete: () => {
                         makeImageDraggable(img);
@@ -1033,7 +1225,7 @@
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
 
-                onPress: function() {
+                onPress: function () {
                     state.currentZIndex++;
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
@@ -1042,7 +1234,7 @@
                     });
                 },
 
-                onDragEnd: function() {
+                onDragEnd: function () {
                     gsap.to(this.target, {
                         scale: 1,
                         duration: 0.3
@@ -1076,8 +1268,8 @@
                     rotation: 0,
                     scale: 0.3,
                     opacity: 0,
-                    duration: 0.5,
-                    delay: i * 0.05,
+                    duration: 0.2, // much faster
+                    delay: i * 0.01, // very fast stagger
                     ease: 'power3.in',
                     onComplete: () => {
                         img.remove();
@@ -1118,7 +1310,7 @@
                     x: targetX,
                     y: targetY,
                     rotation: 0,
-                    duration: 0.6,
+                    duration: 0.3,
                     ease: 'power3.out'
                 });
             });
@@ -1178,4 +1370,5 @@
         window.addEventListener('load', init);
     </script>
 </body>
+
 </html>
