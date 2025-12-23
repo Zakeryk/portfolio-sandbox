@@ -38,5 +38,11 @@
     "./assets/file-assets/schoolofbass-03.png",
     "./assets/file-assets/schoolofbass-04.png"
   ],
-  "Crywolf": []
+  "Crywolf": [
+    "./assets/file-assets/crywolf-01.jpg",
+    "./assets/file-assets/crywolf-02.jpg",
+    "./assets/file-assets/crywolf-03.jpg",
+    "./assets/file-assets/crywolf-04.jpg",
+    "./assets/file-assets/crywolf-05.png"
+  ]
 }
