@@ -1527,6 +1527,14 @@
 
         // Check if image is over its parent document
         function checkParentDocOverlap(img) {
+            // only show visual indication if holding a stack (single images can't be dropped)
+            if (state.heldImageStack.length === 0) {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+                return;
+            }
+
             const parentIndex = img.dataset.parent;
             const parentDoc = document.querySelector(`.document[data-index="${parentIndex}"]`);
 
