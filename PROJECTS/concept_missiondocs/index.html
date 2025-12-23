@@ -416,7 +416,6 @@
         function init() {
             generateDocuments();
             setupDraggables();
-            setupClickHandlers();
             addKeyboardShortcuts();
             startIdleAnimation();
         }
@@ -480,6 +479,9 @@
             const docs = document.querySelectorAll('.document');
 
             docs.forEach(doc => {
+                let clickCount = 0;
+                let clickTimeout = null;
+
                 const draggable = Draggable.create(doc, {
                     type: 'x,y',
                     bounds: '#desk-container',
@@ -516,14 +518,22 @@
                         handleDropZoneSnap(this.target);
                     },
 
-                    onRelease: function() {
-                        // subtle rotation wobble on release
-                        gsap.to(this.target, {
-                            rotation: '+=2',
-                            yoyo: true,
-                            repeat: 1,
-                            duration: 0.15
-                        });
+                    onClick: function() {
+                        // handle click vs double-click
+                        clickCount++;
+
+                        if (clickCount === 1) {
+                            clickTimeout = setTimeout(() => {
+                                // single click = spill images
+                                spillImages(this.target);
+                                clickCount = 0;
+                            }, 300);
+                        } else if (clickCount === 2) {
+                            // double click = open url
+                            clearTimeout(clickTimeout);
+                            openDocument(this.target);
+                            clickCount = 0;
+                        }
                     }
                 })[0];
 
@@ -592,82 +602,6 @@
                         duration: 0.2
                     });
                 }
-            });
-        }
-
-        // click handlers: single = spill images, double = open url
-        function setupClickHandlers() {
-            const docs = document.querySelectorAll('.document');
-            let clickTimeout = null;
-            let clickCount = 0;
-            let clickStartPos = { x: 0, y: 0 };
-            let isDragging = false;
-
-            docs.forEach(doc => {
-                doc.addEventListener('mousedown', (e) => {
-                    clickStartPos = { x: e.clientX, y: e.clientY };
-                    isDragging = false;
-                });
-
-                doc.addEventListener('mousemove', (e) => {
-                    const distance = Math.sqrt(
-                        Math.pow(e.clientX - clickStartPos.x, 2) +
-                        Math.pow(e.clientY - clickStartPos.y, 2)
-                    );
-                    if (distance > 10) isDragging = true;
-                });
-
-                doc.addEventListener('mouseup', (e) => {
-                    if (isDragging) return; // ignore if was dragging
-
-                    clickCount++;
-
-                    if (clickCount === 1) {
-                        clickTimeout = setTimeout(() => {
-                            // single click = spill images
-                            spillImages(doc);
-                            clickCount = 0;
-                        }, 300);
-                    } else if (clickCount === 2) {
-                        // double click = open url
-                        clearTimeout(clickTimeout);
-                        openDocument(doc);
-                        clickCount = 0;
-                    }
-                });
-
-                // touch support
-                doc.addEventListener('touchstart', (e) => {
-                    const touch = e.touches[0];
-                    clickStartPos = { x: touch.clientX, y: touch.clientY };
-                    isDragging = false;
-                });
-
-                doc.addEventListener('touchmove', (e) => {
-                    const touch = e.touches[0];
-                    const distance = Math.sqrt(
-                        Math.pow(touch.clientX - clickStartPos.x, 2) +
-                        Math.pow(touch.clientY - clickStartPos.y, 2)
-                    );
-                    if (distance > 10) isDragging = true;
-                });
-
-                doc.addEventListener('touchend', (e) => {
-                    if (isDragging) return;
-
-                    clickCount++;
-
-                    if (clickCount === 1) {
-                        clickTimeout = setTimeout(() => {
-                            spillImages(doc);
-                            clickCount = 0;
-                        }, 300);
-                    } else if (clickCount === 2) {
-                        clearTimeout(clickTimeout);
-                        openDocument(doc);
-                        clickCount = 0;
-                    }
-                });
             });
         }
 
