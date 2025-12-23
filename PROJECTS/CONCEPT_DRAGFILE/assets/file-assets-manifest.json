@@ -28,7 +28,10 @@
     "./assets/file-assets/us2-02.png",
     "./assets/file-assets/us2-03.png"
   ],
-  "Polar Culture": [],
+  "Polar Culture": [
+    "./assets/file-assets/polarculture-01.png",
+    "./assets/file-assets/polarculture-02.png"
+  ],
   "Lil Dusty G": [],
   "School of Bass": [],
   "Crywolf": []
