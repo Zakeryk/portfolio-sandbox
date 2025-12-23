@@ -611,7 +611,14 @@
             hoveredParentId: null, // tracks which folder is being hovered
             activeLightboxImage: null, // currently focused image in lightbox
             savedImageState: null, // stores gsap state before lightbox
-            isDragging: false // tracks if currently dragging a document
+            isDragging: false, // tracks if currently dragging a document
+            heldImageStack: [], // items collected via shake for images
+            imageShakeContext: {
+                lastX: 0,
+                direction: 0,
+                reversals: 0,
+                lastReversalTime: 0
+            }
         };
 
         // initialization
@@ -1339,6 +1346,19 @@
                         scale: 1.05,
                         duration: 0.2
                     });
+
+                    // Reset shake context for images
+                    state.imageShakeContext.lastX = this.x;
+                    state.imageShakeContext.reversals = 0;
+                    state.imageShakeContext.direction = 0;
+                },
+
+                onDrag: function () {
+                    // Check for shake gesture
+                    checkImageShake(this);
+
+                    // Move collected stack if any
+                    updateHeldImageStackPosition(this.target);
                 },
 
                 onDragEnd: function () {
@@ -1349,6 +1369,9 @@
                         scale: 1,
                         duration: 0.3
                     });
+
+                    // Release image stack
+                    releaseImageStack();
                 },
 
                 onClick: function () {
@@ -1356,6 +1379,121 @@
                     enterLightbox(this.target);
                 }
             });
+        }
+
+        // === IMAGE SHAKE & STACK LOGIC ===
+
+        function checkImageShake(draggable) {
+            const currentX = draggable.x;
+            const now = Date.now();
+            const ctx = state.imageShakeContext;
+
+            // Calculate delta and direction
+            const delta = currentX - ctx.lastX;
+            const direction = Math.sign(delta);
+
+            // Only count significant moves
+            if (Math.abs(delta) > 10) {
+                if (direction !== ctx.direction && ctx.direction !== 0) {
+                    // Direction reversal detected
+                    if (now - ctx.lastReversalTime < 400) {
+                        ctx.reversals++;
+                    } else {
+                        ctx.reversals = 1;
+                    }
+                    ctx.lastReversalTime = now;
+                }
+                ctx.direction = direction;
+            }
+
+            ctx.lastX = currentX;
+
+            // Trigger shake if reversals threshold met
+            if (ctx.reversals >= 3 && state.heldImageStack.length === 0) {
+                collectSiblingImages(draggable.target);
+                ctx.reversals = 0;
+            }
+        }
+
+        function collectSiblingImages(leaderImg) {
+            const parentIndex = leaderImg.dataset.parent;
+            const allImages = document.querySelectorAll('.spilled-image');
+
+            // Find valid siblings (same parent folder)
+            const siblings = Array.from(allImages).filter(img =>
+                img !== leaderImg &&
+                img.dataset.parent === parentIndex &&
+                !state.heldImageStack.some(item => item.el === img)
+            );
+
+            if (siblings.length === 0) return;
+
+            // Animate them to the leader
+            siblings.forEach((img, i) => {
+                // Disable individual dragging for siblings
+                const dragInstance = Draggable.get(img);
+                if (dragInstance) dragInstance.disable();
+
+                // Add to stack
+                state.heldImageStack.push({
+                    el: img,
+                    offsetX: (Math.random() * 10 - 5),
+                    offsetY: (Math.random() * 10 - 5) + 5
+                });
+
+                // Animate to position
+                gsap.to(img, {
+                    x: gsap.getProperty(leaderImg, "x") + (Math.random() * 10 - 5),
+                    y: gsap.getProperty(leaderImg, "y") + (Math.random() * 20 - 10) + 10,
+                    rotation: gsap.getProperty(leaderImg, "rotation") + (Math.random() * 10 - 5),
+                    scale: 1,
+                    zIndex: state.currentZIndex - 1 - i,
+                    duration: 0.5,
+                    ease: "back.out(1.2)"
+                });
+            });
+
+            // Pulse the leader
+            gsap.fromTo(leaderImg,
+                { scale: 1.15 },
+                { scale: 1.05, duration: 0.3, ease: "elastic.out(1, 0.3)" }
+            );
+        }
+
+        function updateHeldImageStackPosition(leaderImg) {
+            if (state.heldImageStack.length === 0) return;
+
+            const leaderX = gsap.getProperty(leaderImg, "x");
+            const leaderY = gsap.getProperty(leaderImg, "y");
+
+            state.heldImageStack.forEach(item => {
+                gsap.to(item.el, {
+                    x: leaderX + item.offsetX,
+                    y: leaderY + item.offsetY,
+                    duration: 0.1,
+                    overwrite: "auto"
+                });
+            });
+        }
+
+        function releaseImageStack() {
+            if (state.heldImageStack.length === 0) return;
+
+            // Scatter the stack
+            state.heldImageStack.forEach(item => {
+                const dragInstance = Draggable.get(item.el);
+                if (dragInstance) dragInstance.enable();
+
+                gsap.to(item.el, {
+                    x: "+=" + (Math.random() * 60 - 30),
+                    y: "+=" + (Math.random() * 60 - 30),
+                    rotation: "+=" + (Math.random() * 20 - 10),
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            });
+
+            state.heldImageStack = [];
         }
 
         // === LIGHTBOX LOGIC ===
