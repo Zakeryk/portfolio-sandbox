@@ -73,7 +73,7 @@
       align-items: center;
       height: 100vh;
       width: fit-content;
-      padding: 0 40px 0 5vw;
+      padding: 0 40px 0 50vw;
       gap: 8vw;
       position: fixed;
       top: 0;
@@ -796,15 +796,16 @@
         if (firstItem) {
           const itemOffset = firstItem.offsetLeft - scrollContainer.offsetLeft;
           minScroll = itemOffset - (window.innerWidth / 2) + (firstItem.offsetWidth / 2);
-          // ensure minScroll is at least 0
-          minScroll = Math.max(0, minScroll);
 
           window.scrollTo({
             top: minScroll,
             behavior: 'auto'
           });
+
+          // trigger scroll handler to update dots
+          onScroll();
         }
-      }, 50);
+      }, 100);
 
       // hide scroll hint after first scroll
       let hasScrolled = false;
