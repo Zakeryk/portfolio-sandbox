@@ -53,7 +53,7 @@
       align-items: center;
       height: 100vh;
       width: fit-content;
-      padding: 0 5vw 0 5vw;
+      padding: 0 50vw 0 5vw;
       gap: 10vw;
       position: fixed;
       top: 0;
@@ -419,11 +419,10 @@
         dotsContainer.appendChild(dot);
       });
 
-      // set body height to match horizontal scroll width minus viewport
+      // set body height to match horizontal scroll width
       const scrollContainer = document.getElementById('scroll-container');
       const totalWidth = scrollContainer.scrollWidth;
-      const scrollableHeight = totalWidth - window.innerWidth;
-      document.body.style.height = `${scrollableHeight}px`;
+      document.body.style.height = `${totalWidth}px`;
 
       document.getElementById('preloader').classList.add('loaded');
 
