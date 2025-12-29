@@ -112,6 +112,9 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
     }
 
     .item-label {
@@ -413,6 +416,10 @@
     let isDragging = false;
     let startX = 0;
     let startScrollY = 0;
+    let dragVelocity = 0;
+    let lastDragX = 0;
+    let lastDragTime = 0;
+    let momentumRAF = null;
 
     // debug params
     const params = {
@@ -749,9 +756,18 @@
 
     // drag handlers
     function onMouseDown(e) {
+      // cancel any ongoing momentum
+      if (momentumRAF) {
+        cancelAnimationFrame(momentumRAF);
+        momentumRAF = null;
+      }
+
       isDragging = true;
       startX = e.clientX;
+      lastDragX = e.clientX;
+      lastDragTime = Date.now();
       startScrollY = window.scrollY;
+      dragVelocity = 0;
       document.body.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
     }
@@ -759,17 +775,51 @@
     function onMouseMove(e) {
       if (!isDragging) return;
 
-      const deltaX = startX - e.clientX;
+      const currentTime = Date.now();
+      const deltaTime = currentTime - lastDragTime;
+      const deltaX = lastDragX - e.clientX;
+
+      // calculate velocity
+      if (deltaTime > 0) {
+        dragVelocity = deltaX / deltaTime * 16; // normalize to 60fps
+      }
+
+      lastDragX = e.clientX;
+      lastDragTime = currentTime;
+
+      const totalDelta = startX - e.clientX;
       window.scrollTo({
-        top: startScrollY + deltaX,
+        top: startScrollY + totalDelta,
         behavior: 'auto'
       });
     }
 
     function onMouseUp() {
+      if (isDragging && Math.abs(dragVelocity) > 0.5) {
+        // apply momentum
+        applyMomentum();
+      }
+
       isDragging = false;
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+    }
+
+    function applyMomentum() {
+      if (Math.abs(dragVelocity) < 0.1) {
+        momentumRAF = null;
+        return;
+      }
+
+      window.scrollBy({
+        top: dragVelocity,
+        behavior: 'auto'
+      });
+
+      // decelerate
+      dragVelocity *= 0.92;
+
+      momentumRAF = requestAnimationFrame(applyMomentum);
     }
 
     // init
