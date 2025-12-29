@@ -978,13 +978,42 @@
       // initial call to set position
       onScroll();
 
-      // ESC key and debug toggle
+      // keyboard navigation
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           window.location.href = '/';
         }
         if (e.key === '`') {
           document.body.classList.toggle('debug-mode');
+        }
+
+        // arrow key navigation
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+
+          const dots = document.querySelectorAll('.timeline-dot');
+          let currentIndex = Array.from(dots).findIndex(dot => dot.classList.contains('active'));
+
+          if (currentIndex === -1) currentIndex = 0;
+
+          if (e.key === 'ArrowRight') {
+            currentIndex = Math.min(currentIndex + 1, timelineConfig.length - 1);
+          } else if (e.key === 'ArrowLeft') {
+            currentIndex = Math.max(currentIndex - 1, 0);
+          }
+
+          // scroll to the target item
+          const scrollContainer = document.getElementById('scroll-container');
+          const item = timelineItems[currentIndex];
+          if (item) {
+            const itemOffset = item.offsetLeft - scrollContainer.offsetLeft;
+            const targetScroll = itemOffset - (window.innerWidth / 2) + (item.offsetWidth / 2);
+
+            window.scrollTo({
+              top: targetScroll,
+              behavior: 'smooth'
+            });
+          }
         }
       });
 
