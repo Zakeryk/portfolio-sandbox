@@ -1,6 +1,18 @@
 {
   "active": [
     {
+      "id": "concept_dragfile",
+      "path": "./projects/concept_dragfile/",
+      "title": "CONCEPT_DRAGFILE",
+      "tags": [
+        "Experiment",
+        "Interactive"
+      ],
+      "active": true,
+      "image": "./projects/concept_dragfile/thumb.png",
+      "date": "2025-12-29T23:51:21.982Z"
+    },
+    {
       "id": "concept_kiosk",
       "path": "./projects/concept_kiosk/",
       "title": "CONCEPT_KIOSK",
@@ -10,18 +22,6 @@
       "active": true,
       "image": "./projects/concept_kiosk/thumb.png",
       "date": "2025-12-29T23:49:21.041Z"
-    },
-    {
-      "id": "concept_dragfile",
-      "path": "./projects/concept_dragfile/",
-      "title": "CONCEPT_DRAGFILE",
-      "tags": [
-        "Experiment",
-        "Interactive"
-      ],
-      "active": true,
-      "image": null,
-      "date": "2025-12-24T18:42:01.806Z"
     },
     {
       "id": "concept_xbox",
