@@ -512,6 +512,7 @@
     let lastScrollY = 0;
     let scrollVelocity = 0;
     let timelineItems = [];
+    let minScroll = 0; // minimum scroll position (centers first item)
 
     // drag state
     let isDragging = false;
@@ -789,14 +790,17 @@
 
       document.getElementById('preloader').classList.add('loaded');
 
-      // center first item on load
+      // center first item on load and set minimum scroll
       setTimeout(() => {
         const firstItem = timelineItems[0];
         if (firstItem) {
           const itemOffset = firstItem.offsetLeft - scrollContainer.offsetLeft;
-          const targetScroll = itemOffset - (window.innerWidth / 2) + (firstItem.offsetWidth / 2);
+          minScroll = itemOffset - (window.innerWidth / 2) + (firstItem.offsetWidth / 2);
+          // ensure minScroll is at least 0
+          minScroll = Math.max(0, minScroll);
+
           window.scrollTo({
-            top: Math.max(0, targetScroll),
+            top: minScroll,
             behavior: 'auto'
           });
         }
@@ -842,7 +846,16 @@
     function onScroll() {
       const scrollContainer = document.getElementById('scroll-container');
       const maxScroll = scrollContainer.scrollWidth - window.innerWidth;
-      const verticalScroll = window.scrollY;
+      let verticalScroll = window.scrollY;
+
+      // constrain scroll to not go below minScroll (keeps first item centered or right of center)
+      if (verticalScroll < minScroll) {
+        window.scrollTo({
+          top: minScroll,
+          behavior: 'auto'
+        });
+        verticalScroll = minScroll;
+      }
 
       // calculate scroll velocity
       scrollVelocity = Math.abs(verticalScroll - lastScrollY);
@@ -901,22 +914,10 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      const activeIndex = findClosestItemIndex();
-
       // update all model rotations based on scroll
-      modelInstances.forEach((instance, index) => {
-        // find the timeline item index for this model instance
-        const modelItemIndex = timelineItems.findIndex(item => item.contains(instance.renderer.domElement));
-
-        if (modelItemIndex === activeIndex) {
-          // if this model is the active/centered item, face forward
-          instance.model.rotation.y = 0;
-        } else {
-          // otherwise rotate based on scroll
-          const scrollRotation = scrollProgress * Math.PI * 2 * params.rotationSensitivity;
-          instance.model.rotation.y = instance.baseRotation + scrollRotation;
-        }
-
+      modelInstances.forEach(instance => {
+        const scrollRotation = scrollProgress * Math.PI * 2 * params.rotationSensitivity;
+        instance.model.rotation.y = instance.baseRotation + scrollRotation;
         instance.renderer.render(instance.scene, instance.camera);
       });
 
@@ -1008,6 +1009,18 @@
 
     function applyMomentum() {
       if (Math.abs(dragVelocity) < 0.1) {
+        momentumRAF = null;
+        return;
+      }
+
+      const newScrollPos = window.scrollY + dragVelocity;
+
+      // stop momentum if we hit the minimum scroll boundary
+      if (newScrollPos < minScroll) {
+        window.scrollTo({
+          top: minScroll,
+          behavior: 'auto'
+        });
         momentumRAF = null;
         return;
       }
