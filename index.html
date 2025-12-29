@@ -683,7 +683,7 @@
                     // NOTE: THIS LIST REPRESENTS PAST CLIENTS AND COLLABORATORS. DUE TO NDAs, SOME WORKS ARE NOT
                     PUBLICLY VISIBLE BUT ARE AVAILABLE UPON REQUEST.
                 </p>
-                <ul class="work-links mono">
+                <ul class="work-links mono clients-list">
                     <li>99ALBUMART</li>
                     <li>ABSOLUTE</li>
                     <li>AELIA</li>
@@ -800,11 +800,15 @@
 
         .work-links {
             list-style: none;
-            padding: 20px 20px 80px 20px;
+            padding: 20px;
             margin: 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        .work-links.clients-list {
+            padding-bottom: 100px;
         }
 
         .work-links li {
