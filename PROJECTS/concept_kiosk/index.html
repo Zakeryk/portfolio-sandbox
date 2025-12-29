@@ -191,6 +191,7 @@
       border-radius: 20px;
       z-index: 100;
       backdrop-filter: blur(10px);
+      pointer-events: all;
     }
 
     .timeline-dot {
@@ -199,12 +200,23 @@
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.3);
       transition: all 0.3s ease;
+      cursor: pointer;
+      pointer-events: all;
+    }
+
+    .timeline-dot:hover {
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(1.2);
     }
 
     .timeline-dot.active {
       background: #ffffff;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
       transform: scale(1.4);
+    }
+
+    .timeline-dot.active:hover {
+      transform: scale(1.5);
     }
 
     #scroll-progress {
@@ -542,12 +554,30 @@
         timelineItems.push(item);
       });
 
-      // create timeline dots
+      // create timeline dots with click handlers
       const dotsContainer = document.getElementById('timeline-indicator');
       timelineConfig.forEach((_, index) => {
         const dot = document.createElement('div');
         dot.className = 'timeline-dot';
         dot.dataset.index = index;
+
+        // click handler to scroll to corresponding item
+        dot.addEventListener('click', () => {
+          const scrollContainer = document.getElementById('scroll-container');
+          const item = timelineItems[index];
+          if (item) {
+            // calculate scroll position needed to center this item
+            const itemOffset = item.offsetLeft - scrollContainer.offsetLeft;
+            const targetScroll = itemOffset - (window.innerWidth / 2) + (item.offsetWidth / 2);
+
+            // smooth scroll
+            window.scrollTo({
+              top: targetScroll,
+              behavior: 'smooth'
+            });
+          }
+        });
+
         dotsContainer.appendChild(dot);
       });
 
@@ -605,31 +635,31 @@
 
     // apply distortion/momentum effects based on scroll velocity
     function applyMomentumEffects() {
-      const maxVelocity = 50; // max velocity for full effect
+      const maxVelocity = 80; // increased threshold for smoother feel
       const normalizedVelocity = Math.min(scrollVelocity / maxVelocity, 1);
 
-      // skew amount based on velocity
-      const skewAmount = normalizedVelocity * 4;
+      // reduced skew amount
+      const skewAmount = normalizedVelocity * 1.5;
 
-      // horizontal stretch based on velocity
-      const scaleX = 1 + (normalizedVelocity * 0.08);
+      // reduced horizontal stretch
+      const scaleX = 1 + (normalizedVelocity * 0.03);
 
-      // slight scale change
-      const scale = 1 + (normalizedVelocity * 0.05);
+      // reduced scale change
+      const scale = 1 + (normalizedVelocity * 0.02);
 
       timelineItems.forEach((item, index) => {
         const baseY = parseFloat(item.dataset.baseY) || 0;
 
-        // add slight vertical offset based on velocity (momentum effect)
-        const momentumOffset = (index % 2 === 0 ? 1 : -1) * normalizedVelocity * 3;
+        // reduced vertical offset
+        const momentumOffset = (index % 2 === 0 ? 1 : -1) * normalizedVelocity * 1;
 
         // apply transforms - combine translateY, skew, and scale
         item.style.transform = `translateY(${baseY + momentumOffset}vh) skewX(${-skewAmount}deg) scaleX(${scaleX}) scale(${scale})`;
         item.style.filter = 'none';
       });
 
-      // gradually reduce velocity for smooth deceleration
-      scrollVelocity *= 0.8;
+      // faster deceleration for smoother feel
+      scrollVelocity *= 0.85;
     }
 
     // animation loop
