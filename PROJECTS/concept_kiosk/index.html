@@ -419,10 +419,11 @@
         dotsContainer.appendChild(dot);
       });
 
-      // set body height to match horizontal scroll width
+      // set body height to match horizontal scroll width minus viewport
       const scrollContainer = document.getElementById('scroll-container');
       const totalWidth = scrollContainer.scrollWidth;
-      document.body.style.height = `${totalWidth}px`;
+      const scrollableHeight = totalWidth - window.innerWidth;
+      document.body.style.height = `${scrollableHeight}px`;
 
       document.getElementById('preloader').classList.add('loaded');
 
