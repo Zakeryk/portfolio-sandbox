@@ -16,7 +16,7 @@
     html, body {
       margin: 0;
       padding: 0;
-      background: #f5f1eb;
+      background: #ffffff;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
@@ -38,11 +38,11 @@
       content: '';
       position: fixed;
       top: 0;
-      left: 0;
-      width: 100%;
-      height: 200px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200"><path d="M0,100 Q300,20 600,100 T1200,100" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.6"/><path d="M0,105 Q300,25 600,105 T1200,105" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/><path d="M0,110 Q300,30 600,110 T1200,110" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.5"/><path d="M0,115 Q300,35 600,115 T1200,115" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M0,120 Q300,40 600,120 T1200,120" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M0,125 Q300,45 600,125 T1200,125" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.4"/><path d="M0,130 Q300,50 600,130 T1200,130" fill="none" stroke="%2310b981" stroke-width="2" opacity="0.3"/></svg>') no-repeat top center;
-      background-size: 100% 200px;
+      left: -10%;
+      width: 120%;
+      height: 80px;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1400 200"><path d="M-100,100 Q200,20 500,100 T1100,100 T1700,100" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.6"/><path d="M-100,105 Q200,25 500,105 T1100,105 T1700,105" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/><path d="M-100,110 Q200,30 500,110 T1100,110 T1700,110" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.5"/><path d="M-100,115 Q200,35 500,115 T1100,115 T1700,115" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-100,120 Q200,40 500,120 T1100,120 T1700,120" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-100,125 Q200,45 500,125 T1100,125 T1700,125" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.4"/><path d="M-100,130 Q200,50 500,130 T1100,130 T1700,130" fill="none" stroke="%2310b981" stroke-width="2" opacity="0.3"/></svg>') no-repeat top left;
+      background-size: 100% 100%;
       pointer-events: none;
       z-index: 1;
     }
@@ -51,11 +51,11 @@
       content: '';
       position: fixed;
       bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 200px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200"><path d="M0,100 Q300,180 600,100 T1200,100" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.3"/><path d="M0,95 Q300,175 600,95 T1200,95" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M0,90 Q300,170 600,90 T1200,90" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M0,85 Q300,165 600,85 T1200,85" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/></svg>') no-repeat bottom center;
-      background-size: 100% 200px;
+      left: -10%;
+      width: 120%;
+      height: 80px;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1400 200"><path d="M-100,100 Q200,180 500,100 T1100,100 T1700,100" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.3"/><path d="M-100,95 Q200,175 500,95 T1100,95 T1700,95" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-100,90 Q200,170 500,90 T1100,90 T1700,90" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-100,85 Q200,165 500,85 T1100,85 T1700,85" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/></svg>') no-repeat bottom left;
+      background-size: 100% 100%;
       pointer-events: none;
       z-index: 1;
     }
@@ -427,7 +427,7 @@
     // create a model viewer instance
     function createModelViewer(container, baseRotation) {
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x000000);
+      scene.background = null; // transparent background
 
       // camera
       const aspect = 1; // square aspect ratio
@@ -442,7 +442,8 @@
       const renderer = new THREE.WebGLRenderer({
         canvas: canvas,
         antialias: true,
-        alpha: true
+        alpha: true,
+        premultipliedAlpha: false
       });
       renderer.setSize(container.clientWidth, container.clientHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
