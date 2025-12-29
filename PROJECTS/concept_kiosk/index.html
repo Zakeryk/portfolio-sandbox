@@ -462,21 +462,24 @@
       const maxVelocity = 50; // max velocity for full effect
       const normalizedVelocity = Math.min(scrollVelocity / maxVelocity, 1);
 
-      // blur amount based on velocity
-      const blurAmount = normalizedVelocity * 8;
-
       // skew amount based on velocity
-      const skewAmount = normalizedVelocity * 3;
+      const skewAmount = normalizedVelocity * 4;
+
+      // horizontal stretch based on velocity
+      const scaleX = 1 + (normalizedVelocity * 0.08);
+
+      // slight scale change
+      const scale = 1 + (normalizedVelocity * 0.05);
 
       timelineItems.forEach((item, index) => {
         const baseY = parseFloat(item.dataset.baseY) || 0;
 
         // add slight vertical offset based on velocity (momentum effect)
-        const momentumOffset = (index % 2 === 0 ? 1 : -1) * normalizedVelocity * 2;
+        const momentumOffset = (index % 2 === 0 ? 1 : -1) * normalizedVelocity * 3;
 
-        // apply transforms
-        item.style.transform = `translateY(${baseY + momentumOffset}vh) skewX(${-skewAmount}deg)`;
-        item.style.filter = `blur(${blurAmount}px)`;
+        // apply transforms - combine translateY, skew, and scale
+        item.style.transform = `translateY(${baseY + momentumOffset}vh) skewX(${-skewAmount}deg) scaleX(${scaleX}) scale(${scale})`;
+        item.style.filter = 'none';
       });
 
       // gradually reduce velocity for smooth deceleration
