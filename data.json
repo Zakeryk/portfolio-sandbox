@@ -8,8 +8,8 @@
         "Experiment"
       ],
       "active": true,
-      "image": null,
-      "date": "2025-12-29T23:42:19.815Z"
+      "image": "./projects/concept_kiosk/thumb.png",
+      "date": "2025-12-29T23:49:21.041Z"
     },
     {
       "id": "concept_dragfile",
