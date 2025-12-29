@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium Concessions Equipment | Product Showcase</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/impact');
+  </style>
 
   <style>
     * {
@@ -27,6 +30,11 @@
       min-height: 100vh;
       scrollbar-width: none; /* firefox */
       -ms-overflow-style: none; /* ie/edge */
+      cursor: grab;
+    }
+
+    body:active {
+      cursor: grabbing;
     }
 
     body::-webkit-scrollbar {
@@ -38,10 +46,10 @@
       content: '';
       position: fixed;
       top: 0;
-      left: -10%;
-      width: 120%;
+      left: -30%;
+      width: 160%;
       height: 80px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1400 200"><path d="M-100,100 Q200,20 500,100 T1100,100 T1700,100" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.6"/><path d="M-100,105 Q200,25 500,105 T1100,105 T1700,105" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/><path d="M-100,110 Q200,30 500,110 T1100,110 T1700,110" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.5"/><path d="M-100,115 Q200,35 500,115 T1100,115 T1700,115" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-100,120 Q200,40 500,120 T1100,120 T1700,120" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-100,125 Q200,45 500,125 T1100,125 T1700,125" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.4"/><path d="M-100,130 Q200,50 500,130 T1100,130 T1700,130" fill="none" stroke="%2310b981" stroke-width="2" opacity="0.3"/></svg>') no-repeat top left;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-400 0 2000 200" preserveAspectRatio="none"><path d="M-400,100 Q-100,20 200,100 T800,100 T1400,100 T2000,100" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.6"/><path d="M-400,105 Q-100,25 200,105 T800,105 T1400,105 T2000,105" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/><path d="M-400,110 Q-100,30 200,110 T800,110 T1400,110 T2000,110" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.5"/><path d="M-400,115 Q-100,35 200,115 T800,115 T1400,115 T2000,115" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-400,120 Q-100,40 200,120 T800,120 T1400,120 T2000,120" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-400,125 Q-100,45 200,125 T800,125 T1400,125 T2000,125" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.4"/><path d="M-400,130 Q-100,50 200,130 T800,130 T1400,130 T2000,130" fill="none" stroke="%2310b981" stroke-width="2" opacity="0.3"/></svg>') no-repeat top left;
       background-size: 100% 100%;
       pointer-events: none;
       z-index: 1;
@@ -51,10 +59,10 @@
       content: '';
       position: fixed;
       bottom: 0;
-      left: -10%;
-      width: 120%;
+      left: -30%;
+      width: 160%;
       height: 80px;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-100 0 1400 200"><path d="M-100,100 Q200,180 500,100 T1100,100 T1700,100" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.3"/><path d="M-100,95 Q200,175 500,95 T1100,95 T1700,95" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-100,90 Q200,170 500,90 T1100,90 T1700,90" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-100,85 Q200,165 500,85 T1100,85 T1700,85" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/></svg>') no-repeat bottom left;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-400 0 2000 200" preserveAspectRatio="none"><path d="M-400,100 Q-100,180 200,100 T800,100 T1400,100 T2000,100" fill="none" stroke="%2306b6d4" stroke-width="2" opacity="0.3"/><path d="M-400,95 Q-100,175 200,95 T800,95 T1400,95 T2000,95" fill="none" stroke="%233b82f6" stroke-width="2" opacity="0.4"/><path d="M-400,90 Q-100,170 200,90 T800,90 T1400,90 T2000,90" fill="none" stroke="%23d946a6" stroke-width="2" opacity="0.4"/><path d="M-400,85 Q-100,165 200,85 T800,85 T1400,85 T2000,85" fill="none" stroke="%23ff6b35" stroke-width="2" opacity="0.5"/></svg>') no-repeat bottom left;
       background-size: 100% 100%;
       pointer-events: none;
       z-index: 1;
@@ -130,6 +138,7 @@
       font-weight: 700;
       letter-spacing: -0.02em;
       text-transform: uppercase;
+      font-family: Impact, 'Impact', 'Arial Black', sans-serif;
     }
 
     .item-label p {
@@ -271,6 +280,7 @@
       letter-spacing: -0.04em;
       line-height: 0.95;
       text-transform: uppercase;
+      font-family: Impact, 'Impact', 'Arial Black', sans-serif;
     }
 
     #hero-text p {
@@ -339,7 +349,7 @@
 
   <div id="hero-text">
     <h1>Snowie<br>Manufacturing</h1>
-    <p>Inventive Concession Solutions</p>
+    <p>Premium Concession Solutions</p>
   </div>
 
   <div id="scroll-hint">Scroll to explore</div>
@@ -397,6 +407,11 @@
     let lastScrollY = 0;
     let scrollVelocity = 0;
     let timelineItems = [];
+
+    // drag state
+    let isDragging = false;
+    let startX = 0;
+    let startScrollY = 0;
 
     // debug params
     const params = {
@@ -731,6 +746,31 @@
       });
     }
 
+    // drag handlers
+    function onMouseDown(e) {
+      isDragging = true;
+      startX = e.clientX;
+      startScrollY = window.scrollY;
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    }
+
+    function onMouseMove(e) {
+      if (!isDragging) return;
+
+      const deltaX = startX - e.clientX;
+      window.scrollTo({
+        top: startScrollY + deltaX,
+        behavior: 'auto'
+      });
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    }
+
     // init
     async function init() {
       await buildTimeline();
@@ -738,6 +778,12 @@
 
       window.addEventListener('scroll', onScroll);
       window.addEventListener('resize', onWindowResize);
+
+      // drag listeners
+      window.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+      window.addEventListener('mouseleave', onMouseUp);
 
       // initial call to set position
       onScroll();
