@@ -807,15 +807,13 @@
     // find which timeline item is closest to center
     function findClosestItemIndex() {
       const viewportCenter = window.innerWidth / 2;
-      const scrollContainer = document.getElementById('scroll-container');
-      const containerLeft = scrollContainer.getBoundingClientRect().left;
 
       let closestIndex = 0;
       let closestDistance = Infinity;
 
       timelineItems.forEach((item, index) => {
         const itemRect = item.getBoundingClientRect();
-        const itemCenter = itemRect.left + (itemRect.width / 2) - containerLeft;
+        const itemCenter = itemRect.left + (itemRect.width / 2);
         const distance = Math.abs(itemCenter - viewportCenter);
 
         if (distance < closestDistance) {
