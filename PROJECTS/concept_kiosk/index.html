@@ -66,7 +66,8 @@
     .timeline-item {
       flex-shrink: 0;
       position: relative;
-      transition: transform 0.3s ease;
+      transition: filter 0.2s ease-out;
+      will-change: transform, filter;
     }
 
     .timeline-item.model-item {
@@ -158,8 +159,8 @@
     }
 
     .timeline-dot {
-      width: 8px;
-      height: 8px;
+      width: 5px;
+      height: 5px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.3);
       transition: all 0.3s ease;
@@ -168,7 +169,7 @@
     .timeline-dot.active {
       background: #ffffff;
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-      transform: scale(1.3);
+      transform: scale(1.4);
     }
 
     #scroll-progress {
@@ -226,13 +227,13 @@
 
     // timeline config
     const timelineConfig = [
-      { type: 'image', src: 'https://via.placeholder.com/800x600/111111/444444?text=Image+1' },
+      { type: 'image', src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=600&fit=crop' },
       { type: 'model', baseRotation: 0 },
-      { type: 'image', src: 'https://via.placeholder.com/800x600/111111/444444?text=Image+2' },
+      { type: 'image', src: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop' },
       { type: 'model', baseRotation: Math.PI * 0.5 },
-      { type: 'image', src: 'https://via.placeholder.com/800x600/111111/444444?text=Image+3' },
+      { type: 'image', src: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&h=600&fit=crop' },
       { type: 'model', baseRotation: Math.PI },
-      { type: 'image', src: 'https://via.placeholder.com/800x600/111111/444444?text=Image+4' },
+      { type: 'image', src: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop' },
       { type: 'model', baseRotation: Math.PI * 1.5 },
     ];
 
@@ -240,6 +241,9 @@
     let loadedModel = null;
     let modelInstances = [];
     let scrollProgress = 0;
+    let lastScrollY = 0;
+    let scrollVelocity = 0;
+    let timelineItems = [];
 
     // debug params
     const params = {
@@ -389,6 +393,7 @@
 
         // random vertical offset
         const randomY = (Math.random() - 0.5) * 20; // -10vh to +10vh
+        item.dataset.baseY = randomY;
         item.style.transform = `translateY(${randomY}vh)`;
 
         if (config.type === 'image') {
@@ -402,6 +407,7 @@
         }
 
         container.appendChild(item);
+        timelineItems.push(item);
       });
 
       // create timeline dots
@@ -427,6 +433,10 @@
       const maxScroll = scrollContainer.scrollWidth - window.innerWidth;
       const verticalScroll = window.scrollY;
 
+      // calculate scroll velocity
+      scrollVelocity = Math.abs(verticalScroll - lastScrollY);
+      lastScrollY = verticalScroll;
+
       // translate horizontal position based on vertical scroll
       scrollContainer.style.transform = `translateX(-${verticalScroll}px)`;
 
@@ -442,6 +452,35 @@
       dots.forEach((dot, index) => {
         dot.classList.toggle('active', index === currentIndex);
       });
+
+      // apply momentum effects
+      applyMomentumEffects();
+    }
+
+    // apply distortion/momentum effects based on scroll velocity
+    function applyMomentumEffects() {
+      const maxVelocity = 50; // max velocity for full effect
+      const normalizedVelocity = Math.min(scrollVelocity / maxVelocity, 1);
+
+      // blur amount based on velocity
+      const blurAmount = normalizedVelocity * 8;
+
+      // skew amount based on velocity
+      const skewAmount = normalizedVelocity * 3;
+
+      timelineItems.forEach((item, index) => {
+        const baseY = parseFloat(item.dataset.baseY) || 0;
+
+        // add slight vertical offset based on velocity (momentum effect)
+        const momentumOffset = (index % 2 === 0 ? 1 : -1) * normalizedVelocity * 2;
+
+        // apply transforms
+        item.style.transform = `translateY(${baseY + momentumOffset}vh) skewX(${-skewAmount}deg)`;
+        item.style.filter = `blur(${blurAmount}px)`;
+      });
+
+      // gradually reduce velocity for smooth deceleration
+      scrollVelocity *= 0.8;
     }
 
     // animation loop
@@ -454,6 +493,11 @@
         instance.model.rotation.y = instance.baseRotation + scrollRotation;
         instance.renderer.render(instance.scene, instance.camera);
       });
+
+      // continue applying momentum effects even when not scrolling
+      if (scrollVelocity > 0.1) {
+        applyMomentumEffects();
+      }
     }
 
     // setup GUI
