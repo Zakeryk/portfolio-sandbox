@@ -86,8 +86,13 @@
     .timeline-item {
       flex-shrink: 0;
       position: relative;
-      transition: filter 0.2s ease-out;
+      transition: filter 0.2s ease-out, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
       will-change: transform, filter;
+    }
+
+    .timeline-item:hover {
+      transform: scale(1.05) !important;
+      z-index: 10;
     }
 
     .timeline-item.model-item {
