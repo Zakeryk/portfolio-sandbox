@@ -291,7 +291,10 @@
         antialias: true,
         alpha: true
       });
-      renderer.setSize(container.clientWidth, container.clientHeight);
+
+      // force initial size calculation
+      const size = Math.min(container.clientWidth || 500, container.clientHeight || 500);
+      renderer.setSize(size, size);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.0;
@@ -423,6 +426,13 @@
       const scrollContainer = document.getElementById('scroll-container');
       const totalWidth = scrollContainer.scrollWidth;
       document.body.style.height = `${totalWidth}px`;
+
+      // force initial render of all models
+      requestAnimationFrame(() => {
+        modelInstances.forEach(instance => {
+          instance.renderer.render(instance.scene, instance.camera);
+        });
+      });
 
       document.getElementById('preloader').classList.add('loaded');
     }
