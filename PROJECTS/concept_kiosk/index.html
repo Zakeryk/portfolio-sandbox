@@ -789,6 +789,19 @@
 
       document.getElementById('preloader').classList.add('loaded');
 
+      // center first item on load
+      setTimeout(() => {
+        const firstItem = timelineItems[0];
+        if (firstItem) {
+          const itemOffset = firstItem.offsetLeft - scrollContainer.offsetLeft;
+          const targetScroll = itemOffset - (window.innerWidth / 2) + (firstItem.offsetWidth / 2);
+          window.scrollTo({
+            top: Math.max(0, targetScroll),
+            behavior: 'auto'
+          });
+        }
+      }, 50);
+
       // hide scroll hint after first scroll
       let hasScrolled = false;
       window.addEventListener('scroll', () => {
@@ -888,10 +901,22 @@
     function animate() {
       requestAnimationFrame(animate);
 
+      const activeIndex = findClosestItemIndex();
+
       // update all model rotations based on scroll
-      modelInstances.forEach(instance => {
-        const scrollRotation = scrollProgress * Math.PI * 2 * params.rotationSensitivity;
-        instance.model.rotation.y = instance.baseRotation + scrollRotation;
+      modelInstances.forEach((instance, index) => {
+        // find the timeline item index for this model instance
+        const modelItemIndex = timelineItems.findIndex(item => item.contains(instance.renderer.domElement));
+
+        if (modelItemIndex === activeIndex) {
+          // if this model is the active/centered item, face forward
+          instance.model.rotation.y = 0;
+        } else {
+          // otherwise rotate based on scroll
+          const scrollRotation = scrollProgress * Math.PI * 2 * params.rotationSensitivity;
+          instance.model.rotation.y = instance.baseRotation + scrollRotation;
+        }
+
         instance.renderer.render(instance.scene, instance.camera);
       });
 
