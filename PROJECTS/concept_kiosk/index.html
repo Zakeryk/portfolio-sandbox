@@ -1075,6 +1075,20 @@
       window.addEventListener('mouseup', onMouseUp);
       window.addEventListener('mouseleave', onMouseUp);
 
+      // horizontal trackpad gesture support
+      window.addEventListener('wheel', (e) => {
+        // detect horizontal scroll (trackpad swipe)
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          e.preventDefault();
+
+          // convert horizontal scroll to our timeline scroll
+          window.scrollBy({
+            top: e.deltaX,
+            behavior: 'auto'
+          });
+        }
+      }, { passive: false });
+
       // initial call to set position
       onScroll();
 
