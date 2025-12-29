@@ -12,14 +12,18 @@
       box-sizing: border-box;
     }
 
-    body {
+    html, body {
       margin: 0;
-      overflow-x: auto;
-      overflow-y: auto;
+      padding: 0;
       background: #000000;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      height: 100vh;
+    }
+
+    body {
+      overflow-x: hidden;
+      overflow-y: auto;
       position: relative;
+      min-height: 100vh;
     }
 
     /* grid overlay */
@@ -45,8 +49,12 @@
       width: fit-content;
       padding: 0 100vw 0 100vw;
       gap: 15vw;
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
       z-index: 2;
+      transform: translateX(0);
+      will-change: transform;
     }
 
     .timeline-item {
@@ -399,27 +407,32 @@
         dotsContainer.appendChild(dot);
       });
 
+      // set body height to match horizontal scroll width
+      const scrollContainer = document.getElementById('scroll-container');
+      const totalWidth = scrollContainer.scrollWidth;
+      document.body.style.height = `${totalWidth}px`;
+
       document.getElementById('preloader').classList.add('loaded');
     }
 
     // scroll handler with vertical to horizontal conversion
     function onScroll() {
-      const maxScroll = document.documentElement.scrollWidth - window.innerWidth;
-
-      // convert vertical scroll to horizontal
+      const scrollContainer = document.getElementById('scroll-container');
+      const maxScroll = scrollContainer.scrollWidth - window.innerWidth;
       const verticalScroll = window.scrollY;
-      const targetHorizontalScroll = verticalScroll;
-      window.scrollTo(targetHorizontalScroll, 0);
 
-      scrollProgress = window.scrollX / (maxScroll || 1);
+      // translate horizontal position based on vertical scroll
+      scrollContainer.style.transform = `translateX(-${verticalScroll}px)`;
+
+      scrollProgress = verticalScroll / (maxScroll || 1);
 
       // update progress bar
       const progressFill = document.getElementById('scroll-progress-fill');
-      progressFill.style.height = `${scrollProgress * 100}%`;
+      progressFill.style.height = `${Math.min(scrollProgress * 100, 100)}%`;
 
       // update timeline dots
       const dots = document.querySelectorAll('.timeline-dot');
-      const currentIndex = Math.floor(scrollProgress * timelineConfig.length);
+      const currentIndex = Math.min(Math.floor(scrollProgress * timelineConfig.length), timelineConfig.length - 1);
       dots.forEach((dot, index) => {
         dot.classList.toggle('active', index === currentIndex);
       });
@@ -471,12 +484,11 @@
       await buildTimeline();
       setupGUI();
 
-      window.addEventListener('scroll', onScroll, { passive: false });
-      window.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        window.scrollBy(e.deltaY, 0);
-      }, { passive: false });
+      window.addEventListener('scroll', onScroll);
       window.addEventListener('resize', onWindowResize);
+
+      // initial call to set position
+      onScroll();
 
       // ESC key and debug toggle
       window.addEventListener('keydown', (e) => {
