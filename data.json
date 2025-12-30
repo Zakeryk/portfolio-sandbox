@@ -1,17 +1,6 @@
 {
   "active": [
     {
-      "id": "concept_xbox",
-      "path": "./projects/concept_xbox/",
-      "title": "CONCEPT_XBOX",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": "./projects/concept_xbox/thumb.png",
-      "date": "2025-12-29T23:56:23.260Z"
-    },
-    {
       "id": "concept_dragfile",
       "path": "./projects/concept_dragfile/",
       "title": "CONCEPT_DRAGFILE",
@@ -47,6 +36,17 @@
     }
   ],
   "archived": [
+    {
+      "id": "concept_xbox",
+      "path": "./PROJECTS/ARCHIVED/concept_xbox/",
+      "title": "CONCEPT_XBOX",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": "./PROJECTS/ARCHIVED/concept_xbox/thumb.png",
+      "date": "2025-12-29T23:56:23.260Z"
+    },
     {
       "id": "concept_react",
       "path": "./PROJECTS/ARCHIVED/concept_react/",
