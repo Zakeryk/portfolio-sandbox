@@ -589,125 +589,10 @@
             color: var(--accent);
             text-shadow: 0 0 8px var(--accent);
         }
-
-        /* TV TURN ON ANIMATION */
-        #tv-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 99999;
-            pointer-events: none;
-            display: none;
-        }
-
-        #tv-overlay.active {
-            display: block;
-            animation: tv-on 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        @keyframes tv-on {
-            0% {
-                clip-path: inset(49.5% 0 49.5% 0);
-                opacity: 1;
-            }
-            15% {
-                clip-path: inset(49.5% 0 49.5% 0);
-                opacity: 1;
-            }
-            30% {
-                clip-path: inset(40% 0 40% 0);
-                opacity: 1;
-            }
-            50% {
-                clip-path: inset(20% 0 20% 0);
-                opacity: 0.95;
-            }
-            70% {
-                clip-path: inset(0 0 0 0);
-                opacity: 0.6;
-            }
-            85% {
-                opacity: 0.3;
-            }
-            100% {
-                clip-path: inset(0 0 0 0);
-                opacity: 0;
-            }
-        }
-
-        #tv-overlay::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background:
-                repeating-linear-gradient(
-                    0deg,
-                    rgba(255, 255, 255, 0.03) 0px,
-                    rgba(0, 0, 0, 0.05) 2px,
-                    rgba(255, 255, 255, 0.03) 4px
-                );
-            animation: tv-static 0.8s steps(8) forwards;
-            opacity: 0;
-        }
-
-        @keyframes tv-static {
-            0%, 15% {
-                opacity: 0;
-            }
-            20%, 60% {
-                opacity: 0.8;
-            }
-            100% {
-                opacity: 0;
-            }
-        }
-
-        #tv-overlay::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg,
-                transparent,
-                rgba(255, 255, 255, 0.9) 20%,
-                rgba(255, 255, 255, 1) 50%,
-                rgba(255, 255, 255, 0.9) 80%,
-                transparent
-            );
-            box-shadow: 0 0 20px 4px rgba(255, 255, 255, 0.8);
-            animation: tv-line 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        @keyframes tv-line {
-            0%, 15% {
-                transform: scaleX(0.3);
-                opacity: 1;
-            }
-            40% {
-                transform: scaleX(1);
-                opacity: 1;
-            }
-            70% {
-                opacity: 0.6;
-            }
-            100% {
-                transform: scaleX(1);
-                opacity: 0;
-            }
-        }
     </style>
 </head>
 
 <body>
-    <div id="tv-overlay"></div>
 
     <div id="app">
         <header>
@@ -937,21 +822,6 @@
     <script>
         // CONFIG
         const GITHUB_USERNAME = 'Zakeryk'; // <--- PUT YOUR USERNAME HERE
-
-        // TV TURN-ON ANIMATION TRIGGER
-        (function() {
-            const referrer = document.referrer;
-            // Check if coming from a project page
-            if (referrer && referrer.includes('/projects/')) {
-                const overlay = document.getElementById('tv-overlay');
-                overlay.classList.add('active');
-
-                // Remove overlay after animation completes
-                setTimeout(() => {
-                    overlay.classList.remove('active');
-                }, 900);
-            }
-        })();
 
         // Helper function to create project card
         function createProjectCard(p) {
