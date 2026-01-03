@@ -48,7 +48,18 @@ async function smartDeploy() {
         }
 
         // 3. Gather Files
-        let allFiles = getAllFiles("./projects");
+        let allFiles = [];
+
+        // Get all PROJECTS subdirectories except ARCHIVED and HIDDEN
+        if(fs.existsSync("./PROJECTS")) {
+            const projectDirs = fs.readdirSync("./PROJECTS", { withFileTypes: true })
+                .filter(item => item.isDirectory() && !['ARCHIVED', 'HIDDEN'].includes(item.name))
+                .map(item => `./PROJECTS/${item.name}`);
+
+            projectDirs.forEach(dir => {
+                allFiles = allFiles.concat(getAllFiles(dir));
+            });
+        }
 
         // Add archived projects
         if(fs.existsSync("./PROJECTS/ARCHIVED")) {

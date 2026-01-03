@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
-const projectsDir = path.join(__dirname, 'projects');
+const projectsDir = path.join(__dirname, 'PROJECTS');
 const archivedDir = path.join(__dirname, 'PROJECTS', 'ARCHIVED');
 const outputFile = path.join(__dirname, 'data.json');
 
-const getProjects = (baseDir, pathPrefix) => {
+const getProjects = (baseDir, pathPrefix, exclude = []) => {
     // 1. Check if folder exists
     if (!fs.existsSync(baseDir)) {
         return [];
@@ -14,7 +14,7 @@ const getProjects = (baseDir, pathPrefix) => {
     const items = fs.readdirSync(baseDir, { withFileTypes: true });
 
     const projects = items
-        .filter(item => item.isDirectory())
+        .filter(item => item.isDirectory() && !exclude.includes(item.name))
         .map(dir => {
             const dirPath = path.join(baseDir, dir.name);
             const files = fs.readdirSync(dirPath);
@@ -64,7 +64,7 @@ const getProjects = (baseDir, pathPrefix) => {
 console.log("---------------------------------------------------");
 console.log("🔍 SCANNING FOR UPDATES...");
 
-const activeProjects = getProjects(projectsDir, './projects/');
+const activeProjects = getProjects(projectsDir, './PROJECTS/', ['ARCHIVED', 'HIDDEN']);
 const archivedProjects = getProjects(archivedDir, './PROJECTS/ARCHIVED/');
 
 const data = {
