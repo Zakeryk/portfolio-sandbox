@@ -1046,13 +1046,11 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // Gather images and straighten file on pickup
-                    gatherSpilledImagesIntoStack(this.target);
+                    // Peek mechanic disabled - no gather on press
 
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
                         scale: 1.05,
-                        rotation: 0,
                         boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
                         duration: 0.1
                     });
@@ -1081,15 +1079,13 @@
                 onDragEnd: function () {
                     state.isDragging = false;
 
-                    // Always spread images back out on release
-                    spreadSpilledImagesFromStack(this.target);
+                    // Peek mechanic disabled - no spread on release
 
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
 
                     gsap.to(this.target, {
                         scale: 1,
-                        rotation: (Math.random() - 0.5) * 3,
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
                         duration: 0.15
                     });
@@ -2344,8 +2340,10 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Keep images spilled so peeking works after lightbox
-            // Images remain in their spread position
+            // Gather spilled images back to source document
+            if (state.gallerySourceDoc) {
+                gatherImagesToFolder(state.gallerySourceDoc);
+            }
 
             // Show original images if they exist (for enterLightbox path)
             if (state.galleryImages) {
