@@ -946,10 +946,6 @@
             // preload images immediately
             preloadImages(JSON.parse(listItem.dataset.images));
 
-            // Add hover handlers for pseudo spill
-            doc.addEventListener('mouseenter', () => pseudoSpillImages(doc));
-            doc.addEventListener('mouseleave', () => cleanupPseudoSpill(doc));
-
             // spawn in center with slight variation
             const centerX = containerRect.width / 2;
             const centerY = containerRect.height / 2;
@@ -1126,10 +1122,6 @@
             docs.forEach(doc => {
                 let clickCount = 0;
                 let clickTimeout = null;
-
-                // Add hover handlers for pseudo spill
-                doc.addEventListener('mouseenter', () => pseudoSpillImages(doc));
-                doc.addEventListener('mouseleave', () => cleanupPseudoSpill(doc));
 
                 const draggable = Draggable.create(doc, {
                     type: 'x,y',
@@ -1896,66 +1888,6 @@
             return url;
         }
 
-        function pseudoSpillImages(doc) {
-            const folderIndex = doc.dataset.index;
-
-            // Don't pseudo spill if already spilled or in gallery
-            if (state.spilledFolders.has(folderIndex) || state.galleryActive) return;
-
-            const images = JSON.parse(doc.dataset.images);
-            const docRect = doc.getBoundingClientRect();
-            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-            const container = document.getElementById('documents-area');
-
-            // Track pseudo spilled images
-            if (!state.pseudoSpilledImages) state.pseudoSpilledImages = {};
-            state.pseudoSpilledImages[folderIndex] = [];
-
-            const edgePositions = [
-                { x: -60, y: 0 },      // left
-                { x: 60, y: 0 },       // right
-                { x: 0, y: -50 },      // top
-                { x: 0, y: 50 },       // bottom
-            ];
-
-            images.slice(0, 4).forEach((imgUrl, i) => {
-                const img = document.createElement('img');
-                img.className = 'spilled-image pseudo-spill';
-                img.loading = 'eager';
-                img.src = imgUrl;
-                img.dataset.parent = folderIndex;
-
-                const centerX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
-                const centerY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
-
-                const edge = edgePositions[i % edgePositions.length];
-
-                gsap.set(img, {
-                    x: centerX + edge.x,
-                    y: centerY + edge.y,
-                    rotation: (Math.random() - 0.5) * 10,
-                    scale: 0.7,
-                    opacity: 0.6,
-                    zIndex: 5
-                });
-
-                container.appendChild(img);
-                state.pseudoSpilledImages[folderIndex].push(img);
-            });
-        }
-
-        function cleanupPseudoSpill(doc) {
-            const folderIndex = doc.dataset.index;
-
-            if (!state.pseudoSpilledImages || !state.pseudoSpilledImages[folderIndex]) return;
-
-            state.pseudoSpilledImages[folderIndex].forEach(img => {
-                img.remove();
-            });
-
-            delete state.pseudoSpilledImages[folderIndex];
-        }
-
         function openGalleryFromDocument(doc) {
             if (state.galleryActive) return;
 
@@ -1963,9 +1895,6 @@
             if (!images || images.length === 0) return;
 
             const folderIndex = doc.dataset.index;
-
-            // Cleanup pseudo spill first
-            cleanupPseudoSpill(doc);
 
             // Spill images behind overlay if not already spilled
             if (!state.spilledFolders.has(folderIndex)) {
