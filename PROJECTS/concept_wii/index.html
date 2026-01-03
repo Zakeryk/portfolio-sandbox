@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SELECT A WORLD</title>
+    <title>SELECT A DESTINATION</title>
     <link id="favicon" rel="icon" href="data:,">
     <script>
         (function () {
@@ -636,51 +636,56 @@
         import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
         import { GUI } from 'dat.gui';
 
-        // --- DS-STYLE TAB ANIMATION ---
-        const titleFrames = [
-            '▌SELECT A WORLD',
-            '█▌SELECT A WORLD',
-            '██▌SELECT A WORLD',
-            '███▌SELECT A WORLD',
-            '████▌SELECT A WORLD',
-            '█████▌SELECT A WORLD',
-            '██████▌SELECT A WORLD',
-            '███████▌SELECT A WORLD',
-            '████████▌SELECT A WORLD',
-            '█████████▌SELECT A WORLD',
-            '██████████▌SELECT A WORLD',
-            '███████████▌SELECT A WORLD',
-            '████████████▌SELECT A WORLD',
-            '█████████████▌SELECT A WORLD',
-            'SELECT A WORLD',
-            'SELECT A WORLD ▐',
-            'SELECT A WORLD ▐█',
-            'SELECT A WORLD ▐██',
-            'SELECT A WORLD ▐███',
-            'SELECT A WORLD ▐████',
-            'SELECT A WORLD ▐█████',
-            'SELECT A WORLD',
-            '// SELECT A WORLD',
-            '>>> SELECT A WORLD',
-            '[ SELECT A WORLD ]',
-            'SELECT A WORLD',
+        // --- DS-STYLE TAB ANIMATION WITH WAVES ---
+        const baseTitle = 'SELECT A DESTINATION';
+        const waveFrames = [
+            '・ SELECT A DESTINATION',
+            '∴ SELECT A DESTINATION',
+            '∵ SELECT A DESTINATION',
+            '≋ SELECT A DESTINATION',
+            '∿ SELECT A DESTINATION',
+            '〰 SELECT A DESTINATION',
+            '～ SELECT A DESTINATION',
+            '≈ SELECT A DESTINATION',
+            '∼ SELECT A DESTINATION',
+            '⋯ SELECT A DESTINATION',
+            '⋰ SELECT A DESTINATION',
+            '⋱ SELECT A DESTINATION',
+            baseTitle,
+            '◐ SELECT A DESTINATION',
+            '◓ SELECT A DESTINATION',
+            '◑ SELECT A DESTINATION',
+            '◒ SELECT A DESTINATION',
+            baseTitle,
+            '⊹ SELECT A DESTINATION',
+            '✦ SELECT A DESTINATION',
+            '✧ SELECT A DESTINATION',
+            '◆ SELECT A DESTINATION',
+            baseTitle,
         ];
 
         let titleIndex = 0;
         let animPhase = 0;
 
         function animateTitle() {
-            if (animPhase < titleFrames.length) {
-                document.title = titleFrames[animPhase];
+            if (animPhase < waveFrames.length) {
+                document.title = waveFrames[animPhase];
                 animPhase++;
-                setTimeout(animateTitle, 80);
+                setTimeout(animateTitle, 120);
             } else {
-                // After intro, pulse effect
+                // After intro, subtle wave pulse
+                const pulseStates = [
+                    baseTitle,
+                    '～ ' + baseTitle,
+                    '≋ ' + baseTitle,
+                    '∿ ' + baseTitle,
+                    baseTitle,
+                    baseTitle,
+                ];
                 setInterval(() => {
-                    const states = ['SELECT A WORLD', '▌SELECT A WORLD▐', 'SELECT A WORLD'];
-                    titleIndex = (titleIndex + 1) % states.length;
-                    document.title = states[titleIndex];
-                }, 2000);
+                    document.title = pulseStates[titleIndex % pulseStates.length];
+                    titleIndex++;
+                }, 1800);
             }
         }
 
