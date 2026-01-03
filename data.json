@@ -1,6 +1,17 @@
 {
   "active": [
     {
+      "id": "CONCEPTS",
+      "path": "./projects/CONCEPTS/",
+      "title": "CONCEPTS",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": "./projects/CONCEPTS/thumb.png",
+      "date": "2026-01-03T05:03:47.830Z"
+    },
+    {
       "id": "MY WORK",
       "path": "./projects/MY WORK/",
       "title": "CONCEPT_RESIDENT",
@@ -11,17 +22,6 @@
       "active": true,
       "image": "./projects/MY WORK/thumb.png",
       "date": "2026-01-03T04:06:38.140Z"
-    },
-    {
-      "id": "CONCEPTS",
-      "path": "./projects/CONCEPTS/",
-      "title": "CONCEPTS",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": "./projects/CONCEPTS/thumb.png",
-      "date": "2026-01-03T04:03:43.020Z"
     }
   ],
   "archived": [
