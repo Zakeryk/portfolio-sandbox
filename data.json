@@ -1,26 +1,26 @@
 {
   "active": [
     {
-      "id": "CONCEPTS",
-      "path": "./projects/CONCEPTS/",
-      "title": "CONCEPTS",
+      "id": "MY_PROJECTS",
+      "path": "./projects/MY_PROJECTS/",
+      "title": "MY_PROJECTS",
       "tags": [
         "Experiment"
       ],
       "active": true,
-      "image": "./projects/CONCEPTS/thumb.png",
+      "image": "./projects/MY_PROJECTS/thumb.png",
       "date": "2026-01-03T05:03:47.830Z"
     },
     {
-      "id": "MY WORK",
-      "path": "./projects/MY WORK/",
+      "id": "MY_WORK",
+      "path": "./projects/MY_WORK/",
       "title": "CONCEPT_RESIDENT",
       "tags": [
         "Experiment",
         "Interactive"
       ],
       "active": true,
-      "image": "./projects/MY WORK/thumb.png",
+      "image": "./projects/MY_WORK/thumb.png",
       "date": "2026-01-03T04:06:38.140Z"
     }
   ],
