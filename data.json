@@ -1,17 +1,6 @@
 {
   "active": [
     {
-      "id": "concept_wii",
-      "path": "./projects/concept_wii/",
-      "title": "CONCEPT_WII",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": "./projects/concept_wii/thumb.png",
-      "date": "2026-01-03T04:03:43.020Z"
-    },
-    {
       "id": "concept_resident",
       "path": "./projects/concept_resident/",
       "title": "CONCEPT_RESIDENT",
@@ -21,21 +10,21 @@
       ],
       "active": true,
       "image": "./projects/concept_resident/thumb.png",
-      "date": "2026-01-03T04:01:56.171Z"
-    }
-  ],
-  "archived": [
+      "date": "2026-01-03T04:06:38.140Z"
+    },
     {
-      "id": "concept_xbox",
-      "path": "./PROJECTS/ARCHIVED/concept_xbox/",
-      "title": "CONCEPT_XBOX",
+      "id": "concept_wii",
+      "path": "./projects/concept_wii/",
+      "title": "CONCEPT_WII",
       "tags": [
         "Experiment"
       ],
       "active": true,
-      "image": "./PROJECTS/ARCHIVED/concept_xbox/thumb.png",
-      "date": "2025-12-29T23:56:23.260Z"
-    },
+      "image": "./projects/concept_wii/thumb.png",
+      "date": "2026-01-03T04:03:43.020Z"
+    }
+  ],
+  "archived": [
     {
       "id": "concept_kiosk",
       "path": "./PROJECTS/ARCHIVED/concept_kiosk/",
@@ -44,8 +33,19 @@
         "Experiment"
       ],
       "active": true,
-      "image": "./PROJECTS/ARCHIVED/concept_kiosk/thumb.png",
-      "date": "2025-12-29T23:49:21.041Z"
+      "image": null,
+      "date": "2026-01-03T04:20:49.536Z"
+    },
+    {
+      "id": "concept_xbox",
+      "path": "./PROJECTS/ARCHIVED/concept_xbox/",
+      "title": "CONCEPT_XBOX",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": null,
+      "date": "2026-01-03T04:20:41.186Z"
     },
     {
       "id": "concept_react",
