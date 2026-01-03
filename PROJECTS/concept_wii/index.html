@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Wii OS Concept</title>
+    <title>Wii OS</title>
     <link id="favicon" rel="icon" href="data:,">
     <script>
         (function () {
@@ -570,7 +570,7 @@
         </div>
     </div>
 
-    <div id="radio-player" class="player-stopped">
+    <div id="radio-player">
         <div class="radio-controls">
             <div id="btn-toggle" class="radio-btn">
                 <svg class="icon-play" viewBox="0 0 24 24">
@@ -693,7 +693,7 @@
 
         const radioEl = document.getElementById('radio-player');
         const btnToggle = document.getElementById('btn-toggle');
-        let isPlaying = false;
+        let isPlaying = true;
 
         radioEl.addEventListener('click', () => { togglePlay(); });
 
@@ -721,6 +721,7 @@
 
             setTimeout(() => {
                 document.getElementById('radio-player').classList.add('slide-in');
+                audio.play().catch(e => console.log("Audio autoplay blocked:", e));
             }, 1200);
         });
 
