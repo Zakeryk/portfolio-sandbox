@@ -1,6 +1,19 @@
 {
   "active": [
     {
+      "id": "concept_ripndip_terminal",
+      "path": "./projects/concept_ripndip_terminal/",
+      "title": "RIPNDIP_TERMINAL",
+      "tags": [
+        "Aesthetic",
+        "Interactive",
+        "Playful"
+      ],
+      "active": true,
+      "image": null,
+      "date": "2026-01-03T03:24:00.380Z"
+    },
+    {
       "id": "concept_resident",
       "path": "./projects/concept_resident/",
       "title": "CONCEPT_RESIDENT",
@@ -11,17 +24,6 @@
       "active": true,
       "image": "./projects/concept_resident/thumb.png",
       "date": "2026-01-03T03:23:28.365Z"
-    },
-    {
-      "id": "concept_ripndip_terminal",
-      "path": "./projects/concept_ripndip_terminal/",
-      "title": "CONCEPT_RIPNDIP_TERMINAL",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": null,
-      "date": "2026-01-03T03:23:22.931Z"
     },
     {
       "id": "concept_wii",
