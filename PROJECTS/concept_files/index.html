@@ -478,9 +478,9 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease, left 0.3s ease;
-            padding: 0 5vw;
+            padding: 10vh 5vw;
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: visible;
             scroll-behavior: smooth;
             scrollbar-width: none;
         }
@@ -506,7 +506,7 @@
         }
 
         .lightbox-image:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) translateY(-8px);
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8),
                         0 0 25px rgba(50, 150, 100, 0.4);
             border-color: rgba(50, 150, 100, 0.6);
