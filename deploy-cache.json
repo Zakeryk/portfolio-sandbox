@@ -51,7 +51,7 @@
   "projects/concept_wii/styles/style.css": 1765593374771.713,
   "projects/concept_wii/thumb.jpg": 1765565040253.485,
   "index.html": 1767412729507.9053,
-  "data.json": 1767417520150.6665,
+  "data.json": 1767418239743.846,
   ".htaccess": 1765567405134.0796,
   "favicon.png": 1767405520209.8035,
   "projects/HIDDEN/concept_dark_3d/Daylight_Box_0.png": 1763666671360.729,
@@ -466,8 +466,8 @@
   "projects/MY_PROJECTS/assets/il_1588xN.2129482398_qgsf.webp": 1765818635370.7478,
   "projects/MY_PROJECTS/assets/on_my_way.mp3": 1765784211445.6775,
   "projects/MY_PROJECTS/assets/toothpaste.mp3": 1767405167542.903,
-  "projects/MY_PROJECTS/assets/wiicursor.png": 1763761008180.822,
-  "projects/MY_PROJECTS/assets/wiicursor_sprite.png": 1763761598317.8977,
+  "projects/MY_PROJECTS/assets/wiicursor.png": 1767418072571.783,
+  "projects/MY_PROJECTS/assets/wiicursor_sprite.png": 1767418156158.6033,
   "projects/MY_PROJECTS/favicon.png": 1767404995585.3088,
   "projects/MY_PROJECTS/index.html": 1767413023020.0547,
   "projects/MY_PROJECTS/scripts/main.js": 1765829732204.3354,
@@ -531,5 +531,7 @@
   "projects/MY_WORK/thumb.png": 1767412657681.219,
   "projects/MY_WORK/thumb.svg": 1766459999468.2974,
   "projects/MY_WORK/thumb_old.png": 1767052372025.525,
-  "projects/MY_PROJECTS/assets/anim_01_old.mp4": 1767408622000
+  "projects/MY_PROJECTS/assets/anim_01_old.mp4": 1767408622000,
+  "projects/MY_PROJECTS/assets/wiicursor_old.png": 1763761008180.822,
+  "projects/MY_PROJECTS/assets/wiicursor_sprite_old.png": 1763761598317.8977
 }
