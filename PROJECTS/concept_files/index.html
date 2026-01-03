@@ -1045,9 +1045,14 @@
                 onPress: function () {
                     state.isDragging = true;
                     state.currentZIndex++;
+
+                    // Gather images and straighten file on pickup
+                    gatherSpilledImagesIntoStack(this.target);
+
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
                         scale: 1.05,
+                        rotation: 0,
                         boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
                         duration: 0.1
                     });
@@ -1057,11 +1062,6 @@
                     state.shakeContext.lastX = this.x;
                     state.shakeContext.reversals = 0;
                     state.shakeContext.direction = 0;
-                },
-
-                onDragStart: function () {
-                    // Gather spilled images into stack when drag actually starts
-                    gatherSpilledImagesIntoStack(this.target);
                 },
 
                 onDrag: function () {
@@ -1078,20 +1078,37 @@
                     checkDropZoneOverlap(this.target);
                 },
 
-                onDragEnd: function () {
+                onDragEnd: function (e) {
                     state.isDragging = false;
 
-                    // Spread images back out
-                    spreadSpilledImagesFromStack(this.target);
+                    // Check if mouse is hovering over the file
+                    const rect = this.target.getBoundingClientRect();
+                    const mouseX = e.clientX || e.changedTouches?.[0]?.clientX || 0;
+                    const mouseY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
+                    const isHovering = mouseX >= rect.left && mouseX <= rect.right &&
+                                      mouseY >= rect.top && mouseY <= rect.bottom;
+
+                    // If hovering, spread images back out with tilt
+                    if (isHovering) {
+                        spreadSpilledImagesFromStack(this.target);
+
+                        gsap.to(this.target, {
+                            scale: 1,
+                            rotation: (Math.random() - 0.5) * 3,
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            duration: 0.15
+                        });
+                    } else {
+                        // Not hovering - keep gathered
+                        gsap.to(this.target, {
+                            scale: 1,
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            duration: 0.15
+                        });
+                    }
 
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
-
-                    gsap.to(this.target, {
-                        scale: 1,
-                        boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                        duration: 0.15
-                    });
 
                     // Check if dropped on parent
                     const droppedOnParent = handleDropZoneSnap(this.target);
@@ -2343,8 +2360,10 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Don't gather images back - leave them spilled
-            // Images should remain visible after exiting lightbox
+            // Gather spilled images back to source document
+            if (state.gallerySourceDoc) {
+                gatherImagesToFolder(state.gallerySourceDoc);
+            }
 
             // Show original images if they exist (for enterLightbox path)
             if (state.galleryImages) {
