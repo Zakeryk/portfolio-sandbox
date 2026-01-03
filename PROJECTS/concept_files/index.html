@@ -1046,11 +1046,17 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // Remove any peek images immediately when drag starts
+                    // Fade out peek images when drag starts
                     const peekImages = document.querySelectorAll('.peek-image');
                     peekImages.forEach(img => {
                         gsap.killTweensOf(img);
-                        img.remove();
+                        gsap.to(img, {
+                            scale: 0.5,
+                            opacity: 0,
+                            duration: 0.15,
+                            ease: 'power2.in',
+                            onComplete: () => img.remove()
+                        });
                     });
 
                     // Reset document rotation from hover
@@ -2347,8 +2353,24 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Gather spilled images back to source document
+            // Reset source document to default state
             if (state.gallerySourceDoc) {
+                // Reset drag state and visual properties
+                state.isDragging = false;
+                state.selectedDoc = null;
+
+                gsap.to(state.gallerySourceDoc, {
+                    scale: 1,
+                    rotation: 0,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                    duration: 0.2
+                });
+
+                // Re-enable draggable if it was disabled
+                const dragInstance = Draggable.get(state.gallerySourceDoc);
+                if (dragInstance) dragInstance.enable();
+
+                // Gather spilled images back
                 gatherImagesToFolder(state.gallerySourceDoc);
             }
 
