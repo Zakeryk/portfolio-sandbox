@@ -234,7 +234,7 @@
                         inset 0 1px 0 rgba(50, 150, 100, 0.15),
                         0 0 15px rgba(50, 150, 100, 0.1);
             cursor: pointer;
-            transition: box-shadow 0.3s ease;
+            transition: box-shadow 0.15s ease;
             will-change: transform;
             padding: 16px;
         }
@@ -424,6 +424,8 @@
             z-index: 50;
             object-fit: contain;
             border-radius: 2px;
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
         }
 
         .spilled-image:active {
@@ -1119,7 +1121,7 @@
                             zIndex: state.currentZIndex,
                             scale: 1.05,
                             boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
-                            duration: 0.2
+                            duration: 0.1
                         });
                         state.selectedDoc = this.target;
 
@@ -1151,7 +1153,7 @@
                         gsap.to(this.target, {
                             scale: 1,
                             boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                            duration: 0.3,
+                            duration: 0.15,
                             ease: 'power2.out'
                         });
 
@@ -1171,7 +1173,7 @@
                                 // single click = spill images
                                 spillImages(this.target);
                                 clickCount = 0;
-                            }, 300);
+                            }, 200);
                         } else if (clickCount === 2) {
                             // double click = open url
                             clearTimeout(clickTimeout);
@@ -1498,6 +1500,7 @@
             images.forEach((imgUrl, i) => {
                 const img = document.createElement('img');
                 img.className = 'spilled-image';
+                img.loading = 'eager';
                 img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
@@ -1569,7 +1572,7 @@
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
                         scale: 1.05,
-                        duration: 0.2
+                        duration: 0.1
                     });
 
                     // Reset shake context for images
@@ -1595,7 +1598,7 @@
 
                     gsap.to(this.target, {
                         scale: 1,
-                        duration: 0.3
+                        duration: 0.15
                     });
 
                     // Check if dropped on parent document
