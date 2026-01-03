@@ -392,13 +392,13 @@
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
-            max-width: 162px;
-            max-height: 126px;
+            width: 198px;
+            height: 144px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
             cursor: pointer;
             will-change: transform;
             z-index: 50;
-            object-fit: contain;
+            object-fit: cover;
             border-radius: 2px;
             image-rendering: crisp-edges;
             image-rendering: -webkit-optimize-contrast;
@@ -1583,16 +1583,20 @@
                 img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
-                // start position (at document center)
-                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
-                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+                // image size to match document
+                const imgWidth = docRect.width * 0.9;
+                const imgHeight = docRect.height * 0.9;
 
-                // random spill direction
-                const angle = (Math.random() * 360) * (Math.PI / 180);
-                const distance = 100 + Math.random() * 150;
-                const endX = startX + Math.cos(angle) * distance;
-                const endY = startY + Math.sin(angle) * distance;
-                const randomRot = (Math.random() - 0.5) * 30;
+                // start position (at document center)
+                const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
+
+                // spread evenly below document
+                const totalImages = images.length;
+                const spacing = docRect.width / (totalImages + 1);
+                const endX = docRect.left - containerRect.left + spacing * (i + 1) - imgWidth / 2;
+                const endY = docRect.bottom - containerRect.top + 10; // 10px below document
+                const randomRot = (Math.random() - 0.5) * 6; // smaller rotation
 
                 // set initial position
                 gsap.set(img, {
@@ -2029,14 +2033,19 @@
                 img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
-                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
-                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+                // image size to match document
+                const imgWidth = docRect.width * 0.9;
+                const imgHeight = docRect.height * 0.9;
 
-                const angle = (Math.random() * 360) * (Math.PI / 180);
-                const distance = 100 + Math.random() * 150;
-                const endX = startX + Math.cos(angle) * distance;
-                const endY = startY + Math.sin(angle) * distance;
-                const randomRot = (Math.random() - 0.5) * 30;
+                const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
+
+                // spread evenly below document
+                const totalImages = images.length;
+                const spacing = docRect.width / (totalImages + 1);
+                const endX = docRect.left - containerRect.left + spacing * (i + 1) - imgWidth / 2;
+                const endY = docRect.bottom - containerRect.top + 10;
+                const randomRot = (Math.random() - 0.5) * 6;
 
                 gsap.set(img, {
                     x: startX,
@@ -2234,8 +2243,10 @@
 
             const docRect = doc.getBoundingClientRect();
             const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-            const targetX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
-            const targetY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+            const imgWidth = docRect.width * 0.9;
+            const imgHeight = docRect.height * 0.9;
+            const targetX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
+            const targetY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
             spilledImgs.forEach((img, i) => {
                 gsap.to(img, {
