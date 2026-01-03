@@ -747,11 +747,11 @@
             animTriggerMode: 'hover', // 'hover' or 'interval'
             animFrequency: 4000,
             animEnabled: true,
-            animBrightness: 0.73,
-            animSaturation: 1.2,
-            animSizeAdjust: 1.1,
+            animBrightness: 0.82,
+            animSaturation: 0.95,
+            animSizeAdjust: 2.5,
             animBorderRadius: 62,
-            animEdgeInset: 20,
+            animEdgeInset: 15,
             animTriggerNow: null // set after function is defined
         };
 
@@ -1204,6 +1204,8 @@
 
                 // MAGNETIC LOGIC
                 let hoveredTile = null;
+                const wasHoveringTile0 = isTile0Hovered;
+
                 if (intersects.length > 0) {
                     hoveredTile = intersects[0].object;
                     const hitPoint = intersects[0].point;
@@ -1213,7 +1215,6 @@
                     hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
 
                     // track tile 0 hover state
-                    const wasHoveringTile0 = isTile0Hovered;
                     isTile0Hovered = hoveredTile.userData.index === 0;
 
                     if (INTERSECTED !== hoveredTile) {
@@ -1225,12 +1226,13 @@
                         triggerTileAnimation();
                     }
                 } else {
-                    // stop animation when hover ends
-                    if (PARAMS.animTriggerMode === 'hover' && isTile0Hovered) {
-                        stopTileAnimation();
-                    }
                     isTile0Hovered = false;
                     INTERSECTED = null;
+                }
+
+                // stop animation when leaving tile 0 (moved outside else block to ensure it always runs)
+                if (PARAMS.animTriggerMode === 'hover' && wasHoveringTile0 && !isTile0Hovered) {
+                    stopTileAnimation();
                 }
 
                 channelBlocks.forEach(b => {
@@ -1381,9 +1383,9 @@
         animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Interval (ms)').onChange(startAnimationLoop);
         animFolder.add(PARAMS, 'animBrightness', 0.5, 1.5).name('Brightness').onChange(updateAnimFilters);
         animFolder.add(PARAMS, 'animSaturation', 0.5, 1.5).name('Saturation').onChange(updateAnimFilters);
-        animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.15).name('Size Adjust');
+        animFolder.add(PARAMS, 'animSizeAdjust', 0.5, 10).name('Size Adjust');
         animFolder.add(PARAMS, 'animBorderRadius', 1, 150).name('Border Radius');
-        animFolder.add(PARAMS, 'animEdgeInset', 0, 20).name('Edge Inset (px)');
+        animFolder.add(PARAMS, 'animEdgeInset', 0, 40).name('Edge Inset (px)');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
     </script>
