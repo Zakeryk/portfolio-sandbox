@@ -442,7 +442,7 @@
             opacity: 0;
             pointer-events: none;
             z-index: 900;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.2s ease;
             backdrop-filter: blur(8px);
         }
 
@@ -465,7 +465,7 @@
             z-index: 1002;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.4s ease;
+            transition: opacity 0.2s ease;
             max-width: 90vw;
         }
 
@@ -478,7 +478,7 @@
             max-width: 400px;
             max-height: 60vh;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
             object-fit: contain;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
                         0 0 15px rgba(50, 150, 100, 0.2);
@@ -742,8 +742,20 @@
                 lastReversalTime: 0
             },
             isHoveringParentDoc: false, // tracks if image is hovering over its parent document
-            hoveredParentDoc: null // the parent document being hovered
+            hoveredParentDoc: null, // the parent document being hovered
+            preloadedImages: {} // cache of preloaded images
         };
+
+        // preload images for a document
+        function preloadImages(images) {
+            images.forEach(src => {
+                if (!state.preloadedImages[src]) {
+                    const img = new Image();
+                    img.src = src;
+                    state.preloadedImages[src] = img;
+                }
+            });
+        }
 
         // initialization
         async function init() {
@@ -902,6 +914,9 @@
             doc.dataset.index = listItem.dataset.index;
             doc.dataset.images = listItem.dataset.images;
 
+            // preload images immediately
+            preloadImages(JSON.parse(listItem.dataset.images));
+
             // spawn in center with slight variation
             const centerX = containerRect.width / 2;
             const centerY = containerRect.height / 2;
@@ -940,7 +955,7 @@
                         zIndex: state.currentZIndex,
                         scale: 1.05,
                         boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
-                        duration: 0.2
+                        duration: 0.1
                     });
 
                     // Reset shake context
@@ -970,7 +985,7 @@
                     gsap.to(this.target, {
                         scale: 1,
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                        duration: 0.3
+                        duration: 0.15
                     });
 
                     // Check if dropped on parent
@@ -991,7 +1006,7 @@
                                 spillImages(this.target);
                             }
                             this.clickCount = 0;
-                        }, 300);
+                        }, 200);
                     } else if (clickCount === 2) {
                         openDocument(this.target);
                         this.clickCount = 0;
@@ -1519,9 +1534,9 @@
                     rotation: randomRot,
                     scale: 1,
                     opacity: 1,
-                    duration: 0.2, // much faster
-                    delay: i * 0.02, // very fast stagger
-                    ease: 'back.out(1.7)',
+                    duration: 0.15,
+                    delay: i * 0.01,
+                    ease: 'power2.out',
                     onComplete: () => {
                         makeImageDraggable(img);
                     }
@@ -1536,7 +1551,7 @@
                 opacity: 0.3,
                 scale: 0.95,
                 zIndex: 5, // send opened files to back
-                duration: 0.3
+                duration: 0.1
             });
         }
 
@@ -1907,7 +1922,7 @@
             // Show gallery
             setTimeout(() => {
                 gallery.classList.add('visible');
-            }, 100);
+            }, 50);
 
             state.galleryActive = true;
             state.galleryImages = allImages;
@@ -1939,7 +1954,7 @@
 
             setTimeout(() => {
                 gallery.innerHTML = '';
-            }, 400);
+            }, 200);
 
             // Show original images
             if (state.galleryImages) {
@@ -1979,9 +1994,9 @@
                     rotation: 0,
                     scale: 0.3,
                     opacity: 0,
-                    duration: 0.2, // much faster
-                    delay: i * 0.01, // very fast stagger
-                    ease: 'power3.in',
+                    duration: 0.12,
+                    delay: i * 0.005,
+                    ease: 'power2.in',
                     onComplete: () => {
                         img.remove();
                     }
@@ -1992,7 +2007,7 @@
             gsap.to(doc, {
                 opacity: 1,
                 scale: 1,
-                duration: 0.3
+                duration: 0.15
             });
 
             // clear tracking
