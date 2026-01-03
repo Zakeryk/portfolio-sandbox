@@ -750,6 +750,7 @@
             animBrightness: 0.82,
             animSaturation: 0.95,
             animSizeAdjust: 1.1,
+            animBorderRadius: 62,
             animTriggerNow: null // set after function is defined
         };
 
@@ -987,9 +988,9 @@
             const widthPx = baseWidthPx * PARAMS.animSizeAdjust;
             const heightPx = baseHeightPx * PARAMS.animSizeAdjust;
 
-            // calculate border radius in pixels to match tile's rounded corners (scaled proportionally)
-            const borderRadiusWorld = PARAMS.borderRadius * BASE_BLOCK_WIDTH;
-            const borderRadiusPx = borderRadiusWorld * scaleFactor * tile.scale.x * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
+            // calculate border radius to match tile's rounded corners
+            const radiusInWorldUnits = PARAMS.borderRadius * PARAMS.animBorderRadius;
+            const borderRadiusPx = radiusInWorldUnits * scaleFactor * tile.scale.x * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
 
             videoOverlay.style.left = `${x - widthPx / 2}px`;
             videoOverlay.style.top = `${y - heightPx / 2}px`;
@@ -1372,7 +1373,8 @@
         animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Interval (ms)').onChange(startAnimationLoop);
         animFolder.add(PARAMS, 'animBrightness', 0.5, 1.5).name('Brightness').onChange(updateAnimFilters);
         animFolder.add(PARAMS, 'animSaturation', 0.5, 1.5).name('Saturation').onChange(updateAnimFilters);
-        animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.1).name('Size Adjust');
+        animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.15).name('Size Adjust');
+        animFolder.add(PARAMS, 'animBorderRadius', 1, 150).name('Border Radius');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
     </script>

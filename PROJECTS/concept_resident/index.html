@@ -731,8 +731,8 @@
             },
             isHoveringParent: false, // tracks if currently hovering valid parent folder
             hoveredParentId: null, // tracks which folder is being hovered
-            activeLightboxImage: null, // currently focused image in lightbox
-            savedImageState: null, // stores gsap state before lightbox
+            galleryActive: false, // tracks if gallery is open
+            galleryImages: null, // stores original images while gallery is open
             isDragging: false, // tracks if currently dragging a document
             heldImageStack: [], // items collected via shake for images
             imageShakeContext: {
@@ -785,8 +785,8 @@
 
             const filingArea = document.getElementById('filing-area');
 
-            // NEVER open during lightbox
-            if (state.activeLightboxImage) {
+            // NEVER open during gallery
+            if (state.galleryActive) {
                 filingArea.classList.remove('visible');
                 return;
             }
@@ -1864,285 +1864,94 @@
         }
 
         function enterLightbox(img) {
-            if (state.activeLightboxImage) return; // already active
+            if (state.galleryActive) return; // already active
 
             // Hide filing area
             const filingArea = document.getElementById('filing-area');
             filingArea.classList.remove('visible');
 
-            // Disable drag on original
-            const dragInstance = Draggable.get(img);
-            if (dragInstance) dragInstance.disable();
+            // Get all images from same parent
+            const parentIndex = img.dataset.parent;
+            const allImages = Array.from(document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`));
 
-            // Store ref to original
-            state.activeLightboxImage = img; // This is the original image on desk
-
-            // Save state of original (to return to it)
-            state.savedImageState = {
-                x: gsap.getProperty(img, "x"),
-                y: gsap.getProperty(img, "y"),
-                rotation: gsap.getProperty(img, "rotation"),
-                scale: gsap.getProperty(img, "scale"),
-                zIndex: gsap.getProperty(img, "zIndex"),
-                parent: img.parentNode
-            };
-
-            // Get original position relative to viewport
-            const rect = img.getBoundingClientRect();
-
-            // Create CLONE for lightbox
-            const clone = img.cloneNode(true);
-            clone.id = 'lightbox-clone';
-
-            // Set initial state of clone to MATCH the original exactly
-            // We append to body, so we need fixed positioning based on the rect
-            Object.assign(clone.style, {
-                position: 'fixed',
-                left: rect.left + 'px',
-                top: rect.top + 'px',
-                width: rect.width + 'px',
-                height: rect.height + 'px',
-                objectFit: 'contain',
-                zIndex: 1001, // Above overlay (900)
-                transform: 'none', // Reset transform on the clone initially
-                margin: 0,
-                pointerEvents: 'none',
-                maxWidth: '100vw',
-                maxHeight: '100vh'
+            // Hide all original images
+            allImages.forEach(image => {
+                const dragInstance = Draggable.get(image);
+                if (dragInstance) dragInstance.disable();
+                gsap.set(image, { opacity: 0 });
             });
-
-            // Also copy the background image, but we'll swap it soon
-            // The cloneNode(true) copies inline styles, so background image is already there.
-
-            document.body.appendChild(clone);
-            state.lightboxClone = clone; // Track the clone
-
-            // Hide original
-            gsap.set(img, { opacity: 0 });
-
-            // "Fill screen" calculation
-            const maxWidth = window.innerWidth * 0.9;
-            const maxHeight = window.innerHeight * 0.9;
-
-            // Get actual image dimensions to preserve aspect ratio
-            // Use naturalWidth/Height if available, otherwise use current dimensions
-            const imgWidth = clone.naturalWidth || clone.width || 162;
-            const imgHeight = clone.naturalHeight || clone.height || 126;
-            const aspect = imgWidth / imgHeight;
-
-            let targetWidth = maxWidth;
-            let targetHeight = targetWidth / aspect;
-
-            if (targetHeight > maxHeight) {
-                targetHeight = maxHeight;
-                targetWidth = targetHeight * aspect;
-            }
-
-            // Center coords
-            const targetLeft = (window.innerWidth - targetWidth) / 2;
-            const targetTop = (window.innerHeight - targetHeight) / 2;
 
             // Show overlay
             document.getElementById('lightbox-overlay').classList.add('visible');
 
-            // Swap URL to high-res
-            const highResUrl = getHighResUrl(img.src);
-            clone.src = highResUrl;
+            // Create gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.innerHTML = ''; // clear existing
 
-            // Animate CLONE
-            gsap.to(clone, {
-                left: targetLeft,
-                top: targetTop,
-                width: targetWidth,
-                height: targetHeight,
-                rotation: 0,
-                duration: 0.5,
-                ease: 'power3.inOut'
-            });
+            allImages.forEach((image, index) => {
+                const galleryImg = document.createElement('img');
+                galleryImg.className = 'lightbox-image';
+                galleryImg.src = getHighResUrl(image.src);
+                galleryImg.dataset.index = index;
+                galleryImg.dataset.originalImage = index;
 
-            // Create thumbnail gallery for sibling images
-            createLightboxThumbnails(img);
-
-            // Add keyboard navigation
-            setupLightboxKeyboardNav();
-        }
-
-        function setupLightboxKeyboardNav() {
-            // Store the handler so we can remove it later
-            state.lightboxKeyHandler = (e) => {
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    navigateLightboxThumbnails(e.key === 'ArrowLeft' ? -1 : 1);
-                }
-            };
-            document.addEventListener('keydown', state.lightboxKeyHandler);
-        }
-
-        function navigateLightboxThumbnails(direction) {
-            const thumbnails = Array.from(document.querySelectorAll('.lightbox-thumb'));
-            if (thumbnails.length === 0) return;
-
-            const activeIndex = thumbnails.findIndex(thumb => thumb.classList.contains('active'));
-            if (activeIndex === -1) return;
-
-            let newIndex = activeIndex + direction;
-            // wrap around
-            if (newIndex < 0) newIndex = thumbnails.length - 1;
-            if (newIndex >= thumbnails.length) newIndex = 0;
-
-            // find the original image corresponding to this thumbnail
-            const parentIndex = state.activeLightboxImage.dataset.parent;
-            const allImages = Array.from(document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`))
-                .filter(img => img.id !== 'lightbox-clone');
-
-            if (allImages[newIndex]) {
-                switchLightboxImage(allImages[newIndex]);
-            }
-        }
-
-        function createLightboxThumbnails(currentImg) {
-            const parentIndex = currentImg.dataset.parent;
-            const allImages = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
-
-            if (allImages.length <= 1) return; // no siblings to show
-
-            const thumbnailContainer = document.getElementById('lightbox-thumbnails');
-            thumbnailContainer.innerHTML = ''; // clear existing
-
-            allImages.forEach(img => {
-                // skip if this is the lightbox clone
-                if (img.id === 'lightbox-clone') return;
-
-                const thumb = document.createElement('img');
-                thumb.className = 'lightbox-thumb';
-                thumb.src = img.src;
-                thumb.dataset.originalImg = img; // store reference to original image element
-
-                // mark active thumbnail
-                if (img === currentImg) {
-                    thumb.classList.add('active');
-                }
-
-                // click to switch focused image
-                thumb.addEventListener('click', (e) => {
-                    e.stopPropagation(); // prevent lightbox from closing
-                    switchLightboxImage(img);
+                // Click to focus/unfocus
+                galleryImg.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFocusImage(galleryImg);
                 });
 
-                thumbnailContainer.appendChild(thumb);
+                gallery.appendChild(galleryImg);
             });
 
-            // show thumbnail container
+            // Show gallery
             setTimeout(() => {
-                thumbnailContainer.classList.add('visible');
-            }, 300); // delay for smooth entrance
+                gallery.classList.add('visible');
+            }, 100);
+
+            state.galleryActive = true;
+            state.galleryImages = allImages;
         }
 
-        function switchLightboxImage(newImg) {
-            if (!state.lightboxClone || newImg === state.activeLightboxImage) return;
+        function toggleFocusImage(img) {
+            const allGalleryImages = document.querySelectorAll('.lightbox-image');
 
-            const clone = state.lightboxClone;
-
-            // update active thumbnail
-            const thumbnails = document.querySelectorAll('.lightbox-thumb');
-            thumbnails.forEach(thumb => {
-                thumb.classList.remove('active');
-                // find matching thumbnail (compare src)
-                if (thumb.src === newImg.src) {
-                    thumb.classList.add('active');
-                }
-            });
-
-            // swap high-res image on clone
-            const highResUrl = getHighResUrl(newImg.src);
-
-            // fade out, swap, fade in
-            gsap.to(clone, {
-                opacity: 0.3,
-                duration: 0.2,
-                onComplete: () => {
-                    clone.src = highResUrl;
-
-                    // restore previous active image
-                    if (state.activeLightboxImage) {
-                        gsap.set(state.activeLightboxImage, { opacity: 1 });
-                        const dragInstance = Draggable.get(state.activeLightboxImage);
-                        if (dragInstance) dragInstance.enable();
-                    }
-
-                    // hide new active image
-                    gsap.set(newImg, { opacity: 0 });
-                    const newDragInstance = Draggable.get(newImg);
-                    if (newDragInstance) newDragInstance.disable();
-
-                    // update state
-                    state.activeLightboxImage = newImg;
-
-                    gsap.to(clone, {
-                        opacity: 1,
-                        duration: 0.2
-                    });
-                }
-            });
+            if (img.classList.contains('focused')) {
+                // Unfocus
+                img.classList.remove('focused');
+            } else {
+                // Remove focus from all others
+                allGalleryImages.forEach(i => i.classList.remove('focused'));
+                // Focus this one
+                img.classList.add('focused');
+            }
         }
 
         function exitLightbox() {
-            if (!state.activeLightboxImage || !state.lightboxClone) return;
-
-            const img = state.activeLightboxImage;
-            const clone = state.lightboxClone;
-
-            // Remove keyboard navigation
-            if (state.lightboxKeyHandler) {
-                document.removeEventListener('keydown', state.lightboxKeyHandler);
-                state.lightboxKeyHandler = null;
-            }
+            if (!state.galleryActive) return;
 
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
 
-            // Hide and clear thumbnails
-            const thumbnailContainer = document.getElementById('lightbox-thumbnails');
-            thumbnailContainer.classList.remove('visible');
+            // Hide gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.classList.remove('visible');
+
             setTimeout(() => {
-                thumbnailContainer.innerHTML = '';
+                gallery.innerHTML = '';
             }, 400);
 
-            // Get original's CURRENT position (it shouldn't have moved, but just in case)
-            // Since original is Opacity 0, it's still there.
-            const rect = img.getBoundingClientRect();
-
-            // Animate clone back to original's spot
-            gsap.to(clone, {
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height,
-                rotation: 0, // The original might have rotation, but `rect` accounts for bounding box...
-                // Actually, rect is the bounding box of the transformed element. 
-                // Using left/top/width/height against a rotated element's rect might look slightly off if we don't match rotation.
-                // But our clone is 'fixed' and we are animating left/top/width/height.
-                // It's easier to animate back to the VISUAL rect. 
-                // Let's try just using the rect. 
-
-                duration: 0.4,
-                ease: 'power3.out',
-                onComplete: () => {
-                    // Remove clone
-                    clone.remove();
-                    state.lightboxClone = null;
-
-                    // Show original
-                    gsap.set(img, { opacity: 1 });
-
-                    // Re-enable drag
-                    const dragInstance = Draggable.get(img);
+            // Show original images
+            if (state.galleryImages) {
+                state.galleryImages.forEach(image => {
+                    gsap.set(image, { opacity: 1 });
+                    const dragInstance = Draggable.get(image);
                     if (dragInstance) dragInstance.enable();
+                });
+            }
 
-                    state.activeLightboxImage = null;
-                    state.savedImageState = null;
-                }
-            });
+            state.galleryActive = false;
+            state.galleryImages = null;
         }
 
         // double-click to open original url
@@ -2226,16 +2035,16 @@
         // keyboard shortcuts
         function addKeyboardShortcuts() {
             window.addEventListener('keydown', (e) => {
-                // ESC: Exit lightbox OR navigate home
+                // ESC: Exit gallery OR navigate home
                 if (e.key === 'Escape') {
-                    if (state.activeLightboxImage) {
+                    if (state.galleryActive) {
                         exitLightbox();
                     } else {
                         window.location.href = '/';
                     }
                 }
 
-                if (state.activeLightboxImage) return; // disable others while in lightbox
+                if (state.galleryActive) return; // disable others while in gallery
 
                 // category filter shortcuts
                 if (e.key === '1') filterByCategory('saas');
