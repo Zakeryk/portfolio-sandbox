@@ -972,8 +972,11 @@
             const y = (-screenPos.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
 
             const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / (camera.right - camera.left));
-            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / (camera.top - camera.bottom));
+            const visibleWidth = (camera.right - camera.left) / camera.zoom;
+            const visibleHeight = (camera.top - camera.bottom) / camera.zoom;
+
+            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth);
+            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight);
 
             videoOverlay.style.left = `${x - widthPx / 2}px`;
             videoOverlay.style.top = `${y - heightPx / 2}px`;

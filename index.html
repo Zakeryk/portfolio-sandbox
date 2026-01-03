@@ -30,8 +30,24 @@
         })();
     </script>
     <style>
-        /* --- KOJIMA CORE --- */
+        /* --- THEME SYSTEM --- */
         :root {
+            --bg: #1a1a2e;
+            --card-bg: #16213e;
+            --border: #333;
+            --border-active: #ff6ec7;
+            --text: #f0f0f0;
+            --text-dim: #666;
+            --accent: #ff6ec7;
+            --success: #b19cd9;
+            --idle: #444;
+            --pink: #ff6ec7;
+            --purple: #b19cd9;
+            --blue: #89cff0;
+            --yellow: #ffd93d;
+        }
+
+        [data-theme="kojima"] {
             --bg: #080808;
             --card-bg: #0c0c0c;
             --border: #333;
@@ -40,8 +56,11 @@
             --text-dim: #555;
             --accent: #fff;
             --success: #33ff33;
-            /* Tactical Green */
             --idle: #444;
+            --pink: #ff0040;
+            --purple: #ff0040;
+            --blue: #00ffff;
+            --yellow: #00ffff;
         }
 
         @font-face {
@@ -49,7 +68,7 @@
             src: local('IBM Plex Mono'), local('Courier New');
         }
 
-        /* --- KOJIMA GLITCH EFFECTS --- */
+        /* --- GLITCH EFFECTS --- */
         @keyframes glitch {
 
             0%,
@@ -58,11 +77,11 @@
             }
 
             20% {
-                text-shadow: -2px 0 #ff0040, 2px 0 #00ffff;
+                text-shadow: -2px 0 var(--pink), 2px 0 var(--blue);
             }
 
             40% {
-                text-shadow: 2px 0 #ff0040, -2px 0 #00ffff;
+                text-shadow: 2px 0 var(--purple), -2px 0 var(--yellow);
             }
 
             60% {
@@ -157,7 +176,7 @@
             }
         }
 
-        /* SCANLINE OVERLAY - ENHANCED CRT EFFECT */
+        /* SCANLINE OVERLAY - CRT EFFECT */
         body::after {
             content: "";
             position: fixed;
@@ -165,10 +184,14 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.04) 50%);
+            background: linear-gradient(rgba(255, 110, 199, 0) 50%, rgba(255, 110, 199, 0.02) 50%);
             background-size: 100% 3px;
             pointer-events: none;
             z-index: 9999;
+        }
+
+        [data-theme="kojima"] body::after {
+            background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.04) 50%);
         }
 
         body {
@@ -589,10 +612,94 @@
             color: var(--accent);
             text-shadow: 0 0 8px var(--accent);
         }
+
+        /* DEBUG PANEL */
+        #debug-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--accent);
+            padding: 20px;
+            font-family: 'TechMono', monospace;
+            font-size: 10px;
+            z-index: 10001;
+            min-width: 200px;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #debug-panel.active {
+            display: block;
+        }
+
+        #debug-panel h3 {
+            margin: 0 0 15px 0;
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        #debug-panel .debug-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #debug-panel .debug-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        #debug-panel label {
+            color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+
+        #debug-panel select {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 5px 10px;
+            font-family: 'TechMono', monospace;
+            font-size: 9px;
+            cursor: pointer;
+            letter-spacing: 1px;
+        }
+
+        #debug-panel select:hover {
+            border-color: var(--accent);
+        }
+
+        #debug-panel .debug-hint {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 9px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- DEBUG PANEL -->
+    <div id="debug-panel">
+        <h3>DEBUG</h3>
+        <div class="debug-row">
+            <label>SKIN:</label>
+            <select id="theme-selector">
+                <option value="ripndip">RIPNDIP</option>
+                <option value="kojima">KOJIMA</option>
+            </select>
+        </div>
+        <div class="debug-hint">PRESS ~ TO TOGGLE</div>
+    </div>
 
     <div id="app">
         <header>
@@ -1000,6 +1107,37 @@
                     accIcon.innerText = "[+]";
                 }
             });
+        });
+
+        // DEBUG PANEL & THEME SWITCHER
+        const debugPanel = document.getElementById('debug-panel');
+        const themeSelector = document.getElementById('theme-selector');
+        const htmlElement = document.documentElement;
+
+        // Load saved theme or default to ripndip
+        const savedTheme = localStorage.getItem('theme') || 'ripndip';
+        if (savedTheme === 'kojima') {
+            htmlElement.setAttribute('data-theme', 'kojima');
+            themeSelector.value = 'kojima';
+        }
+
+        // Toggle debug panel with ~ key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '~' || e.key === '`') {
+                e.preventDefault();
+                debugPanel.classList.toggle('active');
+            }
+        });
+
+        // Theme selector change
+        themeSelector.addEventListener('change', (e) => {
+            const newTheme = e.target.value;
+            if (newTheme === 'kojima') {
+                htmlElement.setAttribute('data-theme', 'kojima');
+            } else {
+                htmlElement.removeAttribute('data-theme');
+            }
+            localStorage.setItem('theme', newTheme);
         });
 
     </script>
