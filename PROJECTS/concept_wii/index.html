@@ -751,6 +751,7 @@
             animSaturation: 0.95,
             animSizeAdjust: 1.08,
             animBorderRadius: 62,
+            animEdgeInset: 3,
             animTriggerNow: null // set after function is defined
         };
 
@@ -997,6 +998,13 @@
             videoOverlay.style.width = `${widthPx}px`;
             videoOverlay.style.height = `${heightPx}px`;
             videoOverlay.style.borderRadius = `${borderRadiusPx}px`;
+
+            // apply edge inset to pull video content away from edges uniformly
+            if (PARAMS.animEdgeInset > 0) {
+                videoEl.style.clipPath = `inset(${PARAMS.animEdgeInset}px round ${borderRadiusPx}px)`;
+            } else {
+                videoEl.style.clipPath = 'none';
+            }
         }
 
         function triggerTileAnimation() {
@@ -1375,6 +1383,7 @@
         animFolder.add(PARAMS, 'animSaturation', 0.5, 1.5).name('Saturation').onChange(updateAnimFilters);
         animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.15).name('Size Adjust');
         animFolder.add(PARAMS, 'animBorderRadius', 1, 150).name('Border Radius');
+        animFolder.add(PARAMS, 'animEdgeInset', 0, 20).name('Edge Inset (px)');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
     </script>
