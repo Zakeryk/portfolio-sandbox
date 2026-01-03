@@ -2344,10 +2344,8 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Gather spilled images back to source document
-            if (state.gallerySourceDoc) {
-                gatherImagesToFolder(state.gallerySourceDoc);
-            }
+            // Keep images spilled so peeking works after lightbox
+            // Images remain in their spread position
 
             // Show original images if they exist (for enterLightbox path)
             if (state.galleryImages) {
