@@ -72,6 +72,7 @@ async function smartDeploy() {
             "data.json",
             ".htaccess",      // <--- Added Security File
             "favicon.png",    // <--- Added Favicon
+            "cursor.png",     // <--- Added Custom Cursor
             "eyeball-favi.jpg"
         ];
 

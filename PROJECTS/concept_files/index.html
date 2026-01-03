@@ -392,8 +392,8 @@
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
-            width: 198px;
-            height: 144px;
+            width: 220px;
+            height: 160px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
             cursor: pointer;
             will-change: transform;
@@ -1067,6 +1067,9 @@
                     // Move collected stack if any
                     updateHeldStackPosition(this.target);
 
+                    // Move spilled images with document
+                    updateSpilledImagesPosition(this.target);
+
                     // Check drop zone overlap
                     checkDropZoneOverlap(this.target);
                 },
@@ -1225,6 +1228,9 @@
                         // Move collected stack if any
                         updateHeldStackPosition(this.target);
 
+                        // Move spilled images with document
+                        updateSpilledImagesPosition(this.target);
+
                         // check overlapping with specific parent folder for swell
                         checkDropZoneOverlap(this.target);
                     },
@@ -1361,6 +1367,28 @@
 
             // Update filing area visibility (stack collected = should open)
             updateFilingAreaVisibility();
+        }
+
+        function updateSpilledImagesPosition(doc) {
+            const folderIndex = doc.dataset.index;
+            const spilledImgs = state.spilledImages[folderIndex];
+
+            if (!spilledImgs || spilledImgs.length === 0) return;
+
+            // get current document position
+            const x = gsap.getProperty(doc, 'x');
+            const y = gsap.getProperty(doc, 'y');
+
+            // move each spilled image relative to document
+            spilledImgs.forEach(img => {
+                const offsetX = parseFloat(img.dataset.offsetX);
+                const offsetY = parseFloat(img.dataset.offsetY);
+
+                gsap.set(img, {
+                    x: x + offsetX,
+                    y: y + offsetY
+                });
+            });
         }
 
         function updateHeldStackPosition(leaderDoc) {
@@ -1583,20 +1611,29 @@
                 img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
-                // image size to match document
-                const imgWidth = docRect.width * 0.9;
-                const imgHeight = docRect.height * 0.9;
+                // image size matches document
+                const imgWidth = 220;
+                const imgHeight = 160;
 
                 // start position (at document center)
                 const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
                 const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
-                // spread evenly below document
+                // splay outward from bottom center in a fan pattern
                 const totalImages = images.length;
-                const spacing = docRect.width / (totalImages + 1);
-                const endX = docRect.left - containerRect.left + spacing * (i + 1) - imgWidth / 2;
-                const endY = docRect.bottom - containerRect.top + 10; // 10px below document
-                const randomRot = (Math.random() - 0.5) * 6; // smaller rotation
+                const centerX = docRect.left - containerRect.left + docRect.width / 2;
+                const bottomY = docRect.bottom - containerRect.top;
+
+                // create fan spread (-60 to +60 degrees from vertical)
+                const angleSpread = 120; // total spread in degrees
+                const startAngle = 90 - angleSpread / 2; // start from left side of fan
+                const angleStep = totalImages > 1 ? angleSpread / (totalImages - 1) : 0;
+                const currentAngle = (startAngle + angleStep * i) * (Math.PI / 180);
+                const distance = 120 + Math.random() * 40; // distance from bottom center
+
+                const endX = centerX + Math.cos(currentAngle) * distance - imgWidth / 2;
+                const endY = bottomY + Math.sin(currentAngle) * distance;
+                const randomRot = (Math.random() - 0.5) * 15;
 
                 // set initial position
                 gsap.set(img, {
@@ -1609,6 +1646,10 @@
                 });
 
                 container.appendChild(img);
+
+                // store relative offset from parent for dragging
+                img.dataset.offsetX = endX - (docRect.left - containerRect.left);
+                img.dataset.offsetY = endY - (docRect.top - containerRect.top);
 
                 // track this image
                 state.spilledImages[folderIndex].push(img);
@@ -2033,19 +2074,28 @@
                 img.src = imgUrl;
                 img.dataset.parent = folderIndex;
 
-                // image size to match document
-                const imgWidth = docRect.width * 0.9;
-                const imgHeight = docRect.height * 0.9;
+                // image size matches document
+                const imgWidth = 220;
+                const imgHeight = 160;
 
                 const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
                 const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
-                // spread evenly below document
+                // splay outward from bottom center in a fan pattern
                 const totalImages = images.length;
-                const spacing = docRect.width / (totalImages + 1);
-                const endX = docRect.left - containerRect.left + spacing * (i + 1) - imgWidth / 2;
-                const endY = docRect.bottom - containerRect.top + 10;
-                const randomRot = (Math.random() - 0.5) * 6;
+                const centerX = docRect.left - containerRect.left + docRect.width / 2;
+                const bottomY = docRect.bottom - containerRect.top;
+
+                // create fan spread (-60 to +60 degrees from vertical)
+                const angleSpread = 120;
+                const startAngle = 90 - angleSpread / 2;
+                const angleStep = totalImages > 1 ? angleSpread / (totalImages - 1) : 0;
+                const currentAngle = (startAngle + angleStep * i) * (Math.PI / 180);
+                const distance = 120 + Math.random() * 40;
+
+                const endX = centerX + Math.cos(currentAngle) * distance - imgWidth / 2;
+                const endY = bottomY + Math.sin(currentAngle) * distance;
+                const randomRot = (Math.random() - 0.5) * 15;
 
                 gsap.set(img, {
                     x: startX,
@@ -2243,8 +2293,8 @@
 
             const docRect = doc.getBoundingClientRect();
             const containerRect = document.getElementById('desk-container').getBoundingClientRect();
-            const imgWidth = docRect.width * 0.9;
-            const imgHeight = docRect.height * 0.9;
+            const imgWidth = 220;
+            const imgHeight = 160;
             const targetX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
             const targetY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
