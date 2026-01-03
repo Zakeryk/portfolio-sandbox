@@ -413,6 +413,19 @@
             cursor: grabbing !important;
         }
 
+        /* === PEEK IMAGES === */
+        .peek-image {
+            position: absolute;
+            max-width: 100px;
+            max-height: 80px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 4;
+            object-fit: cover;
+            border-radius: 2px;
+            opacity: 0.9;
+        }
+
 
         /* === LIGHTBOX OVERLAY === */
         #lightbox-overlay {
@@ -749,6 +762,96 @@
             });
         }
 
+        // add peek effect to document
+        function addPeekEffect(doc) {
+            let peekImages = [];
+
+            doc.addEventListener('mouseenter', () => {
+                // Don't show peek if already spilled or if dragging
+                const folderIndex = doc.dataset.index;
+                if (state.spilledFolders.has(folderIndex) || state.isDragging) return;
+
+                const images = JSON.parse(doc.dataset.images);
+                if (!images || images.length === 0) return;
+
+                // Tilt the document slightly
+                const tiltAngle = (Math.random() - 0.5) * 8; // ±4 degrees
+                gsap.to(doc, {
+                    rotation: tiltAngle,
+                    scale: 1.02,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+
+                // Get document position
+                const docRect = doc.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+                // Show up to 3 peek images at the edges
+                const numPeeks = Math.min(3, images.length);
+                const peekPositions = [
+                    { x: -30, y: -20, rotation: -8 },  // top-left
+                    { x: 20, y: -25, rotation: 5 },    // top-right
+                    { x: -20, y: 15, rotation: -3 }    // bottom-left
+                ];
+
+                for (let i = 0; i < numPeeks; i++) {
+                    const peekImg = document.createElement('img');
+                    peekImg.className = 'peek-image';
+                    peekImg.src = images[i];
+                    peekImg.loading = 'eager';
+
+                    const baseX = docRect.left - containerRect.left;
+                    const baseY = docRect.top - containerRect.top;
+                    const pos = peekPositions[i];
+
+                    gsap.set(peekImg, {
+                        x: baseX + pos.x,
+                        y: baseY + pos.y,
+                        rotation: pos.rotation,
+                        scale: 0.5,
+                        opacity: 0,
+                        zIndex: parseInt(gsap.getProperty(doc, 'zIndex')) - 1
+                    });
+
+                    document.getElementById('documents-area').appendChild(peekImg);
+                    peekImages.push(peekImg);
+
+                    // Animate in
+                    gsap.to(peekImg, {
+                        scale: 1,
+                        opacity: 0.9,
+                        duration: 0.3,
+                        delay: i * 0.05,
+                        ease: 'back.out(1.5)'
+                    });
+                }
+            });
+
+            doc.addEventListener('mouseleave', () => {
+                // Reset document
+                gsap.to(doc, {
+                    rotation: 0,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+
+                // Remove peek images
+                peekImages.forEach((img, i) => {
+                    gsap.to(img, {
+                        scale: 0.5,
+                        opacity: 0,
+                        duration: 0.2,
+                        delay: i * 0.02,
+                        ease: 'power2.in',
+                        onComplete: () => img.remove()
+                    });
+                });
+                peekImages = [];
+            });
+        }
+
         // initialization
         async function init() {
             // load real images from manifest first
@@ -999,6 +1102,9 @@
             // trigger drag immediately
             draggable.startDrag(e);
 
+            // add peek effect
+            addPeekEffect(doc);
+
             // remove from list
             listItem.remove();
             updateFileCounts();
@@ -1154,6 +1260,9 @@
                 })[0];
 
                 state.draggables.push(draggable);
+
+                // add peek effect
+                addPeekEffect(doc);
             });
         }
 
