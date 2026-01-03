@@ -1081,6 +1081,9 @@
                 onDragEnd: function () {
                     state.isDragging = false;
 
+                    // Spread images back out
+                    spreadSpilledImagesFromStack(this.target);
+
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
 
@@ -1371,6 +1374,74 @@
 
             // Update filing area visibility (stack collected = should open)
             updateFilingAreaVisibility();
+        }
+
+        function gatherSpilledImagesIntoStack(doc) {
+            const folderIndex = doc.dataset.index;
+            const spilledImgs = state.spilledImages[folderIndex];
+
+            if (!spilledImgs || spilledImgs.length === 0) return;
+
+            const docX = gsap.getProperty(doc, 'x');
+            const docY = gsap.getProperty(doc, 'y');
+
+            // gather images into stack formation behind document
+            spilledImgs.forEach((img, i) => {
+                const stackOffset = i * 3; // small offset for stack effect
+
+                gsap.to(img, {
+                    x: docX + stackOffset,
+                    y: docY + stackOffset,
+                    rotation: 0,
+                    scale: 0.95,
+                    duration: 0.2,
+                    ease: 'power2.out'
+                });
+
+                // update offsets for dragging
+                img.dataset.offsetX = stackOffset;
+                img.dataset.offsetY = stackOffset;
+            });
+        }
+
+        function spreadSpilledImagesFromStack(doc) {
+            const folderIndex = doc.dataset.index;
+            const spilledImgs = state.spilledImages[folderIndex];
+
+            if (!spilledImgs || spilledImgs.length === 0) return;
+
+            const docRect = doc.getBoundingClientRect();
+            const docX = gsap.getProperty(doc, 'x');
+            const docY = gsap.getProperty(doc, 'y');
+
+            // spread images back to original pattern
+            spilledImgs.forEach((img, i) => {
+                const totalImages = spilledImgs.length;
+                const angleStep = (360 / totalImages);
+                const currentAngle = (angleStep * i) * (Math.PI / 180);
+                const distance = 150 + Math.random() * 30;
+
+                const centerX = docX + docRect.width / 2;
+                const centerY = docY + docRect.height / 2;
+                const imgWidth = 220;
+                const imgHeight = 160;
+
+                const endX = centerX + Math.cos(currentAngle) * distance - imgWidth / 2;
+                const endY = centerY + Math.sin(currentAngle) * distance - imgHeight / 2;
+
+                gsap.to(img, {
+                    x: endX,
+                    y: endY,
+                    rotation: (Math.random() - 0.5) * 20,
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+
+                // update offsets for new positions
+                img.dataset.offsetX = endX - docX;
+                img.dataset.offsetY = endY - docY;
+            });
         }
 
         function updateSpilledImagesPosition(doc) {
