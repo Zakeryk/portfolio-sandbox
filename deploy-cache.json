@@ -51,7 +51,7 @@
   "projects/concept_wii/styles/style.css": 1765593374771.713,
   "projects/concept_wii/thumb.jpg": 1765565040253.485,
   "index.html": 1767410991335.86,
-  "data.json": 1767412594093.9746,
+  "data.json": 1767412677005.5872,
   ".htaccess": 1765567405134.0796,
   "favicon.png": 1767405520209.8035,
   "projects/HIDDEN/concept_dark_3d/Daylight_Box_0.png": 1763666671360.729,
@@ -355,7 +355,7 @@
   "projects/concept_resident/background.jpg": 1767407295913.5024,
   "projects/concept_resident/index.html": 1767412582245.5828,
   "projects/concept_resident/meta.json": 1767407503424.444,
-  "projects/concept_resident/thumb.png": 1767052372025.525,
+  "projects/concept_resident/thumb.png": 1767412657681.219,
   "projects/concept_resident/thumb.svg": 1766459999468.2974,
   "projects/concept_resident/.claude/settings.local.json": 1767411006309.0425,
   "projects/concept_wii/assets/anim_01.mp4": 1767408622000,
@@ -363,5 +363,6 @@
   "projects/concept_resident/assets/background.jpg": 1767407295913.5024,
   "projects/concept_ripndip_terminal/index.html": 1767410602931.1458,
   "projects/concept_ripndip_terminal/meta.json": 1767410640379.7878,
-  "projects/concept_ripndip_terminal/thumb.svg": 1767410665441.0767
+  "projects/concept_ripndip_terminal/thumb.svg": 1767410665441.0767,
+  "projects/concept_resident/thumb_old.png": 1767052372025.525
 }
