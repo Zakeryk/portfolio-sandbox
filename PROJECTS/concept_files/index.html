@@ -1046,11 +1046,18 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // Peek mechanic disabled - no gather on press
+                    // Remove any peek images immediately when drag starts
+                    const peekImages = document.querySelectorAll('.peek-image');
+                    peekImages.forEach(img => {
+                        gsap.killTweensOf(img);
+                        img.remove();
+                    });
 
+                    // Reset document rotation from hover
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
                         scale: 1.05,
+                        rotation: 0,
                         boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
                         duration: 0.1
                     });
@@ -2400,15 +2407,16 @@
             gsap.to(doc, {
                 opacity: 1,
                 scale: 1,
+                rotation: 0,
                 duration: 0.15,
                 onComplete: () => {
-                    // ensure document is clickable again
+                    // ensure document is clickable and peek works again
                     doc.style.pointerEvents = 'all';
                     doc.style.cursor = 'pointer';
                 }
             });
 
-            // clear tracking
+            // clear tracking - this allows peek to work again
             state.spilledImages[folderIndex] = [];
             state.spilledFolders.delete(folderIndex);
         }
