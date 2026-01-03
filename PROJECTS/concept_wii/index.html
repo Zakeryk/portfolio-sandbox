@@ -545,7 +545,6 @@
             z-index: 35;
             opacity: 0;
             transition: opacity 0.3s ease;
-            border-radius: 4px;
             overflow: hidden;
         }
 
@@ -985,10 +984,15 @@
             const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
             const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight) * PARAMS.animSizeAdjust;
 
+            // calculate border radius in pixels to match tile's rounded corners
+            const borderRadiusWorld = PARAMS.borderRadius * BASE_BLOCK_WIDTH;
+            const borderRadiusPx = borderRadiusWorld * scaleFactor * tile.scale.x * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
+
             videoOverlay.style.left = `${x - widthPx / 2}px`;
             videoOverlay.style.top = `${y - heightPx / 2}px`;
             videoOverlay.style.width = `${widthPx}px`;
             videoOverlay.style.height = `${heightPx}px`;
+            videoOverlay.style.borderRadius = `${borderRadiusPx}px`;
         }
 
         function triggerTileAnimation() {
