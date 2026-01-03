@@ -1054,14 +1054,16 @@
                         duration: 0.1
                     });
 
-                    // Gather spilled images into stack behind document
-                    gatherSpilledImagesIntoStack(this.target);
-
                     // Reset shake context
                     state.shakeContext.history = [];
                     state.shakeContext.lastX = this.x;
                     state.shakeContext.reversals = 0;
                     state.shakeContext.direction = 0;
+                },
+
+                onDragStart: function () {
+                    // Gather spilled images into stack when drag actually starts
+                    gatherSpilledImagesIntoStack(this.target);
                 },
 
                 onDrag: function () {
@@ -1384,23 +1386,25 @@
 
             const docX = gsap.getProperty(doc, 'x');
             const docY = gsap.getProperty(doc, 'y');
+            const docRect = doc.getBoundingClientRect();
 
-            // gather images into stack formation behind document
+            // gather images into stack formation behind/below document
             spilledImgs.forEach((img, i) => {
-                const stackOffset = i * 3; // small offset for stack effect
+                const stackOffsetX = i * 5; // horizontal offset for stack
+                const stackOffsetY = i * 5 + 20; // vertical offset - stack below
 
                 gsap.to(img, {
-                    x: docX + stackOffset,
-                    y: docY + stackOffset,
-                    rotation: 0,
-                    scale: 0.95,
-                    duration: 0.2,
+                    x: docX + stackOffsetX,
+                    y: docY + stackOffsetY,
+                    rotation: (Math.random() - 0.5) * 5,
+                    scale: 0.98,
+                    duration: 0.15,
                     ease: 'power2.out'
                 });
 
                 // update offsets for dragging
-                img.dataset.offsetX = stackOffset;
-                img.dataset.offsetY = stackOffset;
+                img.dataset.offsetX = stackOffsetX;
+                img.dataset.offsetY = stackOffsetY;
             });
         }
 
