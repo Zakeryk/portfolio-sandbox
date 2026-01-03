@@ -240,13 +240,7 @@
         }
 
         .document:hover {
-            animation: documentShake 0.3s ease-in-out;
-        }
-
-        @keyframes documentShake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(1deg); }
-            75% { transform: rotate(-1deg); }
+            /* hover animation disabled - conflicts with gsap transforms */
         }
 
         .document::before {
