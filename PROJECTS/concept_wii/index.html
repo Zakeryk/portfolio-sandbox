@@ -553,7 +553,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.92) contrast(1.02);
+            filter: brightness(0.82) saturate(0.95);
         }
 
         #tile-video-overlay.playing {
@@ -748,7 +748,8 @@
             animTriggerMode: 'hover', // 'hover' or 'interval'
             animFrequency: 8000,
             animEnabled: true,
-            animBrightness: 0.92,
+            animBrightness: 0.82,
+            animSaturation: 0.95,
             animSizeAdjust: 1.01,
             animTriggerNow: null // set after function is defined
         };
@@ -961,6 +962,7 @@
         const videoEl = videoOverlay.querySelector('video');
         let animInterval = null;
         let isAnimPlaying = false;
+        let isTile0Hovered = false;
 
         function updateVideoPosition() {
             if (!channelBlocks[0]) return;
@@ -990,17 +992,31 @@
         }
 
         function triggerTileAnimation() {
-            if (isAnimPlaying || !PARAMS.animEnabled) return;
+            if (!PARAMS.animEnabled) return;
 
-            isAnimPlaying = true;
-            videoOverlay.classList.add('playing');
-            videoEl.currentTime = 0;
-            videoEl.play();
+            if (!isAnimPlaying) {
+                isAnimPlaying = true;
+                videoOverlay.classList.add('playing');
+                videoEl.currentTime = 0;
+                videoEl.loop = PARAMS.animTriggerMode === 'hover';
+                videoEl.play();
+            }
 
-            videoEl.onended = () => {
+            if (PARAMS.animTriggerMode !== 'hover') {
+                videoEl.onended = () => {
+                    videoOverlay.classList.remove('playing');
+                    isAnimPlaying = false;
+                };
+            }
+        }
+
+        function stopTileAnimation() {
+            if (isAnimPlaying) {
+                videoEl.pause();
+                videoEl.currentTime = 0;
                 videoOverlay.classList.remove('playing');
                 isAnimPlaying = false;
-            };
+            }
         }
 
         function startAnimationLoop() {
@@ -1014,7 +1030,7 @@
         }
 
         function updateAnimFilters() {
-            videoEl.style.filter = `brightness(${PARAMS.animBrightness}) contrast(1.02)`;
+            videoEl.style.filter = `brightness(${PARAMS.animBrightness}) saturate(${PARAMS.animSaturation})`;
         }
 
         // now set the callback
@@ -1180,14 +1196,24 @@
 
                     hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
 
+                    // track tile 0 hover state
+                    const wasHoveringTile0 = isTile0Hovered;
+                    isTile0Hovered = hoveredTile.userData.index === 0;
+
                     if (INTERSECTED !== hoveredTile) {
                         INTERSECTED = hoveredTile;
-                        // trigger animation on hover for tile 0
-                        if (PARAMS.animTriggerMode === 'hover' && hoveredTile.userData.index === 0) {
-                            triggerTileAnimation();
-                        }
+                    }
+
+                    // start animation when hovering tile 0
+                    if (PARAMS.animTriggerMode === 'hover' && isTile0Hovered && !wasHoveringTile0) {
+                        triggerTileAnimation();
                     }
                 } else {
+                    // stop animation when hover ends
+                    if (PARAMS.animTriggerMode === 'hover' && isTile0Hovered) {
+                        stopTileAnimation();
+                    }
+                    isTile0Hovered = false;
                     INTERSECTED = null;
                 }
 
@@ -1338,6 +1364,7 @@
         animFolder.add(PARAMS, 'animTriggerMode', ['hover', 'interval']).name('Trigger Mode').onChange(startAnimationLoop);
         animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Interval (ms)').onChange(startAnimationLoop);
         animFolder.add(PARAMS, 'animBrightness', 0.5, 1.5).name('Brightness').onChange(updateAnimFilters);
+        animFolder.add(PARAMS, 'animSaturation', 0.5, 1.5).name('Saturation').onChange(updateAnimFilters);
         animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.1).name('Size Adjust');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
