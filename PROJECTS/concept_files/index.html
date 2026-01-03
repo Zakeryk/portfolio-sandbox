@@ -458,7 +458,7 @@
             display: flex;
             gap: 30px;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-evenly;
             z-index: 1002;
             opacity: 0;
             pointer-events: none;
@@ -1620,21 +1620,19 @@
                 const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
                 const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
-                // splay outward from bottom center in a fan pattern
+                // splay outward in all directions (360 degrees)
                 const totalImages = images.length;
                 const centerX = docRect.left - containerRect.left + docRect.width / 2;
-                const bottomY = docRect.bottom - containerRect.top;
+                const centerY = docRect.top - containerRect.top + docRect.height / 2;
 
-                // create fan spread (-60 to +60 degrees from vertical)
-                const angleSpread = 120; // total spread in degrees
-                const startAngle = 90 - angleSpread / 2; // start from left side of fan
-                const angleStep = totalImages > 1 ? angleSpread / (totalImages - 1) : 0;
-                const currentAngle = (startAngle + angleStep * i) * (Math.PI / 180);
-                const distance = 120 + Math.random() * 40; // distance from bottom center
+                // spread evenly in circle around document
+                const angleStep = (360 / totalImages);
+                const currentAngle = (angleStep * i) * (Math.PI / 180);
+                const distance = 150 + Math.random() * 30;
 
                 const endX = centerX + Math.cos(currentAngle) * distance - imgWidth / 2;
-                const endY = bottomY + Math.sin(currentAngle) * distance;
-                const randomRot = (Math.random() - 0.5) * 15;
+                const endY = centerY + Math.sin(currentAngle) * distance - imgHeight / 2;
+                const randomRot = (Math.random() - 0.5) * 20;
 
                 // set initial position
                 gsap.set(img, {
@@ -2084,21 +2082,19 @@
                 const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
                 const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
 
-                // splay outward from bottom center in a fan pattern
+                // splay outward in all directions (360 degrees)
                 const totalImages = images.length;
                 const centerX = docRect.left - containerRect.left + docRect.width / 2;
-                const bottomY = docRect.bottom - containerRect.top;
+                const centerY = docRect.top - containerRect.top + docRect.height / 2;
 
-                // create fan spread (-60 to +60 degrees from vertical)
-                const angleSpread = 120;
-                const startAngle = 90 - angleSpread / 2;
-                const angleStep = totalImages > 1 ? angleSpread / (totalImages - 1) : 0;
-                const currentAngle = (startAngle + angleStep * i) * (Math.PI / 180);
-                const distance = 120 + Math.random() * 40;
+                // spread evenly in circle around document
+                const angleStep = (360 / totalImages);
+                const currentAngle = (angleStep * i) * (Math.PI / 180);
+                const distance = 150 + Math.random() * 30;
 
                 const endX = centerX + Math.cos(currentAngle) * distance - imgWidth / 2;
-                const endY = bottomY + Math.sin(currentAngle) * distance;
-                const randomRot = (Math.random() - 0.5) * 15;
+                const endY = centerY + Math.sin(currentAngle) * distance - imgHeight / 2;
+                const randomRot = (Math.random() - 0.5) * 20;
 
                 gsap.set(img, {
                     x: startX,
