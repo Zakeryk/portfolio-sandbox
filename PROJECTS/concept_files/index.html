@@ -1054,6 +1054,9 @@
                         duration: 0.1
                     });
 
+                    // Gather spilled images into stack behind document
+                    gatherSpilledImagesIntoStack(this.target);
+
                     // Reset shake context
                     state.shakeContext.history = [];
                     state.shakeContext.lastX = this.x;
