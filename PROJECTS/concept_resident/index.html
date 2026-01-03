@@ -440,12 +440,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(5, 10, 8, 0.4);
+            background: rgba(5, 10, 8, 0.25);
             opacity: 0;
             pointer-events: none;
             z-index: 900;
             transition: opacity 0.2s ease;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(2px);
         }
 
         #lightbox-overlay.visible {
@@ -458,17 +458,26 @@
         #lightbox-gallery {
             position: fixed;
             top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
             display: flex;
             gap: 30px;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             z-index: 1002;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s ease;
-            max-width: 90vw;
+            transition: opacity 0.2s ease, left 0.3s ease;
+            padding: 0 5vw;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+
+        #lightbox-gallery::-webkit-scrollbar {
+            display: none;
         }
 
         #lightbox-gallery.visible {
@@ -745,7 +754,10 @@
             },
             isHoveringParentDoc: false, // tracks if image is hovering over its parent document
             hoveredParentDoc: null, // the parent document being hovered
-            preloadedImages: {} // cache of preloaded images
+            preloadedImages: {}, // cache of preloaded images
+            currentGalleryIndex: 0, // current focused image in gallery
+            gallerySourceDoc: null, // document that opened the gallery
+            galleryKeyHandler: null // keyboard handler for gallery
         };
 
         // preload images for a document
@@ -998,20 +1010,10 @@
                 },
 
                 onClick: function () {
-                    let clickCount = this.clickCount || 0;
-                    clickCount++;
-                    this.clickCount = clickCount;
-
-                    if (clickCount === 1) {
-                        setTimeout(() => {
-                            if (this.clickCount === 1) {
-                                spillImages(this.target);
-                            }
-                            this.clickCount = 0;
-                        }, 200);
-                    } else if (clickCount === 2) {
-                        openDocument(this.target);
-                        this.clickCount = 0;
+                    // Open gallery directly on click
+                    const images = JSON.parse(this.target.dataset.images);
+                    if (images && images.length > 0) {
+                        openGalleryFromDocument(this.target);
                     }
                 }
             })[0];
@@ -1165,20 +1167,10 @@
                     },
 
                     onClick: function () {
-                        // handle click vs double-click
-                        clickCount++;
-
-                        if (clickCount === 1) {
-                            clickTimeout = setTimeout(() => {
-                                // single click = spill images
-                                spillImages(this.target);
-                                clickCount = 0;
-                            }, 200);
-                        } else if (clickCount === 2) {
-                            // double click = open url
-                            clearTimeout(clickTimeout);
-                            openDocument(this.target);
-                            clickCount = 0;
+                        // Open gallery directly on click
+                        const images = JSON.parse(this.target.dataset.images);
+                        if (images && images.length > 0) {
+                            openGalleryFromDocument(this.target);
                         }
                     }
                 })[0];
@@ -1881,6 +1873,50 @@
             return url;
         }
 
+        function openGalleryFromDocument(doc) {
+            if (state.galleryActive) return;
+
+            const images = JSON.parse(doc.dataset.images);
+            if (!images || images.length === 0) return;
+
+            // Hide filing area
+            const filingArea = document.getElementById('filing-area');
+            filingArea.classList.remove('visible');
+
+            // Show overlay
+            document.getElementById('lightbox-overlay').classList.add('visible');
+
+            // Create gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.innerHTML = '';
+
+            images.forEach((imgUrl, index) => {
+                const galleryImg = document.createElement('img');
+                galleryImg.className = 'lightbox-image';
+                galleryImg.src = getHighResUrl(imgUrl);
+                galleryImg.dataset.index = index;
+                galleryImg.loading = 'eager';
+
+                // Click to focus/unfocus
+                galleryImg.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFocusImage(galleryImg);
+                });
+
+                gallery.appendChild(galleryImg);
+            });
+
+            // Show gallery
+            setTimeout(() => {
+                gallery.classList.add('visible');
+            }, 50);
+
+            state.galleryActive = true;
+            state.gallerySourceDoc = doc;
+            state.currentGalleryIndex = 0;
+            setupGalleryKeyboardNav();
+        }
+
         function enterLightbox(img) {
             if (state.galleryActive) return; // already active
 
@@ -1912,6 +1948,7 @@
                 galleryImg.src = getHighResUrl(image.src);
                 galleryImg.dataset.index = index;
                 galleryImg.dataset.originalImage = index;
+                galleryImg.loading = 'eager';
 
                 // Click to focus/unfocus
                 galleryImg.addEventListener('click', (e) => {
@@ -1929,6 +1966,42 @@
 
             state.galleryActive = true;
             state.galleryImages = allImages;
+            state.currentGalleryIndex = 0;
+            setupGalleryKeyboardNav();
+        }
+
+        function setupGalleryKeyboardNav() {
+            if (state.galleryKeyHandler) {
+                document.removeEventListener('keydown', state.galleryKeyHandler);
+            }
+
+            state.galleryKeyHandler = (e) => {
+                if (!state.galleryActive) return;
+
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navigateGallery(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateGallery(1);
+                }
+            };
+
+            document.addEventListener('keydown', state.galleryKeyHandler);
+        }
+
+        function navigateGallery(direction) {
+            const gallery = document.getElementById('lightbox-gallery');
+            const images = gallery.querySelectorAll('.lightbox-image');
+
+            if (images.length === 0) return;
+
+            state.currentGalleryIndex = Math.max(0, Math.min(images.length - 1, state.currentGalleryIndex + direction));
+
+            const targetImage = images[state.currentGalleryIndex];
+            if (targetImage) {
+                targetImage.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
         }
 
         function toggleFocusImage(img) {
@@ -1942,11 +2015,23 @@
                 allGalleryImages.forEach(i => i.classList.remove('focused'));
                 // Focus this one
                 img.classList.add('focused');
+
+                // Update current index
+                const index = parseInt(img.dataset.index);
+                if (!isNaN(index)) {
+                    state.currentGalleryIndex = index;
+                }
             }
         }
 
         function exitLightbox() {
             if (!state.galleryActive) return;
+
+            // Remove keyboard handler
+            if (state.galleryKeyHandler) {
+                document.removeEventListener('keydown', state.galleryKeyHandler);
+                state.galleryKeyHandler = null;
+            }
 
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
@@ -1959,7 +2044,7 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Show original images
+            // Show original images if they exist
             if (state.galleryImages) {
                 state.galleryImages.forEach(image => {
                     gsap.set(image, { opacity: 1 });
@@ -1970,6 +2055,8 @@
 
             state.galleryActive = false;
             state.galleryImages = null;
+            state.gallerySourceDoc = null;
+            state.currentGalleryIndex = 0;
         }
 
         // double-click to open original url
