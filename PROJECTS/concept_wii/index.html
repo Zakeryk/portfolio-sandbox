@@ -537,6 +537,27 @@
         body.debug-mode .tile-index-label {
             display: block;
         }
+
+        /* TILE VIDEO OVERLAY */
+        #tile-video-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 35;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #tile-video-overlay video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #tile-video-overlay.playing {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -608,6 +629,11 @@
             <div id="canvas-wrapper"></div>
         </div>
         <div id="tile-label-container"></div>
+        <div id="tile-video-overlay">
+            <video muted playsinline preload="auto">
+                <source src="assets/anim_01.mp4" type="video/mp4">
+            </video>
+        </div>
 
         <div id="clock">12:00</div>
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
@@ -692,7 +718,7 @@
         setTimeout(animateTitle, 800);
 
         const ASSETS = {
-            0: 'assets/channel_devil.jpg',
+            0: 'assets/anim_01_still.jpg',
             1: 'assets/channel_wii.jpg',
             2: 'assets/channel_grassball.jpg',
             3: null,
@@ -717,6 +743,10 @@
             borderRadius: 0.018,
             activeSlot: 1,
             splitHeight: 0.86,
+            // tile 0 animation params
+            animFrequency: 8000,
+            animEnabled: true,
+            animTriggerNow: () => { triggerTileAnimation(); }
         };
 
         const cursorState = {
@@ -1057,6 +1087,8 @@
                 scrollState.current = 0;
             }
 
+            updateVideoPosition();
+
             if (!isMobile) {
                 camera.lookAt(PARAMS.aimX, PARAMS.aimY, PARAMS.aimZ);
                 raycaster.setFromCamera(pointer, camera);
@@ -1215,14 +1247,75 @@
         updateClock();
         updateBorders();
 
+        // --- TILE 0 VIDEO ANIMATION SYSTEM ---
+        const videoOverlay = document.getElementById('tile-video-overlay');
+        const videoEl = videoOverlay.querySelector('video');
+        let animInterval = null;
+        let isAnimPlaying = false;
+
+        function updateVideoPosition() {
+            if (!channelBlocks[0]) return;
+
+            const tile = channelBlocks[0];
+            tile.updateWorldMatrix(true, false);
+            tile.getWorldPosition(worldPosition);
+
+            const screenPos = worldPosition.clone();
+            screenPos.project(camera);
+
+            const x = (screenPos.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = (-screenPos.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+
+            const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
+            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / (camera.right - camera.left));
+            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / (camera.top - camera.bottom));
+
+            videoOverlay.style.left = `${x - widthPx / 2}px`;
+            videoOverlay.style.top = `${y - heightPx / 2}px`;
+            videoOverlay.style.width = `${widthPx}px`;
+            videoOverlay.style.height = `${heightPx}px`;
+        }
+
+        function triggerTileAnimation() {
+            if (isAnimPlaying || !PARAMS.animEnabled) return;
+
+            isAnimPlaying = true;
+            videoOverlay.classList.add('playing');
+            videoEl.currentTime = 0;
+            videoEl.play();
+
+            videoEl.onended = () => {
+                videoOverlay.classList.remove('playing');
+                isAnimPlaying = false;
+            };
+        }
+
+        function startAnimationLoop() {
+            if (animInterval) clearInterval(animInterval);
+
+            if (PARAMS.animEnabled && PARAMS.animFrequency > 0) {
+                animInterval = setInterval(() => {
+                    if (PARAMS.animEnabled) triggerTileAnimation();
+                }, PARAMS.animFrequency);
+            }
+        }
+
+        startAnimationLoop();
+
         const gui = new GUI({ autoPlace: false });
         document.getElementById('gui-container').appendChild(gui.domElement);
+
         const folder = gui.addFolder('Layout');
         folder.add(PARAMS, 'gridSpacing', 1, 3).onChange(updateGrid);
         folder.add(PARAMS, 'gridOffsetY', -5, 5).onChange(updateGrid);
         folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
-
         folder.open();
+
+        const animFolder = gui.addFolder('Tile 0 Animation');
+        animFolder.add(PARAMS, 'animEnabled').name('Enable Animation');
+        animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Frequency (ms)').onChange(startAnimationLoop);
+        animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
+        animFolder.open();
     </script>
 </body>
 
