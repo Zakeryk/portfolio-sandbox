@@ -1651,8 +1651,6 @@
                 container.appendChild(img);
 
                 // store relative offset from parent's GSAP position for dragging
-                const docX = gsap.getProperty(doc, 'x') || 0;
-                const docY = gsap.getProperty(doc, 'y') || 0;
                 img.dataset.offsetX = endX - docX;
                 img.dataset.offsetY = endY - docY;
 
@@ -2117,8 +2115,6 @@
                 container.appendChild(img);
 
                 // store relative offset from parent's GSAP position for dragging
-                const docX = gsap.getProperty(doc, 'x') || 0;
-                const docY = gsap.getProperty(doc, 'y') || 0;
                 img.dataset.offsetX = endX - docX;
                 img.dataset.offsetY = endY - docY;
 
