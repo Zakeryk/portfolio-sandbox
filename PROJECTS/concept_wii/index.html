@@ -553,6 +553,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            filter: brightness(0.92) contrast(1.02);
         }
 
         #tile-video-overlay.playing {
@@ -744,8 +745,11 @@
             activeSlot: 1,
             splitHeight: 0.86,
             // tile 0 animation params
+            animTriggerMode: 'hover', // 'hover' or 'interval'
             animFrequency: 8000,
             animEnabled: true,
+            animBrightness: 0.92,
+            animSizeAdjust: 1.01,
             animTriggerNow: null // set after function is defined
         };
 
@@ -975,8 +979,9 @@
             const visibleWidth = (camera.right - camera.left) / camera.zoom;
             const visibleHeight = (camera.top - camera.bottom) / camera.zoom;
 
-            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth);
-            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight);
+            // add small adjustment for better alignment
+            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
+            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight) * PARAMS.animSizeAdjust;
 
             videoOverlay.style.left = `${x - widthPx / 2}px`;
             videoOverlay.style.top = `${y - heightPx / 2}px`;
@@ -1001,11 +1006,15 @@
         function startAnimationLoop() {
             if (animInterval) clearInterval(animInterval);
 
-            if (PARAMS.animEnabled && PARAMS.animFrequency > 0) {
+            if (PARAMS.animEnabled && PARAMS.animTriggerMode === 'interval' && PARAMS.animFrequency > 0) {
                 animInterval = setInterval(() => {
                     if (PARAMS.animEnabled) triggerTileAnimation();
                 }, PARAMS.animFrequency);
             }
+        }
+
+        function updateAnimFilters() {
+            videoEl.style.filter = `brightness(${PARAMS.animBrightness}) contrast(1.02)`;
         }
 
         // now set the callback
@@ -1171,7 +1180,13 @@
 
                     hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
 
-                    if (INTERSECTED !== hoveredTile) INTERSECTED = hoveredTile;
+                    if (INTERSECTED !== hoveredTile) {
+                        INTERSECTED = hoveredTile;
+                        // trigger animation on hover for tile 0
+                        if (PARAMS.animTriggerMode === 'hover' && hoveredTile.userData.index === 0) {
+                            triggerTileAnimation();
+                        }
+                    }
                 } else {
                     INTERSECTED = null;
                 }
@@ -1320,7 +1335,10 @@
 
         const animFolder = gui.addFolder('Tile 0 Animation');
         animFolder.add(PARAMS, 'animEnabled').name('Enable Animation');
-        animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Frequency (ms)').onChange(startAnimationLoop);
+        animFolder.add(PARAMS, 'animTriggerMode', ['hover', 'interval']).name('Trigger Mode').onChange(startAnimationLoop);
+        animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Interval (ms)').onChange(startAnimationLoop);
+        animFolder.add(PARAMS, 'animBrightness', 0.5, 1.5).name('Brightness').onChange(updateAnimFilters);
+        animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 1.1).name('Size Adjust');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
     </script>
