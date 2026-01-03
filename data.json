@@ -1,27 +1,27 @@
 {
   "active": [
     {
-      "id": "MY_PROJECTS",
-      "path": "./projects/MY_PROJECTS/",
-      "title": "MY_PROJECTS",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": "./projects/MY_PROJECTS/thumb.png",
-      "date": "2026-01-03T06:05:14.493Z"
-    },
-    {
-      "id": "MY_WORK",
-      "path": "./projects/MY_WORK/",
+      "id": "concept_wii",
+      "path": "./projects/concept_wii/",
       "title": "CONCEPT_RESIDENT",
       "tags": [
         "Experiment",
         "Interactive"
       ],
       "active": true,
-      "image": "./projects/MY_WORK/thumb.png",
-      "date": "2026-01-03T04:06:38.140Z"
+      "image": "./projects/concept_wii/thumb.png",
+      "date": "2026-01-03T06:10:11.404Z"
+    },
+    {
+      "id": "concept_projectfiles",
+      "path": "./projects/concept_projectfiles/",
+      "title": "CONCEPT_PROJECTFILES",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": "./projects/concept_projectfiles/thumb.png",
+      "date": "2026-01-03T06:05:14.493Z"
     }
   ],
   "archived": [

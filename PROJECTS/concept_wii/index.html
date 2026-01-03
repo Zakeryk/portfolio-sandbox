@@ -1967,8 +1967,10 @@
             // Cleanup pseudo spill first
             cleanupPseudoSpill(doc);
 
-            // Actually spill the images behind the overlay
-            spillImages(doc);
+            // Spill images behind overlay if not already spilled
+            if (!state.spilledFolders.has(folderIndex)) {
+                spillImagesForGallery(doc);
+            }
 
             // Hide filing area
             const filingArea = document.getElementById('filing-area');
@@ -2006,6 +2008,67 @@
             state.gallerySourceDoc = doc;
             state.currentGalleryIndex = 0;
             setupGalleryKeyboardNav();
+        }
+
+        // Spill images for gallery (no toggle, just spill)
+        function spillImagesForGallery(doc) {
+            const folderIndex = doc.dataset.index;
+            const images = JSON.parse(doc.dataset.images);
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const container = document.getElementById('documents-area');
+
+            // Track spilled images for this folder
+            state.spilledImages[folderIndex] = [];
+
+            images.forEach((imgUrl, i) => {
+                const img = document.createElement('img');
+                img.className = 'spilled-image';
+                img.loading = 'eager';
+                img.src = imgUrl;
+                img.dataset.parent = folderIndex;
+
+                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+                const angle = (Math.random() * 360) * (Math.PI / 180);
+                const distance = 100 + Math.random() * 150;
+                const endX = startX + Math.cos(angle) * distance;
+                const endY = startY + Math.sin(angle) * distance;
+                const randomRot = (Math.random() - 0.5) * 30;
+
+                gsap.set(img, {
+                    x: startX,
+                    y: startY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    zIndex: 5
+                });
+
+                container.appendChild(img);
+                state.spilledImages[folderIndex].push(img);
+
+                gsap.to(img, {
+                    x: endX,
+                    y: endY,
+                    rotation: randomRot,
+                    scale: 1,
+                    opacity: 0.3,
+                    duration: 0.15,
+                    delay: i * 0.01,
+                    ease: 'power2.out'
+                });
+            });
+
+            state.spilledFolders.add(folderIndex);
+
+            gsap.to(doc, {
+                opacity: 0.3,
+                scale: 0.95,
+                zIndex: 5,
+                duration: 0.1
+            });
         }
 
         function enterLightbox(img) {
