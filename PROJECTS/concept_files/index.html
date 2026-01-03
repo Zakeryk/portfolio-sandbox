@@ -1092,8 +1092,6 @@
                 onDragEnd: function () {
                     state.isDragging = false;
 
-                    // Peek mechanic disabled - no spread on release
-
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
 
@@ -1102,6 +1100,22 @@
                         boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
                         duration: 0.15
                     });
+
+                    // Check if mouse is still over file - manually trigger hover state
+                    setTimeout(() => {
+                        const rect = this.target.getBoundingClientRect();
+                        const mouseX = this.pointerX;
+                        const mouseY = this.pointerY;
+
+                        if (mouseX >= rect.left && mouseX <= rect.right &&
+                            mouseY >= rect.top && mouseY <= rect.bottom) {
+                            // Trigger mouseenter event to show peek
+                            this.target.dispatchEvent(new MouseEvent('mouseenter', {
+                                bubbles: true,
+                                cancelable: true
+                            }));
+                        }
+                    }, 50);
 
                     // Check if dropped on parent
                     const droppedOnParent = handleDropZoneSnap(this.target);
