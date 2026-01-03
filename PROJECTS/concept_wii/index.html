@@ -552,7 +552,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.82) saturate(0.95);
         }
 
         #tile-video-overlay.playing {
@@ -1051,6 +1050,9 @@
 
         // now set the callback
         PARAMS.animTriggerNow = () => { triggerTileAnimation(); };
+
+        // apply initial filters
+        updateAnimFilters();
 
         startAnimationLoop();
 
