@@ -748,10 +748,10 @@
             animFrequency: 4000,
             animEnabled: true,
             animBrightness: 0.73,
-            animSaturation: 1.3,
+            animSaturation: 1.4,
             animSizeAdjust: 1.5,
-            animBorderRadius: 62,
-            animEdgeInset: 20,
+            animBorderRadius: 150,
+            animEdgeInset: 50,
             animTriggerNow: null // set after function is defined
         };
 
@@ -1385,7 +1385,7 @@
         animFolder.add(PARAMS, 'animSaturation', 0.5, 2.0).name('Saturation').onChange(updateAnimFilters);
         animFolder.add(PARAMS, 'animSizeAdjust', 0.95, 3.0).name('Size Adjust');
         animFolder.add(PARAMS, 'animBorderRadius', 1, 150).name('Border Radius');
-        animFolder.add(PARAMS, 'animEdgeInset', 0, 50).name('Edge Inset (px)');
+        animFolder.add(PARAMS, 'animEdgeInset', 0, 100).name('Edge Inset (px)');
         animFolder.add(PARAMS, 'animTriggerNow').name('▶ Trigger Now');
         animFolder.open();
     </script>
