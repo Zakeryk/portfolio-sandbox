@@ -1,19 +1,6 @@
 {
   "active": [
     {
-      "id": "concept_ripndip_terminal",
-      "path": "./projects/concept_ripndip_terminal/",
-      "title": "RIPNDIP_TERMINAL",
-      "tags": [
-        "Aesthetic",
-        "Interactive",
-        "Playful"
-      ],
-      "active": true,
-      "image": null,
-      "date": "2026-01-03T03:24:25.441Z"
-    },
-    {
       "id": "concept_resident",
       "path": "./projects/concept_resident/",
       "title": "CONCEPT_RESIDENT",
