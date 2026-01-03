@@ -1647,9 +1647,11 @@
 
                 container.appendChild(img);
 
-                // store relative offset from parent for dragging
-                img.dataset.offsetX = endX - (docRect.left - containerRect.left);
-                img.dataset.offsetY = endY - (docRect.top - containerRect.top);
+                // store relative offset from parent's GSAP position for dragging
+                const docX = gsap.getProperty(doc, 'x') || 0;
+                const docY = gsap.getProperty(doc, 'y') || 0;
+                img.dataset.offsetX = endX - docX;
+                img.dataset.offsetY = endY - docY;
 
                 // track this image
                 state.spilledImages[folderIndex].push(img);
@@ -2108,9 +2110,11 @@
 
                 container.appendChild(img);
 
-                // store relative offset from parent for dragging
-                img.dataset.offsetX = endX - (docRect.left - containerRect.left);
-                img.dataset.offsetY = endY - (docRect.top - containerRect.top);
+                // store relative offset from parent's GSAP position for dragging
+                const docX = gsap.getProperty(doc, 'x') || 0;
+                const docY = gsap.getProperty(doc, 'y') || 0;
+                img.dataset.offsetX = endX - docX;
+                img.dataset.offsetY = endY - docY;
 
                 state.spilledImages[folderIndex].push(img);
 
