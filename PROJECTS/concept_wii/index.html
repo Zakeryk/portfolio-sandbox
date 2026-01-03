@@ -749,7 +749,7 @@
             animEnabled: true,
             animBrightness: 0.82,
             animSaturation: 0.95,
-            animSizeAdjust: 1.01,
+            animSizeAdjust: 1.1,
             animTriggerNow: null // set after function is defined
         };
 
@@ -980,11 +980,14 @@
             const visibleWidth = (camera.right - camera.left) / camera.zoom;
             const visibleHeight = (camera.top - camera.bottom) / camera.zoom;
 
-            // add small adjustment for better alignment
-            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
-            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight) * PARAMS.animSizeAdjust;
+            // calculate dimensions - size adjust is applied to match tile visually
+            const baseWidthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / visibleWidth);
+            const baseHeightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / visibleHeight);
 
-            // calculate border radius in pixels to match tile's rounded corners
+            const widthPx = baseWidthPx * PARAMS.animSizeAdjust;
+            const heightPx = baseHeightPx * PARAMS.animSizeAdjust;
+
+            // calculate border radius in pixels to match tile's rounded corners (scaled proportionally)
             const borderRadiusWorld = PARAMS.borderRadius * BASE_BLOCK_WIDTH;
             const borderRadiusPx = borderRadiusWorld * scaleFactor * tile.scale.x * (renderer.domElement.clientWidth / visibleWidth) * PARAMS.animSizeAdjust;
 
