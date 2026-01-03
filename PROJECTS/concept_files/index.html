@@ -1382,8 +1382,8 @@
 
             // move each spilled image relative to document
             spilledImgs.forEach(img => {
-                const offsetX = parseFloat(img.dataset.offsetX);
-                const offsetY = parseFloat(img.dataset.offsetY);
+                const offsetX = parseFloat(img.dataset.offsetX) || 0;
+                const offsetY = parseFloat(img.dataset.offsetY) || 0;
 
                 gsap.set(img, {
                     x: x + offsetX,
@@ -1616,16 +1616,20 @@
                 const imgWidth = 220;
                 const imgHeight = 160;
 
-                // start position (at document center)
-                const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
-                const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
+                // get document's current GSAP position
+                const docX = gsap.getProperty(doc, 'x') || 0;
+                const docY = gsap.getProperty(doc, 'y') || 0;
 
-                // splay outward in all directions (360 degrees)
-                const totalImages = images.length;
-                const centerX = docRect.left - containerRect.left + docRect.width / 2;
-                const centerY = docRect.top - containerRect.top + docRect.height / 2;
+                // document center in GSAP coordinates
+                const centerX = docX + docRect.width / 2;
+                const centerY = docY + docRect.height / 2;
+
+                // start position (at document center)
+                const startX = centerX - imgWidth / 2;
+                const startY = centerY - imgHeight / 2;
 
                 // spread evenly in circle around document
+                const totalImages = images.length;
                 const angleStep = (360 / totalImages);
                 const currentAngle = (angleStep * i) * (Math.PI / 180);
                 const distance = 150 + Math.random() * 30;
@@ -2079,15 +2083,20 @@
                 const imgWidth = 220;
                 const imgHeight = 160;
 
-                const startX = docRect.left - containerRect.left + (docRect.width - imgWidth) / 2;
-                const startY = docRect.top - containerRect.top + (docRect.height - imgHeight) / 2;
+                // get document's current GSAP position
+                const docX = gsap.getProperty(doc, 'x') || 0;
+                const docY = gsap.getProperty(doc, 'y') || 0;
 
-                // splay outward in all directions (360 degrees)
-                const totalImages = images.length;
-                const centerX = docRect.left - containerRect.left + docRect.width / 2;
-                const centerY = docRect.top - containerRect.top + docRect.height / 2;
+                // document center in GSAP coordinates
+                const centerX = docX + docRect.width / 2;
+                const centerY = docY + docRect.height / 2;
+
+                // start position (at document center)
+                const startX = centerX - imgWidth / 2;
+                const startY = centerY - imgHeight / 2;
 
                 // spread evenly in circle around document
+                const totalImages = images.length;
                 const angleStep = (360 / totalImages);
                 const currentAngle = (angleStep * i) * (Math.PI / 180);
                 const distance = 150 + Math.random() * 30;
