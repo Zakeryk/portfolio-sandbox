@@ -1,0 +1,2344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>CLICK AND DRAG</title>
+    <link id="favicon" rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* === RESET === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: 'Courier Prime', monospace;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+            overscroll-behavior: none;
+            touch-action: none;
+        }
+
+        /* === BACKGROUND IMAGE === */
+        body {
+            background-image: url('assets/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.5);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* === NOISE OVERLAY === */
+        #grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 100;
+            mix-blend-mode: overlay;
+        }
+
+        /* === AMBIENT GLOW === */
+        #desk-light {
+            position: absolute;
+            top: -10%;
+            left: 20%;
+            width: 60%;
+            height: 70%;
+            background: radial-gradient(ellipse 50% 40% at 30% 30%,
+                    rgba(50, 150, 100, 0.08) 0%,
+                    rgba(40, 120, 80, 0.04) 40%,
+                    transparent 70%);
+            pointer-events: none;
+            z-index: 2;
+            mix-blend-mode: screen;
+        }
+
+        /* === DESK CONTAINER === */
+        #desk-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: transparent;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        /* === FILING AREA === */
+        #filing-area {
+            position: fixed;
+            left: -240px;
+            top: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 20px;
+            width: 300px;
+            background: rgba(10, 20, 15, 0.98);
+            border-right: 1px solid rgba(50, 150, 100, 0.3);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.7);
+            overflow-y: auto;
+        }
+
+        #filing-area.visible {
+            left: 0px;
+        }
+
+        .folder-stack {
+            position: relative;
+            width: 100%;
+            background: rgba(20, 40, 30, 0.5);
+            border: 1px solid rgba(50, 150, 100, 0.3);
+            border-radius: 2px;
+            padding: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            overflow: hidden;
+            box-shadow: inset 0 1px 0 rgba(50, 150, 100, 0.1);
+        }
+
+        .folder-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #7a9;
+            text-shadow: 0 0 8px rgba(50, 150, 100, 0.5);
+        }
+
+        .folder-stack:hover {
+            background: rgba(50, 150, 100, 0.2);
+            border-color: rgba(50, 150, 100, 0.5);
+            box-shadow: 0 0 10px rgba(50, 150, 100, 0.3), inset 0 1px 0 rgba(50, 150, 100, 0.2);
+        }
+
+        .file-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .folder-stack.expanded .file-list {
+            max-height: 600px;
+        }
+
+        .file-list-item {
+            padding: 10px 15px;
+            border-top: 1px solid rgba(50, 150, 100, 0.2);
+            cursor: grab;
+            transition: background 0.2s ease;
+            font-size: 11px;
+            color: #8ab;
+        }
+
+        .file-list-item:hover {
+            background: rgba(50, 150, 100, 0.15);
+        }
+
+        .file-list-item:active {
+            cursor: grabbing !important;
+        }
+
+        .file-item-title {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .file-item-year {
+            font-size: 9px;
+            opacity: 0.6;
+        }
+
+        .folder-stack[data-category="saas"] {
+            background: rgba(58, 124, 165, 0.15);
+            border-color: rgba(58, 124, 165, 0.4);
+        }
+
+        .folder-stack[data-category="ecommerce"] {
+            background: rgba(201, 85, 77, 0.15);
+            border-color: rgba(201, 85, 77, 0.4);
+        }
+
+        .folder-stack[data-category="design"] {
+            background: rgba(138, 43, 226, 0.15);
+            border-color: rgba(138, 43, 226, 0.4);
+        }
+
+        .folder-stack.drag-over {
+            transform: scale(1);
+            box-shadow:
+                0 8px 20px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .file-count {
+            font-size: 9px;
+            opacity: 0.6;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        /* === DOCUMENTS AREA === */
+        #documents-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .document {
+            position: absolute;
+            width: 220px;
+            height: 160px;
+            background: rgba(15, 25, 20, 0.9);
+            border-radius: 2px;
+            border: 1px solid rgba(50, 150, 100, 0.3);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8),
+                        inset 0 1px 0 rgba(50, 150, 100, 0.15),
+                        0 0 15px rgba(50, 150, 100, 0.1);
+            cursor: pointer;
+            transition: box-shadow 0.15s ease;
+            will-change: transform;
+            padding: 16px;
+        }
+
+        .document:hover {
+            animation: documentShake 0.3s ease-in-out;
+        }
+
+        @keyframes documentShake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
+        }
+
+        .document::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            box-shadow:
+                inset 0 1px 2px rgba(0, 0, 0, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .document:active {
+            cursor: grabbing !important;
+        }
+
+        .document.folder-style {
+            background: #1a1a1a;
+        }
+
+        .document.photo-style {
+            background: #222;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .document.photo-style .doc-content {
+            background: transparent;
+            width: 100%;
+            height: 100%;
+            padding: 15px;
+        }
+
+        .doc-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #8fc;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(50, 200, 150, 0.6);
+        }
+
+        .doc-year {
+            font-size: 11px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .category-tag {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 4px 10px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            border-radius: 3px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .category-tag.saas {
+            background: rgba(58, 124, 165, 0.2);
+            border: 1px solid rgba(58, 124, 165, 0.5);
+            color: #5a9fd4;
+        }
+
+        .category-tag.ecommerce {
+            background: rgba(201, 85, 77, 0.2);
+            border: 1px solid rgba(201, 85, 77, 0.5);
+            color: #e88a82;
+        }
+
+        .category-tag.design {
+            background: rgba(138, 43, 226, 0.2);
+            border: 1px solid rgba(138, 43, 226, 0.5);
+            color: #a060ea;
+        }
+
+        /* === UI OVERLAY === */
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #filter-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 20, 15, 0.95);
+            color: #8ab;
+            padding: 10px 20px;
+            font-size: 11px;
+            border-radius: 2px;
+            border: 1px solid rgba(50, 150, 100, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 10px rgba(50, 150, 100, 0.2);
+            pointer-events: none;
+            text-shadow: 0 0 8px rgba(50, 150, 100, 0.4);
+        }
+
+        #back-link {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            pointer-events: all;
+        }
+
+        #back-link a {
+            color: #8ab;
+            text-decoration: none;
+            font-size: 13px;
+            padding: 10px 20px;
+            background: rgba(10, 20, 15, 0.95);
+            border: 1px solid rgba(50, 150, 100, 0.3);
+            border-radius: 2px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-block;
+            text-shadow: 0 0 8px rgba(50, 150, 100, 0.5);
+        }
+
+        #back-link a:hover {
+            background: rgba(50, 150, 100, 0.15);
+            border-color: rgba(50, 150, 100, 0.6);
+            color: #8fc;
+            box-shadow: 0 0 20px rgba(50, 150, 100, 0.3);
+        }
+
+        #cleanup-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 40, 30, 0.8);
+            color: #8ab;
+            border: 1px solid rgba(50, 150, 100, 0.4);
+            padding: 12px 24px;
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 2px;
+            cursor: pointer;
+            pointer-events: all;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(50, 150, 100, 0.5);
+            box-shadow: inset 0 1px 0 rgba(50, 150, 100, 0.2);
+        }
+
+        #cleanup-btn:hover {
+            background: rgba(50, 150, 100, 0.3);
+            border-color: rgba(50, 150, 100, 0.7);
+            color: #8fc;
+            box-shadow: 0 0 20px rgba(50, 150, 100, 0.4), inset 0 1px 0 rgba(50, 150, 100, 0.3);
+            transform: scale(1.05);
+        }
+
+        #cleanup-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* === SPILLED IMAGES === */
+        .spilled-image {
+            position: absolute;
+            max-width: 162px;
+            max-height: 126px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            will-change: transform;
+            z-index: 50;
+            object-fit: contain;
+            border-radius: 2px;
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .spilled-image.pseudo-spill {
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .spilled-image:active {
+            cursor: grabbing !important;
+        }
+
+
+        /* === LIGHTBOX OVERLAY === */
+        #lightbox-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 10, 8, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 900;
+            transition: opacity 0.2s ease;
+            backdrop-filter: blur(2px);
+        }
+
+        #lightbox-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        /* === LIGHTBOX GALLERY === */
+        #lightbox-gallery {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            justify-content: flex-start;
+            z-index: 1002;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, left 0.3s ease;
+            padding: 0 5vw;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+        }
+
+        #lightbox-gallery::-webkit-scrollbar {
+            display: none;
+        }
+
+        #lightbox-gallery.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .lightbox-image {
+            max-width: 400px;
+            max-height: 60vh;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            object-fit: contain;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
+                        0 0 15px rgba(50, 150, 100, 0.2);
+            border: 1px solid rgba(50, 150, 100, 0.3);
+        }
+
+        .lightbox-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8),
+                        0 0 25px rgba(50, 150, 100, 0.4);
+            border-color: rgba(50, 150, 100, 0.6);
+        }
+
+        .lightbox-image.focused {
+            transform: scale(1.5);
+            z-index: 1003;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9),
+                        0 0 40px rgba(50, 150, 100, 0.6);
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .document {
+                width: 220px;
+                height: 160px;
+                padding: 15px;
+            }
+
+            .document.photo-style {
+                border: 8px solid #f4f4f4;
+            }
+
+            .doc-title {
+                font-size: 14px;
+            }
+
+            /* mobile: show folders at bottom, always visible */
+            #filing-area {
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                top: auto !important;
+                bottom: 5%;
+                flex-direction: row;
+                width: auto;
+                gap: 15px;
+            }
+
+            #filing-area.visible {
+                left: 50% !important;
+            }
+
+            .folder-stack {
+                width: 100px;
+                height: 120px;
+                font-size: 10px;
+                padding: 10px;
+            }
+
+            #filter-hint {
+                font-size: 10px;
+                padding: 8px 12px;
+                bottom: 140px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            #back-link {
+                top: 10px;
+                right: 10px;
+            }
+
+            #back-link a {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            #cleanup-btn {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 18px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- film grain overlay -->
+    <div id="grain-overlay"></div>
+
+    <!-- desk lamp light cone -->
+    <div id="desk-light"></div>
+
+    <!-- desk surface -->
+    <div id="desk-container">
+        <!-- filing system (drop zones) -->
+        <div id="filing-area">
+            <div class="folder-stack" data-category="saas">
+                <div class="folder-header">
+                    <span>SAAS</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
+            </div>
+            <div class="folder-stack" data-category="ecommerce">
+                <div class="folder-header">
+                    <span>ECOMMERCE</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
+            </div>
+            <div class="folder-stack" data-category="design">
+                <div class="folder-header">
+                    <span>DESIGN</span>
+                    <span class="file-count">0</span>
+                </div>
+                <div class="file-list"></div>
+            </div>
+        </div>
+
+        <!-- draggable documents container -->
+        <div id="documents-area"></div>
+    </div>
+
+    <!-- ui overlay -->
+    <div id="ui-overlay">
+        <div id="filter-hint">click to spill • double-click to open • drag anywhere</div>
+        <div id="back-link"><a href="/">← back • esc to leave</a></div>
+        <button id="cleanup-btn">clean up desk</button>
+    </div>
+
+    <!-- lightbox overlay -->
+    <div id="lightbox-overlay"></div>
+
+    <!-- lightbox gallery -->
+    <div id="lightbox-gallery"></div>
+
+    <!-- gsap cdn -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+
+    <script>
+        // register gsap plugin
+        gsap.registerPlugin(Draggable);
+
+        // placeholders (used if no real images found in manifest)
+        const PLACEHOLDER_BASE = 'https://picsum.photos/seed/';
+        const PLACEHOLDER_SIZE = '/400/300';
+
+        function getPlaceholder(seed) {
+            return PLACEHOLDER_BASE + seed + PLACEHOLDER_SIZE;
+        }
+
+        // work data (14 items from main index.html)
+        // images will be loaded from manifest if available, otherwise use placeholders
+        let WORK_ITEMS = [
+            {
+                title: 'Reveo', url: 'https://reveo.com', category: 'saas', type: 'folder', year: '2024',
+                images: ['https://picsum.photos/seed/reveo1/400/300', 'https://picsum.photos/seed/reveo2/400/300', 'https://picsum.photos/seed/reveo3/400/300']
+            },
+            {
+                title: 'Snowie', url: 'https://zakknowlton.com/snowie', category: 'ecommerce', type: 'folder', year: '2023',
+                images: ['https://picsum.photos/seed/snowie1/400/300', 'https://picsum.photos/seed/snowie2/400/300', 'https://picsum.photos/seed/snowie3/400/300', 'https://picsum.photos/seed/snowie4/400/300']
+            },
+            {
+                title: 'Green Philosophy Co', url: 'https://zakknowlton.com/green-philosophy', category: 'ecommerce', type: 'folder', year: '2023',
+                images: ['https://picsum.photos/seed/green1/400/300', 'https://picsum.photos/seed/green2/400/300', 'https://picsum.photos/seed/green3/400/300']
+            },
+            {
+                title: 'Raveyard Sounds', url: 'https://zakknowlton.com/raveyard-sounds', category: 'ecommerce', type: 'folder', year: '2022',
+                images: ['https://picsum.photos/seed/raveyard1/400/300', 'https://picsum.photos/seed/raveyard2/400/300', 'https://picsum.photos/seed/raveyard3/400/300', 'https://picsum.photos/seed/raveyard4/400/300']
+            },
+            {
+                title: 'Shockwav Sound Co', url: 'https://zakknowlton.com/shockwav', category: 'ecommerce', type: 'folder', year: '2022',
+                images: ['https://picsum.photos/seed/shockwav1/400/300', 'https://picsum.photos/seed/shockwav2/400/300', 'https://picsum.photos/seed/shockwav3/400/300']
+            },
+            {
+                title: 'gothparade', url: 'https://zakknowlton.com/gothparade', category: 'design', type: 'photo', year: '2024',
+                images: ['https://picsum.photos/seed/goth1/400/300', 'https://picsum.photos/seed/goth2/400/300', 'https://picsum.photos/seed/goth3/400/300', 'https://picsum.photos/seed/goth4/400/300']
+            },
+            {
+                title: 'Rave Water', url: 'https://zakknowlton.com/rave-water', category: 'design', type: 'photo', year: '2023',
+                images: ['https://picsum.photos/seed/ravewater1/400/300', 'https://picsum.photos/seed/ravewater2/400/300', 'https://picsum.photos/seed/ravewater3/400/300']
+            },
+            {
+                title: 'Glass Heart', url: 'https://zakknowlton.com/glass-heart', category: 'design', type: 'photo', year: '2023',
+                images: ['https://picsum.photos/seed/glass1/400/300', 'https://picsum.photos/seed/glass2/400/300', 'https://picsum.photos/seed/glass3/400/300', 'https://picsum.photos/seed/glass4/400/300']
+            },
+            {
+                title: 'Beat Secrets', url: 'https://zakknowlton.com/beat-secrets', category: 'design', type: 'photo', year: '2022',
+                images: ['https://picsum.photos/seed/beat1/400/300', 'https://picsum.photos/seed/beat2/400/300', 'https://picsum.photos/seed/beat3/400/300']
+            },
+            {
+                title: 'us2', url: 'https://zakknowlton.com/us2', category: 'design', type: 'photo', year: '2022',
+                images: ['https://picsum.photos/seed/us2a/400/300', 'https://picsum.photos/seed/us2b/400/300', 'https://picsum.photos/seed/us2c/400/300', 'https://picsum.photos/seed/us2d/400/300']
+            },
+            {
+                title: 'Polar Culture', url: 'https://zakknowlton.com/polar-culture', category: 'design', type: 'photo', year: '2021',
+                images: ['https://picsum.photos/seed/polar1/400/300', 'https://picsum.photos/seed/polar2/400/300', 'https://picsum.photos/seed/polar3/400/300']
+            },
+            {
+                title: 'School of Bass', url: 'https://zakknowlton.com/school-of-bass', category: 'design', type: 'photo', year: '2020',
+                images: ['https://picsum.photos/seed/bass1/400/300', 'https://picsum.photos/seed/bass2/400/300', 'https://picsum.photos/seed/bass3/400/300']
+            },
+            {
+                title: 'Crywolf', url: 'https://zakknowlton.com/crywolf', category: 'design', type: 'photo', year: '2020',
+                images: ['https://picsum.photos/seed/crywolf1/400/300', 'https://picsum.photos/seed/crywolf2/400/300', 'https://picsum.photos/seed/crywolf3/400/300', 'https://picsum.photos/seed/crywolf4/400/300']
+            }
+        ];
+
+        // load manifest and replace placeholder images with real ones
+        async function loadImageManifest() {
+            try {
+                const response = await fetch('./assets/file-assets-manifest.json');
+                if (!response.ok) throw new Error('Manifest not found');
+
+                const manifest = await response.json();
+
+                // update each work item with real images if available
+                WORK_ITEMS.forEach(item => {
+                    if (manifest[item.title] && manifest[item.title].length > 0) {
+                        // replace placeholders with real images
+                        item.images = manifest[item.title];
+                        console.log(`✓ Loaded ${item.images.length} real image(s) for ${item.title}`);
+                    } else {
+                        console.log(`  Using placeholders for ${item.title}`);
+                    }
+                });
+
+            } catch (error) {
+                console.log('No manifest found, using placeholder images');
+            }
+        }
+
+        // state management
+        const state = {
+            draggables: [],
+            currentZIndex: 10,
+            selectedDoc: null,
+            isMobile: window.innerWidth <= 768,
+            spilledFolders: new Set(), // track which folders have spilled
+            spilledImages: {}, // map folder index to array of spilled image elements
+            heldStack: [], // items collected via shake
+            shakeContext: {
+                history: [],
+                lastX: 0,
+                direction: 0, // 1 for right, -1 for left
+                reversals: 0,
+                lastReversalTime: 0
+            },
+            isHoveringParent: false, // tracks if currently hovering valid parent folder
+            hoveredParentId: null, // tracks which folder is being hovered
+            galleryActive: false, // tracks if gallery is open
+            galleryImages: null, // stores original images while gallery is open
+            isDragging: false, // tracks if currently dragging a document
+            heldImageStack: [], // items collected via shake for images
+            imageShakeContext: {
+                lastX: 0,
+                direction: 0,
+                reversals: 0,
+                lastReversalTime: 0
+            },
+            isHoveringParentDoc: false, // tracks if image is hovering over its parent document
+            hoveredParentDoc: null, // the parent document being hovered
+            preloadedImages: {}, // cache of preloaded images
+            currentGalleryIndex: 0, // current focused image in gallery
+            gallerySourceDoc: null, // document that opened the gallery
+            galleryKeyHandler: null // keyboard handler for gallery
+        };
+
+        // preload images for a document
+        function preloadImages(images) {
+            images.forEach(src => {
+                if (!state.preloadedImages[src]) {
+                    const img = new Image();
+                    img.src = src;
+                    state.preloadedImages[src] = img;
+                }
+            });
+        }
+
+        // initialization
+        async function init() {
+            // load real images from manifest first
+            await loadImageManifest();
+
+            setupFilingAreaInteractions();
+            addKeyboardShortcuts();
+
+            // cleanup button
+            document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
+
+            // lightbox dismissal
+            document.getElementById('lightbox-overlay').addEventListener('click', exitLightbox);
+
+            // click on desk background to cleanup
+            document.getElementById('desk-container').addEventListener('click', (e) => {
+                // only if clicking directly on the desk or background elements
+                if (e.target.id === 'desk-container' ||
+                    e.target.id === 'desk-light' ||
+                    e.target.id === 'grain-overlay' ||
+                    e.target.id === 'documents-area') {
+                    gatherAllContents();
+                }
+            });
+        }
+
+        // gather all spilled contents back to their documents (without removing documents)
+        function gatherAllContents() {
+            const docs = document.querySelectorAll('.document');
+            docs.forEach(doc => {
+                gatherImagesToFolder(doc);
+            });
+        }
+
+        // helper to manage filing area visibility based on all states
+        function updateFilingAreaVisibility(mouseX = null) {
+            if (state.isMobile) return;
+
+            const filingArea = document.getElementById('filing-area');
+
+            // NEVER open during gallery
+            if (state.galleryActive) {
+                filingArea.classList.remove('visible');
+                return;
+            }
+
+            const distanceFromLeft = mouseX !== null ? mouseX : -1;
+
+            // check if currently dragging an unopened file (can be filed away)
+            const draggingUnopenedFile = state.isDragging && state.selectedDoc &&
+                !state.spilledFolders.has(state.selectedDoc.dataset.index);
+
+            // check if holding stack of unopened files
+            const holdingUnopenedStack = state.heldStack.length > 0 &&
+                state.heldStack.every(item => !state.spilledFolders.has(item.el.dataset.index));
+
+            // conditions to OPEN (only for filing actions):
+            // 1. mouse within 200px of left edge AND NOT dragging anything (empty cursor)
+            // 2. dragging an unopened file (can be returned to filing)
+            // 3. holding stack of unopened files (can be returned to filing)
+            const shouldOpen = (
+                (distanceFromLeft < 200 && !state.isDragging) ||
+                draggingUnopenedFile ||
+                holdingUnopenedStack
+            );
+
+            // conditions to CLOSE:
+            // mouse far from left AND not in any filing action
+            const shouldClose = (
+                distanceFromLeft > 350 &&
+                !draggingUnopenedFile &&
+                !holdingUnopenedStack
+            );
+
+            if (shouldOpen) {
+                filingArea.classList.add('visible');
+            } else if (shouldClose) {
+                if (filingArea.classList.contains('visible')) {
+                    filingArea.classList.remove('visible');
+                    resetFolderStates();
+                }
+            }
+        }
+
+        // filing area mouse interactions
+        function setupFilingAreaInteractions() {
+            const filingArea = document.getElementById('filing-area');
+            const folders = document.querySelectorAll('.folder-stack');
+
+            // mouse proximity detection
+            document.addEventListener('mousemove', (e) => {
+                updateFilingAreaVisibility(e.clientX);
+            });
+
+            // click folder header to toggle expand/collapse
+            folders.forEach(folder => {
+                const header = folder.querySelector('.folder-header');
+                header.addEventListener('click', () => {
+                    // close other folders
+                    folders.forEach(f => {
+                        if (f !== folder) {
+                            f.classList.remove('expanded');
+                        }
+                    });
+
+                    folder.classList.toggle('expanded');
+                });
+            });
+
+            // populate file lists
+            populateFileLists();
+        }
+
+        // populate file lists in buckets
+        function populateFileLists() {
+            WORK_ITEMS.forEach(item => {
+                const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
+                const fileList = folder.querySelector('.file-list');
+
+                const listItem = document.createElement('div');
+                listItem.className = 'file-list-item';
+                listItem.dataset.index = WORK_ITEMS.indexOf(item);
+                listItem.dataset.category = item.category;
+                listItem.dataset.url = item.url;
+                listItem.dataset.images = JSON.stringify(item.images);
+                listItem.dataset.title = item.title;
+                listItem.dataset.year = item.year;
+
+                listItem.innerHTML = `
+                    <div class="file-item-title">${item.title}</div>
+                    <div class="file-item-year">${item.year}</div>
+                `;
+
+                // make list item draggable - creates document on drag
+                listItem.addEventListener('mousedown', (e) => {
+                    createDocumentFromListItem(listItem, e);
+                });
+
+                fileList.appendChild(listItem);
+            });
+
+            updateFileCounts();
+        }
+
+        // create draggable document from list item
+        function createDocumentFromListItem(listItem, e) {
+            const container = document.getElementById('documents-area');
+            const containerRect = container.getBoundingClientRect();
+
+            const doc = document.createElement('div');
+            const item = WORK_ITEMS[listItem.dataset.index];
+            doc.className = `document ${item.type}-style`;
+            doc.dataset.category = listItem.dataset.category;
+            doc.dataset.url = listItem.dataset.url;
+            doc.dataset.index = listItem.dataset.index;
+            doc.dataset.images = listItem.dataset.images;
+
+            // preload images immediately
+            preloadImages(JSON.parse(listItem.dataset.images));
+
+            // Add hover handlers for pseudo spill
+            doc.addEventListener('mouseenter', () => pseudoSpillImages(doc));
+            doc.addEventListener('mouseleave', () => cleanupPseudoSpill(doc));
+
+            // spawn in center with slight variation
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const variationX = (Math.random() - 0.5) * 100; // ±50px variation
+            const variationY = (Math.random() - 0.5) * 100;
+
+            gsap.set(doc, {
+                x: centerX + variationX - 110, // center minus half doc width (220/2)
+                y: centerY + variationY - 80,  // center minus half doc height (160/2)
+                rotation: 0,
+                zIndex: state.currentZIndex++
+            });
+
+            doc.innerHTML = `
+                <div class="doc-content">
+                    <h3 class="doc-title">${listItem.dataset.title}</h3>
+                    <div class="doc-year">${listItem.dataset.year}</div>
+                    <div class="category-tag ${listItem.dataset.category}">${listItem.dataset.category.toUpperCase()}</div>
+                </div>
+            `;
+
+            container.appendChild(doc);
+
+            // setup draggable immediately
+            const draggable = Draggable.create(doc, {
+                type: 'x,y',
+                cursor: 'pointer',
+                bounds: '#desk-container',
+                inertia: state.isMobile ? false : true,
+                edgeResistance: 0.8,
+
+                onPress: function () {
+                    state.isDragging = true;
+                    state.currentZIndex++;
+                    gsap.to(this.target, {
+                        zIndex: state.currentZIndex,
+                        scale: 1.05,
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
+                        duration: 0.1
+                    });
+
+                    // Reset shake context
+                    state.shakeContext.history = [];
+                    state.shakeContext.lastX = this.x;
+                    state.shakeContext.reversals = 0;
+                    state.shakeContext.direction = 0;
+                },
+
+                onDrag: function () {
+                    // Check for shake gesture
+                    checkShake(this);
+
+                    // Move collected stack if any
+                    updateHeldStackPosition(this.target);
+
+                    // Check drop zone overlap
+                    checkDropZoneOverlap(this.target);
+                },
+
+                onDragEnd: function () {
+                    state.isDragging = false;
+
+                    // Update filing area immediately (no longer dragging)
+                    updateFilingAreaVisibility();
+
+                    gsap.to(this.target, {
+                        scale: 1,
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                        duration: 0.15
+                    });
+
+                    // Check if dropped on parent
+                    const droppedOnParent = handleDropZoneSnap(this.target);
+
+                    // Release stack (scatter or return to list)
+                    releaseStack(droppedOnParent);
+                },
+
+                onClick: function () {
+                    // Open gallery directly on click
+                    const images = JSON.parse(this.target.dataset.images);
+                    if (images && images.length > 0) {
+                        openGalleryFromDocument(this.target);
+                    }
+                }
+            })[0];
+
+            // trigger drag immediately
+            draggable.startDrag(e);
+
+            // remove from list
+            listItem.remove();
+            updateFileCounts();
+        }
+
+        // generate document divs dynamically
+        function generateDocuments() {
+            const container = document.getElementById('documents-area');
+
+            // get folder positions
+            const folders = {
+                saas: document.querySelector('.folder-stack[data-category="saas"]'),
+                ecommerce: document.querySelector('.folder-stack[data-category="ecommerce"]'),
+                design: document.querySelector('.folder-stack[data-category="design"]')
+            };
+
+            // track count per category
+            const counts = { saas: 0, ecommerce: 0, design: 0 };
+
+            WORK_ITEMS.forEach((item, index) => {
+                const doc = document.createElement('div');
+                doc.className = `document ${item.type}-style`;
+                doc.dataset.category = item.category;
+                doc.dataset.url = item.url;
+                doc.dataset.index = index;
+
+                // store images data
+                doc.dataset.images = JSON.stringify(item.images);
+
+                // position in category bucket (stacked)
+                const folder = folders[item.category];
+                const folderRect = folder.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+
+                const stackOffset = counts[item.category] * 2;
+                const baseX = folderRect.left - containerRect.left + 20;
+                const baseY = folderRect.top - containerRect.top + 40;
+
+                gsap.set(doc, {
+                    x: baseX + stackOffset,
+                    y: baseY + stackOffset,
+                    rotation: 0,
+                    scale: 0.6, // smaller in bucket
+                    zIndex: 10 + index
+                });
+
+                counts[item.category]++;
+
+                // content structure
+                doc.innerHTML = `
+                    <div class="doc-content">
+                        <h3 class="doc-title">${item.title}</h3>
+                        <div class="doc-year">${item.year}</div>
+                        <div class="category-tag ${item.category}">${item.category.toUpperCase()}</div>
+                    </div>
+                `;
+
+                container.appendChild(doc);
+            });
+
+            // update file counts
+            updateFileCounts();
+        }
+
+        // update file count displays
+        function updateFileCounts() {
+            const counts = { saas: 0, ecommerce: 0, design: 0 };
+
+            document.querySelectorAll('.file-list-item').forEach(item => {
+                counts[item.dataset.category]++;
+            });
+
+            Object.keys(counts).forEach(category => {
+                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+                const countSpan = folder.querySelector('.file-count');
+                countSpan.textContent = counts[category];
+            });
+        }
+
+        // gsap draggable setup
+        function setupDraggables() {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach(doc => {
+                let clickCount = 0;
+                let clickTimeout = null;
+
+                // Add hover handlers for pseudo spill
+                doc.addEventListener('mouseenter', () => pseudoSpillImages(doc));
+                doc.addEventListener('mouseleave', () => cleanupPseudoSpill(doc));
+
+                const draggable = Draggable.create(doc, {
+                    type: 'x,y',
+                    cursor: 'pointer',
+                    bounds: '#desk-container',
+                    inertia: state.isMobile ? false : true,
+                    edgeResistance: 0.8,
+
+                    onPress: function () {
+                        // bring to front
+                        state.isDragging = true;
+                        state.currentZIndex++;
+                        gsap.to(this.target, {
+                            zIndex: state.currentZIndex,
+                            scale: 1.05,
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
+                            duration: 0.1
+                        });
+                        state.selectedDoc = this.target;
+
+                        // Reset shake context
+                        state.shakeContext.history = [];
+                        state.shakeContext.lastX = this.x;
+                        state.shakeContext.reversals = 0;
+                        state.shakeContext.direction = 0;
+                    },
+
+                    onDrag: function () {
+                        // Check for shake gesture
+                        checkShake(this);
+
+                        // Move collected stack if any
+                        updateHeldStackPosition(this.target);
+
+                        // check overlapping with specific parent folder for swell
+                        checkDropZoneOverlap(this.target);
+                    },
+
+                    onDragEnd: function () {
+                        // reset scale
+                        state.isDragging = false;
+
+                        // Update filing area immediately (no longer dragging)
+                        updateFilingAreaVisibility();
+
+                        gsap.to(this.target, {
+                            scale: 1,
+                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                            duration: 0.15,
+                            ease: 'power2.out'
+                        });
+
+                        // Check if dropped on parent
+                        const droppedOnParent = handleDropZoneSnap(this.target);
+
+                        // Release stack (scatter or return to list)
+                        releaseStack(droppedOnParent);
+                    },
+
+                    onClick: function () {
+                        // Open gallery directly on click
+                        const images = JSON.parse(this.target.dataset.images);
+                        if (images && images.length > 0) {
+                            openGalleryFromDocument(this.target);
+                        }
+                    }
+                })[0];
+
+                state.draggables.push(draggable);
+            });
+        }
+
+        // === SHAKE & STACK LOGIC ===
+
+        function checkShake(draggable) {
+            const currentX = draggable.x;
+            const now = Date.now();
+            const ctx = state.shakeContext;
+
+            // Calculate delta and direction
+            const delta = currentX - ctx.lastX;
+            const direction = Math.sign(delta);
+
+            // Only count significant moves
+            if (Math.abs(delta) > 10) { // Reduced threshold for sensitivity
+                if (direction !== ctx.direction && ctx.direction !== 0) {
+                    // Direction reversal detected
+                    if (now - ctx.lastReversalTime < 400) { // Increased window slightly
+                        ctx.reversals++;
+                    } else {
+                        ctx.reversals = 1;
+                    }
+                    ctx.lastReversalTime = now;
+                }
+                ctx.direction = direction;
+            }
+
+            ctx.lastX = currentX;
+
+            // Trigger shake if reversals threshold met
+            // Reset reversals immediately to prevent multi-trigger
+            if (ctx.reversals >= 3 && state.heldStack.length === 0) { // Reduced to 3
+                collectSiblings(draggable.target);
+                ctx.reversals = 0;
+            }
+        }
+
+        function collectSiblings(leaderDoc) {
+            const category = leaderDoc.dataset.category;
+            const allDocs = document.querySelectorAll('.document');
+
+            // gather spilled contents from leader when stacking
+            const leaderIndex = leaderDoc.dataset.index;
+            if (state.spilledFolders.has(leaderIndex)) {
+                gatherImagesToFolder(leaderDoc);
+            }
+
+            // Find valid siblings on the desk
+            const siblings = Array.from(allDocs).filter(doc =>
+                doc !== leaderDoc &&
+                doc.dataset.category === category &&
+                !state.heldStack.some(item => item.el === doc)
+            );
+
+            if (siblings.length === 0) return;
+
+            // gather spilled contents from siblings too
+            siblings.forEach(doc => {
+                const siblingIndex = doc.dataset.index;
+                if (state.spilledFolders.has(siblingIndex)) {
+                    gatherImagesToFolder(doc);
+                }
+            });
+
+            // Animate them to the leader
+            siblings.forEach((doc, i) => {
+                // Disable individual dragging for siblings
+                const dragInstance = Draggable.get(doc);
+                if (dragInstance) dragInstance.disable();
+
+                // Add to stack
+                state.heldStack.push({
+                    el: doc,
+                    offsetX: (Math.random() * 10 - 5), // Tighter offset
+                    offsetY: (Math.random() * 10 - 5) + 5
+                });
+
+                // Animate to position
+                gsap.to(doc, {
+                    x: gsap.getProperty(leaderDoc, "x") + (Math.random() * 10 - 5),
+                    y: gsap.getProperty(leaderDoc, "y") + (Math.random() * 20 - 10) + 10,
+                    rotation: gsap.getProperty(leaderDoc, "rotation") + (Math.random() * 10 - 5),
+                    scale: 1,
+                    zIndex: state.currentZIndex - 1 - i,
+                    duration: 0.5,
+                    ease: "back.out(1.2)"
+                });
+            });
+
+            // Pulse the leader
+            gsap.fromTo(leaderDoc,
+                { scale: 1.15 },
+                { scale: 1.05, duration: 0.3, ease: "elastic.out(1, 0.3)" }
+            );
+
+            // Update filing area visibility (stack collected = should open)
+            updateFilingAreaVisibility();
+        }
+
+        function updateHeldStackPosition(leaderDoc) {
+            if (state.heldStack.length === 0) return;
+
+            const leaderX = gsap.getProperty(leaderDoc, "x");
+            const leaderY = gsap.getProperty(leaderDoc, "y");
+
+            state.heldStack.forEach(item => {
+                gsap.to(item.el, {
+                    x: leaderX + item.offsetX,
+                    y: leaderY + item.offsetY,
+                    duration: 0.1, // Slight lag for natural feel
+                    overwrite: "auto"
+                });
+            });
+        }
+
+        function releaseStack(droppedOnParent) {
+            if (state.heldStack.length === 0) return;
+
+            if (droppedOnParent) {
+                // If dropped on parent, return all to list is handled by caller logic usually
+                // But we can double check here
+                state.heldStack.forEach(item => {
+                    returnFileToList(item.el);
+                });
+            } else {
+                // Return to desk state
+                state.heldStack.forEach(item => {
+                    const dragInstance = Draggable.get(item.el);
+                    if (dragInstance) dragInstance.enable();
+
+                    gsap.to(item.el, {
+                        x: "+=" + (Math.random() * 60 - 30),
+                        y: "+=" + (Math.random() * 60 - 30),
+                        rotation: "+=" + (Math.random() * 20 - 10),
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                });
+            }
+
+            state.heldStack = [];
+
+            // Update filing area visibility (stack released = might close)
+            updateFilingAreaVisibility();
+        }
+
+        // overlap detection for drop zones (specific parent folder)
+        function checkDropZoneOverlap(doc) {
+            const category = doc.dataset.category;
+            const targetFolder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+
+            if (!targetFolder) return;
+
+            const docRect = doc.getBoundingClientRect();
+            const folderRect = targetFolder.getBoundingClientRect();
+
+            // QUANTUM PROXIMITY CHECK (Center-to-Center)
+            const docCx = docRect.left + docRect.width / 2;
+            const docCy = docRect.top + docRect.height / 2;
+            const folderCx = folderRect.left + folderRect.width / 2;
+            const folderCy = folderRect.top + folderRect.height / 2;
+
+            const distance = Math.hypot(docCx - folderCx, docCy - folderCy);
+
+            // Only glow if within 250px of center (increased for easier targeting)
+            const isOverlapping = distance < 250;
+
+            if (isOverlapping) {
+                if (!state.isHoveringParent) {
+                    state.isHoveringParent = true;
+                    // SWELL ANIMATION
+                    gsap.to(targetFolder, {
+                        scale: 1,
+                        boxShadow: '0 15px 30px rgba(255, 255, 255, 0.2)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        duration: 0.3,
+                        ease: 'back.out(1.7)'
+                    });
+                }
+            } else {
+                if (state.isHoveringParent) {
+                    state.isHoveringParent = false;
+                    // RETURN TO NORMAL
+                    gsap.to(targetFolder, {
+                        scale: 1,
+                        boxShadow: 'none',
+                        backgroundColor: 'transparent', // Reset to css default
+                        clearProps: 'backgroundColor,boxShadow', // cleaner reset
+                        duration: 0.2
+                    });
+                }
+            }
+        }
+
+        // snap to drop zone (return to list)
+        function handleDropZoneSnap(doc) {
+            if (state.isHoveringParent) {
+                // Return main file
+                returnFileToList(doc);
+
+                // Reset folder visual immediately
+                const category = doc.dataset.category;
+                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+                if (folder) {
+                    gsap.to(folder, {
+                        scale: 1,
+                        clearProps: 'all',
+                        duration: 0.3
+                    });
+                }
+
+                state.isHoveringParent = false;
+                return true; // Dropped on parent
+            }
+            return false;
+        }
+
+        // reset all folder visuals (called when sidebar hides)
+        function resetFolderStates() {
+            state.isHoveringParent = false;
+            // Clear specific swell states
+            const folders = document.querySelectorAll('.folder-stack');
+            folders.forEach(folder => {
+                gsap.to(folder, {
+                    scale: 1,
+                    boxShadow: 'none',
+                    backgroundColor: 'transparent',
+                    clearProps: 'backgroundColor,boxShadow',
+                    duration: 0.2
+                });
+            });
+        }
+
+        // return file to list and remove from desk
+        function returnFileToList(doc) {
+            const category = doc.dataset.category;
+            const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
+            const fileList = folder.querySelector('.file-list');
+
+            // gather spilled images first
+            gatherImagesToFolder(doc);
+
+            // create list item
+            const listItem = document.createElement('div');
+            listItem.className = 'file-list-item';
+            listItem.dataset.index = doc.dataset.index;
+            listItem.dataset.category = doc.dataset.category;
+            listItem.dataset.url = doc.dataset.url;
+            listItem.dataset.images = doc.dataset.images;
+            listItem.dataset.title = doc.querySelector('.doc-title').textContent;
+            listItem.dataset.year = doc.querySelector('.doc-year').textContent;
+
+            listItem.innerHTML = `
+                <div class="file-item-title">${listItem.dataset.title}</div>
+                <div class="file-item-year">${listItem.dataset.year}</div>
+            `;
+
+            // make draggable
+            listItem.addEventListener('mousedown', (e) => {
+                createDocumentFromListItem(listItem, e);
+            });
+
+            // animate document to list position then remove
+            const listRect = fileList.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const targetX = listRect.left - containerRect.left;
+            const targetY = listRect.bottom - containerRect.top;
+
+            gsap.to(doc, {
+                x: targetX,
+                y: targetY,
+                scale: 0.5,
+                opacity: 0,
+                duration: 0.4,
+                ease: 'power3.in',
+                onComplete: () => {
+                    doc.remove();
+                    fileList.appendChild(listItem);
+                    updateFileCounts();
+
+                    // expand folder to show file was added
+                    folder.classList.add('expanded');
+                }
+            });
+        }
+
+        // spill images out from document (toggle behavior)
+        function spillImages(doc) {
+            const folderIndex = doc.dataset.index;
+
+            // if already spilled, gather back instead
+            if (state.spilledFolders.has(folderIndex)) {
+                gatherImagesToFolder(doc);
+                return;
+            }
+
+            // return all other spilled contents first
+            const allDocs = document.querySelectorAll('.document');
+            allDocs.forEach(otherDoc => {
+                if (otherDoc !== doc && state.spilledFolders.has(otherDoc.dataset.index)) {
+                    gatherImagesToFolder(otherDoc);
+                }
+            });
+
+            const images = JSON.parse(doc.dataset.images);
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const container = document.getElementById('documents-area');
+
+            // track spilled images for this folder
+            state.spilledImages[folderIndex] = [];
+
+            images.forEach((imgUrl, i) => {
+                const img = document.createElement('img');
+                img.className = 'spilled-image';
+                img.loading = 'eager';
+                img.src = imgUrl;
+                img.dataset.parent = folderIndex;
+
+                // start position (at document center)
+                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+                // random spill direction
+                const angle = (Math.random() * 360) * (Math.PI / 180);
+                const distance = 100 + Math.random() * 150;
+                const endX = startX + Math.cos(angle) * distance;
+                const endY = startY + Math.sin(angle) * distance;
+                const randomRot = (Math.random() - 0.5) * 30;
+
+                // set initial position
+                gsap.set(img, {
+                    x: startX,
+                    y: startY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    zIndex: 50 + i
+                });
+
+                container.appendChild(img);
+
+                // track this image
+                state.spilledImages[folderIndex].push(img);
+
+                // animate spill out
+                gsap.to(img, {
+                    x: endX,
+                    y: endY,
+                    rotation: randomRot,
+                    scale: 1,
+                    opacity: 1,
+                    duration: 0.15,
+                    delay: i * 0.01,
+                    ease: 'power2.out',
+                    onComplete: () => {
+                        makeImageDraggable(img);
+                    }
+                });
+            });
+
+            // mark as spilled
+            state.spilledFolders.add(folderIndex);
+
+            // hide parent document temporarily and send to back
+            gsap.to(doc, {
+                opacity: 0.3,
+                scale: 0.95,
+                zIndex: 5, // send opened files to back
+                duration: 0.1
+            });
+        }
+
+        // make spilled image draggable
+        function makeImageDraggable(img) {
+            Draggable.create(img, {
+                type: 'x,y',
+                cursor: 'pointer',
+                bounds: '#desk-container',
+                inertia: state.isMobile ? false : true,
+                edgeResistance: 0.8,
+
+                onPress: function () {
+                    state.currentZIndex++;
+                    gsap.to(this.target, {
+                        zIndex: state.currentZIndex,
+                        scale: 1.05,
+                        duration: 0.1
+                    });
+
+                    // Reset shake context for images
+                    state.imageShakeContext.lastX = this.x;
+                    state.imageShakeContext.reversals = 0;
+                    state.imageShakeContext.direction = 0;
+                },
+
+                onDrag: function () {
+                    // Check for shake gesture
+                    checkImageShake(this);
+
+                    // Move collected stack if any
+                    updateHeldImageStackPosition(this.target);
+
+                    // Check if hovering over parent document
+                    checkParentDocOverlap(this.target);
+                },
+
+                onDragEnd: function () {
+                    // if dragged enough, don't treat as click
+                    this.isDragging = false;
+
+                    gsap.to(this.target, {
+                        scale: 1,
+                        duration: 0.15
+                    });
+
+                    // Check if dropped on parent document
+                    const droppedOnParent = handleParentDocSnap(this.target);
+
+                    // Release image stack if not dropped on parent
+                    if (!droppedOnParent) {
+                        releaseImageStack();
+                    }
+                },
+
+                onClick: function () {
+                    // enter lightbox on click
+                    enterLightbox(this.target);
+                }
+            });
+        }
+
+        // === IMAGE SHAKE & STACK LOGIC ===
+
+        function checkImageShake(draggable) {
+            const currentX = draggable.x;
+            const now = Date.now();
+            const ctx = state.imageShakeContext;
+
+            // Calculate delta and direction
+            const delta = currentX - ctx.lastX;
+            const direction = Math.sign(delta);
+
+            // Only count significant moves
+            if (Math.abs(delta) > 10) {
+                if (direction !== ctx.direction && ctx.direction !== 0) {
+                    // Direction reversal detected
+                    if (now - ctx.lastReversalTime < 400) {
+                        ctx.reversals++;
+                    } else {
+                        ctx.reversals = 1;
+                    }
+                    ctx.lastReversalTime = now;
+                }
+                ctx.direction = direction;
+            }
+
+            ctx.lastX = currentX;
+
+            // Trigger shake if reversals threshold met
+            if (ctx.reversals >= 3 && state.heldImageStack.length === 0) {
+                collectSiblingImages(draggable.target);
+                ctx.reversals = 0;
+            }
+        }
+
+        function collectSiblingImages(leaderImg) {
+            const parentIndex = leaderImg.dataset.parent;
+            const allImages = document.querySelectorAll('.spilled-image');
+
+            // Find valid siblings (same parent folder)
+            const siblings = Array.from(allImages).filter(img =>
+                img !== leaderImg &&
+                img.dataset.parent === parentIndex &&
+                !state.heldImageStack.some(item => item.el === img)
+            );
+
+            if (siblings.length === 0) return;
+
+            // Animate them to the leader
+            siblings.forEach((img, i) => {
+                // Disable individual dragging for siblings
+                const dragInstance = Draggable.get(img);
+                if (dragInstance) dragInstance.disable();
+
+                // Add to stack
+                state.heldImageStack.push({
+                    el: img,
+                    offsetX: (Math.random() * 10 - 5),
+                    offsetY: (Math.random() * 10 - 5) + 5
+                });
+
+                // Animate to position
+                gsap.to(img, {
+                    x: gsap.getProperty(leaderImg, "x") + (Math.random() * 10 - 5),
+                    y: gsap.getProperty(leaderImg, "y") + (Math.random() * 20 - 10) + 10,
+                    rotation: gsap.getProperty(leaderImg, "rotation") + (Math.random() * 10 - 5),
+                    scale: 1,
+                    zIndex: state.currentZIndex - 1 - i,
+                    duration: 0.5,
+                    ease: "back.out(1.2)"
+                });
+            });
+
+            // Pulse the leader
+            gsap.fromTo(leaderImg,
+                { scale: 1.15 },
+                { scale: 1.05, duration: 0.3, ease: "elastic.out(1, 0.3)" }
+            );
+        }
+
+        function updateHeldImageStackPosition(leaderImg) {
+            if (state.heldImageStack.length === 0) return;
+
+            const leaderX = gsap.getProperty(leaderImg, "x");
+            const leaderY = gsap.getProperty(leaderImg, "y");
+
+            state.heldImageStack.forEach(item => {
+                gsap.to(item.el, {
+                    x: leaderX + item.offsetX,
+                    y: leaderY + item.offsetY,
+                    duration: 0.1,
+                    overwrite: "auto"
+                });
+            });
+        }
+
+        function releaseImageStack() {
+            if (state.heldImageStack.length === 0) return;
+
+            // Scatter the stack
+            state.heldImageStack.forEach(item => {
+                const dragInstance = Draggable.get(item.el);
+                if (dragInstance) dragInstance.enable();
+
+                gsap.to(item.el, {
+                    x: "+=" + (Math.random() * 60 - 30),
+                    y: "+=" + (Math.random() * 60 - 30),
+                    rotation: "+=" + (Math.random() * 20 - 10),
+                    duration: 0.4,
+                    ease: "power2.out"
+                });
+            });
+
+            state.heldImageStack = [];
+        }
+
+        // Check if image is over its parent document
+        function checkParentDocOverlap(img) {
+            // only show visual indication if holding a stack (single images can't be dropped)
+            if (state.heldImageStack.length === 0) {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+                return;
+            }
+
+            const parentIndex = img.dataset.parent;
+            const parentDoc = document.querySelector(`.document[data-index="${parentIndex}"]`);
+
+            if (!parentDoc) {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+                return;
+            }
+
+            const imgRect = img.getBoundingClientRect();
+            const docRect = parentDoc.getBoundingClientRect();
+
+            // Center-to-center distance check
+            const imgCx = imgRect.left + imgRect.width / 2;
+            const imgCy = imgRect.top + imgRect.height / 2;
+            const docCx = docRect.left + docRect.width / 2;
+            const docCy = docRect.top + docRect.height / 2;
+
+            const distance = Math.hypot(imgCx - docCx, imgCy - docCy);
+
+            // Hovering if within 150px of document center
+            const isOverlapping = distance < 150;
+
+            if (isOverlapping) {
+                if (!state.isHoveringParentDoc) {
+                    state.isHoveringParentDoc = true;
+                    state.hoveredParentDoc = parentDoc;
+                    // Swell animation
+                    gsap.to(parentDoc, {
+                        scale: 1.15,
+                        opacity: 1,
+                        boxShadow: '0 20px 40px rgba(255, 255, 255, 0.3)',
+                        duration: 0.3,
+                        ease: 'back.out(1.7)'
+                    });
+                }
+            } else {
+                if (state.isHoveringParentDoc) {
+                    resetParentDocState();
+                }
+            }
+        }
+
+        // Reset parent document visual state
+        function resetParentDocState() {
+            if (state.hoveredParentDoc) {
+                gsap.to(state.hoveredParentDoc, {
+                    scale: 1,
+                    opacity: 0.3,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                    duration: 0.2
+                });
+            }
+            state.isHoveringParentDoc = false;
+            state.hoveredParentDoc = null;
+        }
+
+        // Handle drop on parent document
+        function handleParentDocSnap(img) {
+            // Only accept stacks, not single images
+            if (state.heldImageStack.length === 0) {
+                return false;
+            }
+
+            if (state.isHoveringParentDoc && state.hoveredParentDoc) {
+                const parentDoc = state.hoveredParentDoc;
+                const parentIndex = img.dataset.parent;
+
+                // Gather the leader image
+                const imagesToGather = [img];
+
+                // Add all stacked images
+                state.heldImageStack.forEach(item => {
+                    imagesToGather.push(item.el);
+                });
+
+                // Animate all images back to parent
+                const docRect = parentDoc.getBoundingClientRect();
+                const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+                const targetX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const targetY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+                imagesToGather.forEach((image, i) => {
+                    gsap.to(image, {
+                        x: targetX,
+                        y: targetY,
+                        rotation: 0,
+                        scale: 0.3,
+                        opacity: 0,
+                        duration: 0.3,
+                        delay: i * 0.02,
+                        ease: 'power3.in',
+                        onComplete: () => {
+                            image.remove();
+                        }
+                    });
+                });
+
+                // Clear the stack
+                state.heldImageStack = [];
+
+                // Check if all images are gathered, if so restore document to unopened state
+                setTimeout(() => {
+                    const stillRemaining = document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`);
+                    if (stillRemaining.length === 0) {
+                        // Mark as not spilled
+                        state.spilledFolders.delete(parentIndex);
+                        state.spilledImages[parentIndex] = [];
+
+                        // Restore document to unopened state
+                        gsap.to(parentDoc, {
+                            opacity: 1,
+                            scale: 1,
+                            zIndex: state.currentZIndex++,
+                            duration: 0.3
+                        });
+                    }
+                }, imagesToGather.length * 20 + 300);
+
+                // Reset parent doc state
+                resetParentDocState();
+
+                return true;
+            }
+            return false;
+        }
+
+        // === LIGHTBOX LOGIC ===
+
+        function getHighResUrl(url) {
+            // simpler approach: just replace the dimensions if it's picsum
+            // picsum format: .../seed/stuff/400/300
+            if (url.includes('picsum.photos')) {
+                return url.replace('/400/300', '/1600/1200');
+            }
+            return url;
+        }
+
+        function pseudoSpillImages(doc) {
+            const folderIndex = doc.dataset.index;
+
+            // Don't pseudo spill if already spilled or in gallery
+            if (state.spilledFolders.has(folderIndex) || state.galleryActive) return;
+
+            const images = JSON.parse(doc.dataset.images);
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const container = document.getElementById('documents-area');
+
+            // Track pseudo spilled images
+            if (!state.pseudoSpilledImages) state.pseudoSpilledImages = {};
+            state.pseudoSpilledImages[folderIndex] = [];
+
+            const edgePositions = [
+                { x: -60, y: 0 },      // left
+                { x: 60, y: 0 },       // right
+                { x: 0, y: -50 },      // top
+                { x: 0, y: 50 },       // bottom
+            ];
+
+            images.slice(0, 4).forEach((imgUrl, i) => {
+                const img = document.createElement('img');
+                img.className = 'spilled-image pseudo-spill';
+                img.loading = 'eager';
+                img.src = imgUrl;
+                img.dataset.parent = folderIndex;
+
+                const centerX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const centerY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+                const edge = edgePositions[i % edgePositions.length];
+
+                gsap.set(img, {
+                    x: centerX + edge.x,
+                    y: centerY + edge.y,
+                    rotation: (Math.random() - 0.5) * 10,
+                    scale: 0.7,
+                    opacity: 0.6,
+                    zIndex: 5
+                });
+
+                container.appendChild(img);
+                state.pseudoSpilledImages[folderIndex].push(img);
+            });
+        }
+
+        function cleanupPseudoSpill(doc) {
+            const folderIndex = doc.dataset.index;
+
+            if (!state.pseudoSpilledImages || !state.pseudoSpilledImages[folderIndex]) return;
+
+            state.pseudoSpilledImages[folderIndex].forEach(img => {
+                img.remove();
+            });
+
+            delete state.pseudoSpilledImages[folderIndex];
+        }
+
+        function openGalleryFromDocument(doc) {
+            if (state.galleryActive) return;
+
+            const images = JSON.parse(doc.dataset.images);
+            if (!images || images.length === 0) return;
+
+            const folderIndex = doc.dataset.index;
+
+            // Cleanup pseudo spill first
+            cleanupPseudoSpill(doc);
+
+            // Spill images behind overlay if not already spilled
+            if (!state.spilledFolders.has(folderIndex)) {
+                spillImagesForGallery(doc);
+            }
+
+            // Hide filing area
+            const filingArea = document.getElementById('filing-area');
+            filingArea.classList.remove('visible');
+
+            // Show overlay
+            document.getElementById('lightbox-overlay').classList.add('visible');
+
+            // Create gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.innerHTML = '';
+
+            images.forEach((imgUrl, index) => {
+                const galleryImg = document.createElement('img');
+                galleryImg.className = 'lightbox-image';
+                galleryImg.src = getHighResUrl(imgUrl);
+                galleryImg.dataset.index = index;
+                galleryImg.loading = 'eager';
+
+                // Click to focus/unfocus
+                galleryImg.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFocusImage(galleryImg);
+                });
+
+                gallery.appendChild(galleryImg);
+            });
+
+            // Show gallery
+            setTimeout(() => {
+                gallery.classList.add('visible');
+            }, 50);
+
+            state.galleryActive = true;
+            state.gallerySourceDoc = doc;
+            state.currentGalleryIndex = 0;
+            setupGalleryKeyboardNav();
+        }
+
+        // Spill images for gallery (no toggle, just spill)
+        function spillImagesForGallery(doc) {
+            const folderIndex = doc.dataset.index;
+            const images = JSON.parse(doc.dataset.images);
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const container = document.getElementById('documents-area');
+
+            // Track spilled images for this folder
+            state.spilledImages[folderIndex] = [];
+
+            images.forEach((imgUrl, i) => {
+                const img = document.createElement('img');
+                img.className = 'spilled-image';
+                img.loading = 'eager';
+                img.src = imgUrl;
+                img.dataset.parent = folderIndex;
+
+                const startX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+                const startY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+                const angle = (Math.random() * 360) * (Math.PI / 180);
+                const distance = 100 + Math.random() * 150;
+                const endX = startX + Math.cos(angle) * distance;
+                const endY = startY + Math.sin(angle) * distance;
+                const randomRot = (Math.random() - 0.5) * 30;
+
+                gsap.set(img, {
+                    x: startX,
+                    y: startY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    zIndex: 5
+                });
+
+                container.appendChild(img);
+                state.spilledImages[folderIndex].push(img);
+
+                gsap.to(img, {
+                    x: endX,
+                    y: endY,
+                    rotation: randomRot,
+                    scale: 1,
+                    opacity: 0.3,
+                    duration: 0.15,
+                    delay: i * 0.01,
+                    ease: 'power2.out'
+                });
+            });
+
+            state.spilledFolders.add(folderIndex);
+
+            gsap.to(doc, {
+                opacity: 0.3,
+                scale: 0.95,
+                zIndex: 5,
+                duration: 0.1
+            });
+        }
+
+        function enterLightbox(img) {
+            if (state.galleryActive) return; // already active
+
+            // Hide filing area
+            const filingArea = document.getElementById('filing-area');
+            filingArea.classList.remove('visible');
+
+            // Get all images from same parent
+            const parentIndex = img.dataset.parent;
+            const allImages = Array.from(document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`));
+
+            // Hide all original images
+            allImages.forEach(image => {
+                const dragInstance = Draggable.get(image);
+                if (dragInstance) dragInstance.disable();
+                gsap.set(image, { opacity: 0 });
+            });
+
+            // Show overlay
+            document.getElementById('lightbox-overlay').classList.add('visible');
+
+            // Create gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.innerHTML = ''; // clear existing
+
+            allImages.forEach((image, index) => {
+                const galleryImg = document.createElement('img');
+                galleryImg.className = 'lightbox-image';
+                galleryImg.src = getHighResUrl(image.src);
+                galleryImg.dataset.index = index;
+                galleryImg.dataset.originalImage = index;
+                galleryImg.loading = 'eager';
+
+                // Click to focus/unfocus
+                galleryImg.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFocusImage(galleryImg);
+                });
+
+                gallery.appendChild(galleryImg);
+            });
+
+            // Show gallery
+            setTimeout(() => {
+                gallery.classList.add('visible');
+            }, 50);
+
+            state.galleryActive = true;
+            state.galleryImages = allImages;
+            state.currentGalleryIndex = 0;
+            setupGalleryKeyboardNav();
+        }
+
+        function setupGalleryKeyboardNav() {
+            if (state.galleryKeyHandler) {
+                document.removeEventListener('keydown', state.galleryKeyHandler);
+            }
+
+            state.galleryKeyHandler = (e) => {
+                if (!state.galleryActive) return;
+
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navigateGallery(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateGallery(1);
+                }
+            };
+
+            document.addEventListener('keydown', state.galleryKeyHandler);
+        }
+
+        function navigateGallery(direction) {
+            const gallery = document.getElementById('lightbox-gallery');
+            const images = gallery.querySelectorAll('.lightbox-image');
+
+            if (images.length === 0) return;
+
+            state.currentGalleryIndex = Math.max(0, Math.min(images.length - 1, state.currentGalleryIndex + direction));
+
+            const targetImage = images[state.currentGalleryIndex];
+            if (targetImage) {
+                targetImage.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
+        function toggleFocusImage(img) {
+            const allGalleryImages = document.querySelectorAll('.lightbox-image');
+
+            if (img.classList.contains('focused')) {
+                // Unfocus
+                img.classList.remove('focused');
+            } else {
+                // Remove focus from all others
+                allGalleryImages.forEach(i => i.classList.remove('focused'));
+                // Focus this one
+                img.classList.add('focused');
+
+                // Update current index
+                const index = parseInt(img.dataset.index);
+                if (!isNaN(index)) {
+                    state.currentGalleryIndex = index;
+                }
+            }
+        }
+
+        function exitLightbox() {
+            if (!state.galleryActive) return;
+
+            // Remove keyboard handler
+            if (state.galleryKeyHandler) {
+                document.removeEventListener('keydown', state.galleryKeyHandler);
+                state.galleryKeyHandler = null;
+            }
+
+            // Hide overlay
+            document.getElementById('lightbox-overlay').classList.remove('visible');
+
+            // Hide gallery
+            const gallery = document.getElementById('lightbox-gallery');
+            gallery.classList.remove('visible');
+
+            setTimeout(() => {
+                gallery.innerHTML = '';
+            }, 200);
+
+            // Gather spilled images back to source document
+            if (state.gallerySourceDoc) {
+                gatherImagesToFolder(state.gallerySourceDoc);
+            }
+
+            // Show original images if they exist (for enterLightbox path)
+            if (state.galleryImages) {
+                state.galleryImages.forEach(image => {
+                    gsap.set(image, { opacity: 1 });
+                    const dragInstance = Draggable.get(image);
+                    if (dragInstance) dragInstance.enable();
+                });
+            }
+
+            state.galleryActive = false;
+            state.galleryImages = null;
+            state.gallerySourceDoc = null;
+            state.currentGalleryIndex = 0;
+        }
+
+        // double-click to open original url
+        function openDocument(doc) {
+            const url = doc.dataset.url;
+            window.open(url, '_blank');
+        }
+
+        // gather spilled images back to folder
+        function gatherImagesToFolder(doc) {
+            const folderIndex = doc.dataset.index;
+            const spilledImgs = state.spilledImages[folderIndex];
+
+            if (!spilledImgs || spilledImgs.length === 0) return;
+
+            const docRect = doc.getBoundingClientRect();
+            const containerRect = document.getElementById('desk-container').getBoundingClientRect();
+            const targetX = docRect.left - containerRect.left + (docRect.width - 162) / 2;
+            const targetY = docRect.top - containerRect.top + (docRect.height - 126) / 2;
+
+            spilledImgs.forEach((img, i) => {
+                gsap.to(img, {
+                    x: targetX,
+                    y: targetY,
+                    rotation: 0,
+                    scale: 0.3,
+                    opacity: 0,
+                    duration: 0.12,
+                    delay: i * 0.005,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        img.remove();
+                    }
+                });
+            });
+
+            // restore folder appearance
+            gsap.to(doc, {
+                opacity: 1,
+                scale: 1,
+                duration: 0.15
+            });
+
+            // clear tracking
+            state.spilledImages[folderIndex] = [];
+            state.spilledFolders.delete(folderIndex);
+        }
+
+        // cleanup all: return images + files to list and remove from desk
+        function cleanupAllImages() {
+            const docs = Array.from(document.querySelectorAll('.document'));
+
+            docs.forEach((doc, index) => {
+                // gather spilled images back first
+                gatherImagesToFolder(doc);
+
+                // return file to list with staggered animation
+                setTimeout(() => {
+                    returnFileToList(doc);
+                }, index * 100); // stagger by 100ms each
+            });
+        }
+
+        // idle animation (subtle paper movement)
+        function startIdleAnimation() {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach((doc, i) => {
+                gsap.to(doc, {
+                    y: '+=3',
+                    rotation: '+=0.5',
+                    duration: 3 + Math.random() * 2,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: 'sine.inOut',
+                    delay: i * 0.2
+                });
+            });
+        }
+
+        // keyboard shortcuts
+        function addKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                // ESC: Exit gallery OR navigate home
+                if (e.key === 'Escape') {
+                    if (state.galleryActive) {
+                        exitLightbox();
+                    } else {
+                        window.location.href = '/';
+                    }
+                }
+
+                if (state.galleryActive) return; // disable others while in gallery
+
+                // category filter shortcuts
+                if (e.key === '1') filterByCategory('saas');
+                if (e.key === '2') filterByCategory('ecommerce');
+                if (e.key === '3') filterByCategory('design');
+                if (e.key === '0') showAllDocuments();
+            });
+        }
+
+        // category filtering
+        function filterByCategory(category) {
+            const docs = document.querySelectorAll('.document');
+
+            docs.forEach(doc => {
+                if (doc.dataset.category === category) {
+                    gsap.to(doc, { opacity: 1, scale: 1, duration: 0.3 });
+                } else {
+                    gsap.to(doc, { opacity: 0.2, scale: 0.9, duration: 0.3 });
+                }
+            });
+        }
+
+        function showAllDocuments() {
+            const docs = document.querySelectorAll('.document');
+            gsap.to(docs, { opacity: 1, scale: 1, duration: 0.3, stagger: 0.05 });
+        }
+
+        // init on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+
+</html>
