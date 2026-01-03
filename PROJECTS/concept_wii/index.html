@@ -746,7 +746,7 @@
             // tile 0 animation params
             animFrequency: 8000,
             animEnabled: true,
-            animTriggerNow: () => { triggerTileAnimation(); }
+            animTriggerNow: null // set after function is defined
         };
 
         const cursorState = {
@@ -951,6 +951,64 @@
         }
 
         updateGrid();
+
+        // --- TILE 0 VIDEO ANIMATION SYSTEM ---
+        const videoOverlay = document.getElementById('tile-video-overlay');
+        const videoEl = videoOverlay.querySelector('video');
+        let animInterval = null;
+        let isAnimPlaying = false;
+
+        function updateVideoPosition() {
+            if (!channelBlocks[0]) return;
+
+            const tile = channelBlocks[0];
+            tile.updateWorldMatrix(true, false);
+            tile.getWorldPosition(worldPosition);
+
+            const screenPos = worldPosition.clone();
+            screenPos.project(camera);
+
+            const x = (screenPos.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = (-screenPos.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
+
+            const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
+            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / (camera.right - camera.left));
+            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / (camera.top - camera.bottom));
+
+            videoOverlay.style.left = `${x - widthPx / 2}px`;
+            videoOverlay.style.top = `${y - heightPx / 2}px`;
+            videoOverlay.style.width = `${widthPx}px`;
+            videoOverlay.style.height = `${heightPx}px`;
+        }
+
+        function triggerTileAnimation() {
+            if (isAnimPlaying || !PARAMS.animEnabled) return;
+
+            isAnimPlaying = true;
+            videoOverlay.classList.add('playing');
+            videoEl.currentTime = 0;
+            videoEl.play();
+
+            videoEl.onended = () => {
+                videoOverlay.classList.remove('playing');
+                isAnimPlaying = false;
+            };
+        }
+
+        function startAnimationLoop() {
+            if (animInterval) clearInterval(animInterval);
+
+            if (PARAMS.animEnabled && PARAMS.animFrequency > 0) {
+                animInterval = setInterval(() => {
+                    if (PARAMS.animEnabled) triggerTileAnimation();
+                }, PARAMS.animFrequency);
+            }
+        }
+
+        // now set the callback
+        PARAMS.animTriggerNow = () => { triggerTileAnimation(); };
+
+        startAnimationLoop();
 
         // --- INPUT & SCROLL LOGIC ---
         window.addEventListener('resize', () => {
@@ -1247,61 +1305,7 @@
         updateClock();
         updateBorders();
 
-        // --- TILE 0 VIDEO ANIMATION SYSTEM ---
-        const videoOverlay = document.getElementById('tile-video-overlay');
-        const videoEl = videoOverlay.querySelector('video');
-        let animInterval = null;
-        let isAnimPlaying = false;
-
-        function updateVideoPosition() {
-            if (!channelBlocks[0]) return;
-
-            const tile = channelBlocks[0];
-            tile.updateWorldMatrix(true, false);
-            tile.getWorldPosition(worldPosition);
-
-            const screenPos = worldPosition.clone();
-            screenPos.project(camera);
-
-            const x = (screenPos.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
-            const y = (-screenPos.y * 0.5 + 0.5) * renderer.domElement.clientHeight;
-
-            const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-            const widthPx = (BASE_BLOCK_WIDTH * scaleFactor * tile.scale.x) * (renderer.domElement.clientWidth / (camera.right - camera.left));
-            const heightPx = (BASE_BLOCK_HEIGHT * scaleFactor * tile.scale.y) * (renderer.domElement.clientHeight / (camera.top - camera.bottom));
-
-            videoOverlay.style.left = `${x - widthPx / 2}px`;
-            videoOverlay.style.top = `${y - heightPx / 2}px`;
-            videoOverlay.style.width = `${widthPx}px`;
-            videoOverlay.style.height = `${heightPx}px`;
-        }
-
-        function triggerTileAnimation() {
-            if (isAnimPlaying || !PARAMS.animEnabled) return;
-
-            isAnimPlaying = true;
-            videoOverlay.classList.add('playing');
-            videoEl.currentTime = 0;
-            videoEl.play();
-
-            videoEl.onended = () => {
-                videoOverlay.classList.remove('playing');
-                isAnimPlaying = false;
-            };
-        }
-
-        function startAnimationLoop() {
-            if (animInterval) clearInterval(animInterval);
-
-            if (PARAMS.animEnabled && PARAMS.animFrequency > 0) {
-                animInterval = setInterval(() => {
-                    if (PARAMS.animEnabled) triggerTileAnimation();
-                }, PARAMS.animFrequency);
-            }
-        }
-
-        startAnimationLoop();
-
+        // --- GUI SETUP ---
         const gui = new GUI({ autoPlace: false });
         document.getElementById('gui-container').appendChild(gui.domElement);
 
