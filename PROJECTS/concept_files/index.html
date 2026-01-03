@@ -1078,37 +1078,21 @@
                     checkDropZoneOverlap(this.target);
                 },
 
-                onDragEnd: function (e) {
+                onDragEnd: function () {
                     state.isDragging = false;
 
-                    // Check if mouse is hovering over the file
-                    const rect = this.target.getBoundingClientRect();
-                    const mouseX = e.clientX || e.changedTouches?.[0]?.clientX || 0;
-                    const mouseY = e.clientY || e.changedTouches?.[0]?.clientY || 0;
-                    const isHovering = mouseX >= rect.left && mouseX <= rect.right &&
-                                      mouseY >= rect.top && mouseY <= rect.bottom;
-
-                    // If hovering, spread images back out with tilt
-                    if (isHovering) {
-                        spreadSpilledImagesFromStack(this.target);
-
-                        gsap.to(this.target, {
-                            scale: 1,
-                            rotation: (Math.random() - 0.5) * 3,
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                            duration: 0.15
-                        });
-                    } else {
-                        // Not hovering - keep gathered
-                        gsap.to(this.target, {
-                            scale: 1,
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                            duration: 0.15
-                        });
-                    }
+                    // Always spread images back out on release
+                    spreadSpilledImagesFromStack(this.target);
 
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
+
+                    gsap.to(this.target, {
+                        scale: 1,
+                        rotation: (Math.random() - 0.5) * 3,
+                        boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                        duration: 0.15
+                    });
 
                     // Check if dropped on parent
                     const droppedOnParent = handleDropZoneSnap(this.target);
