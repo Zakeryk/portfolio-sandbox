@@ -463,11 +463,9 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease, left 0.3s ease;
-            padding: 10vh 5vw;
-            overflow-x: auto;
-            overflow-y: visible;
+            padding: 15vh 5vw;
+            overflow: visible;
             scroll-behavior: smooth;
-            scrollbar-width: none;
         }
 
         #lightbox-gallery::-webkit-scrollbar {
@@ -480,8 +478,8 @@
         }
 
         .lightbox-image {
-            max-width: 400px;
-            max-height: 50vh;
+            max-width: 500px;
+            max-height: 70vh;
             cursor: pointer;
             transition: all 0.15s ease;
             object-fit: contain;
@@ -1384,27 +1382,25 @@
 
             if (!spilledImgs || spilledImgs.length === 0) return;
 
-            const docX = gsap.getProperty(doc, 'x');
-            const docY = gsap.getProperty(doc, 'y');
-            const docRect = doc.getBoundingClientRect();
+            const docX = gsap.getProperty(doc, 'x') || 0;
+            const docY = gsap.getProperty(doc, 'y') || 0;
 
-            // gather images into stack formation behind/below document
+            // gather images into stack formation instantly (no animation during drag)
             spilledImgs.forEach((img, i) => {
                 const stackOffsetX = i * 5; // horizontal offset for stack
                 const stackOffsetY = i * 5 + 20; // vertical offset - stack below
 
-                gsap.to(img, {
-                    x: docX + stackOffsetX,
-                    y: docY + stackOffsetY,
-                    rotation: (Math.random() - 0.5) * 5,
-                    scale: 0.98,
-                    duration: 0.15,
-                    ease: 'power2.out'
-                });
-
-                // update offsets for dragging
+                // update offsets first
                 img.dataset.offsetX = stackOffsetX;
                 img.dataset.offsetY = stackOffsetY;
+
+                // set position instantly
+                gsap.set(img, {
+                    x: docX + stackOffsetX,
+                    y: docY + stackOffsetY,
+                    rotation: 0,
+                    scale: 0.95
+                });
             });
         }
 
@@ -2347,10 +2343,8 @@
                 gallery.innerHTML = '';
             }, 200);
 
-            // Gather spilled images back to source document
-            if (state.gallerySourceDoc) {
-                gatherImagesToFolder(state.gallerySourceDoc);
-            }
+            // Don't gather images back - leave them spilled
+            // Images should remain visible after exiting lightbox
 
             // Show original images if they exist (for enterLightbox path)
             if (state.galleryImages) {
