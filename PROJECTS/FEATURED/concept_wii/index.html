@@ -26,6 +26,13 @@
             loadFavicon('./favicon.png');
         })();
     </script>
+    <script>
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.location.href = 'https://sandbox.zakknowlton.com/';
+            }
+        });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@400;700&display=swap"
@@ -1412,10 +1419,13 @@
                 if (intersects.length > 0) {
                     hoveredTile = intersects[0].object;
                     const hitPoint = intersects[0].point;
-                    const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.05;
-                    const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.05;
 
-                    hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
+                    // only apply magnetic effect when clicking and holding
+                    if (isMouseDown) {
+                        const magX = hoveredTile.userData.baseX + (hitPoint.x - hoveredTile.userData.baseX) * 0.05;
+                        const magY = hoveredTile.userData.baseY + (hitPoint.y - hoveredTile.userData.baseY) * 0.05;
+                        hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
+                    }
 
                     // track tile 0 hover state
                     isTile0Hovered = hoveredTile.userData.index === 0;
