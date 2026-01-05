@@ -301,16 +301,24 @@
         }
 
         #wastebin.active {
-            transform: translateX(-50%) scale(1.15);
-            background: rgba(201, 85, 77, 0.3);
-            border-color: rgba(201, 85, 77, 0.8);
-            color: rgba(201, 85, 77, 1);
-            animation: pulse 1s ease-in-out infinite;
+            transform: translateX(-50%) scale(1.2);
+            background: rgba(201, 85, 77, 0.5);
+            border-color: rgba(201, 85, 77, 1);
+            border-width: 3px;
+            color: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 20px rgba(201, 85, 77, 0.8), 0 0 40px rgba(201, 85, 77, 0.4);
+            animation: pulse 0.8s ease-in-out infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { transform: translateX(-50%) scale(1.15); }
-            50% { transform: translateX(-50%) scale(1.2); }
+            0%, 100% {
+                transform: translateX(-50%) scale(1.2);
+                box-shadow: 0 0 20px rgba(201, 85, 77, 0.8), 0 0 40px rgba(201, 85, 77, 0.4);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.25);
+                box-shadow: 0 0 30px rgba(201, 85, 77, 1), 0 0 50px rgba(201, 85, 77, 0.6);
+            }
         }
 
         /* === DOCUMENTS AREA === */
@@ -1348,7 +1356,23 @@
 
                     // Check wastebin overlap on mobile
                     if (state.isMobile && state.wastebin) {
+                        const wasOverBin = isOverWastebin;
                         isOverWastebin = state.wastebin.updateWastebinState(this.pointerX, this.pointerY);
+
+                        // scale document down when over wastebin
+                        if (isOverWastebin && !wasOverBin) {
+                            gsap.to(this.target, {
+                                scale: 0.8,
+                                duration: 0.2,
+                                ease: 'power2.out'
+                            });
+                        } else if (!isOverWastebin && wasOverBin) {
+                            gsap.to(this.target, {
+                                scale: 1.05,
+                                duration: 0.2,
+                                ease: 'power2.out'
+                            });
+                        }
                     }
 
                     // Check drop zone overlap
@@ -1429,8 +1453,11 @@
                 duration: 0.4,
                 ease: 'back.in(1.7)',
                 onComplete: () => {
-                    // gather any spilled images first
-                    gatherImagesToFolder(doc);
+                    // gather any spilled images first (if any)
+                    const folderIndex = doc.dataset.index;
+                    if (state.spilledFolders.has(folderIndex)) {
+                        gatherImagesToFolder(doc);
+                    }
 
                     // remove document
                     doc.remove();

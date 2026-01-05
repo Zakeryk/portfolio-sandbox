@@ -336,6 +336,27 @@
             overflow: hidden;
         }
 
+        @media (max-width: 767px) {
+            button#view-toggle {
+                padding: 8px 12px;
+                font-size: 14px;
+                letter-spacing: 0;
+            }
+
+            button#view-toggle .btn-text {
+                display: none;
+            }
+
+            button#view-toggle #btn-icon::before {
+                content: attr(data-icon);
+                font-size: 16px;
+            }
+
+            button#view-toggle #btn-icon {
+                font-size: 0;
+            }
+        }
+
         button#view-toggle:hover {
             background: var(--text);
             color: var(--bg);
@@ -518,6 +539,10 @@
 
         .grid.list-mode .card-meta {
             margin-top: 0;
+        }
+
+        .grid.list-mode .tag {
+            display: none;
         }
 
         /* --- MODE: TILES --- */
@@ -727,7 +752,7 @@
 
             <div class="controls">
                 <div class="stats" id="status">INIT_SEQ...</div>
-                <button id="view-toggle">/// TILES</button>
+                <button id="view-toggle"><span class="btn-text">/// </span><span id="btn-icon">TILES</span></button>
             </div>
         </header>
 
@@ -1028,14 +1053,17 @@
         let isList = false;
 
         function updateView() {
+            const btnIcon = document.getElementById('btn-icon');
             if (isList) {
                 gridContainer.classList.remove('tile-mode');
                 gridContainer.classList.add('list-mode');
-                toggleBtn.innerText = "/// TILES";
+                btnIcon.innerText = "TILES";
+                btnIcon.setAttribute('data-icon', '▦');
             } else {
                 gridContainer.classList.remove('list-mode');
                 gridContainer.classList.add('tile-mode');
-                toggleBtn.innerText = "/// LIST";
+                btnIcon.innerText = "LIST";
+                btnIcon.setAttribute('data-icon', '≡');
             }
         }
 
