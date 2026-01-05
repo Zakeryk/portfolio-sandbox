@@ -626,7 +626,7 @@
             }
 
             .document.photo-style {
-                border: 8px solid #f4f4f4;
+                border: none;
             }
 
             .doc-title {
@@ -673,20 +673,11 @@
             }
 
             #back-link {
-                top: 10px;
-                right: 10px;
-            }
-
-            #back-link a {
-                font-size: 12px;
-                padding: 6px 12px;
+                display: none;
             }
 
             #cleanup-btn {
-                bottom: 10px;
-                right: 10px;
-                padding: 10px 18px;
-                font-size: 12px;
+                display: none;
             }
         }
     </style>
@@ -1027,6 +1018,17 @@
             // backdrop click to close
             menuBackdrop.addEventListener('click', () => {
                 toggleMenu(false);
+            });
+
+            // also close menu when tapping anywhere outside filing area
+            document.addEventListener('click', (e) => {
+                const isClickInsideMenu = filingArea.contains(e.target);
+                const isClickOnHamburger = hamburgerBtn.contains(e.target);
+                const isMenuOpen = filingArea.classList.contains('visible');
+
+                if (isMenuOpen && !isClickInsideMenu && !isClickOnHamburger) {
+                    toggleMenu(false);
+                }
             });
         }
 
