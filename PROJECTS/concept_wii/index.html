@@ -499,10 +499,12 @@
             left: 0;
             width: 100%;
             height: 100%;
-            padding: 80px 20px 120px 20px;
+            padding: 20px;
+            padding-bottom: 100px;
             overflow-y: auto;
             z-index: 50;
             background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+            box-sizing: border-box;
         }
 
         #mobile-grid-container {
@@ -511,6 +513,7 @@
             gap: 20px;
             max-width: 500px;
             margin: 0 auto;
+            padding-top: 0;
         }
 
         .mobile-tile {
@@ -542,13 +545,14 @@
             right: 30px;
             width: 50px;
             height: 50px;
-            background: #7ec1d9;
+            background: #f0f0f0;
+            border: 2px solid #ffffff;
             border-radius: 50%;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             z-index: 100;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: transform 0.15s ease, opacity 0.2s ease;
         }
 
@@ -559,7 +563,14 @@
         #mobile-sound-toggle svg {
             width: 24px;
             height: 24px;
-            fill: white;
+        }
+
+        #mobile-sound-toggle .sound-on {
+            fill: #7ec1d9;
+        }
+
+        #mobile-sound-toggle .sound-off {
+            fill: #888888;
         }
 
         /* MOBILE ADJUSTMENTS */
