@@ -275,9 +275,9 @@
             opacity: 1;
         }
 
-        /* === MOBILE WASTEBIN === */
+        /* === WASTEBIN === */
         #wastebin {
-            display: none;
+            display: flex;
             position: fixed;
             bottom: -100px;
             left: 50%;
@@ -1343,8 +1343,8 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // show wastebin on mobile
-                    if (state.isMobile && state.wastebin) {
+                    // show wastebin when dragging
+                    if (state.wastebin) {
                         state.wastebin.showWastebin();
                     }
 
@@ -1387,8 +1387,8 @@
                     // Move spilled images with document
                     updateSpilledImagesPosition(this.target);
 
-                    // Check wastebin overlap on mobile
-                    if (state.isMobile && state.wastebin) {
+                    // Check wastebin overlap
+                    if (state.wastebin) {
                         const wasOverBin = isOverWastebin;
                         isOverWastebin = state.wastebin.updateWastebinState(this.pointerX, this.pointerY);
 
@@ -1415,13 +1415,13 @@
                 onDragEnd: function () {
                     state.isDragging = false;
 
-                    // hide wastebin on mobile
-                    if (state.isMobile && state.wastebin) {
+                    // hide wastebin
+                    if (state.wastebin) {
                         state.wastebin.hideWastebin();
                     }
 
-                    // check if dropped on wastebin (mobile)
-                    if (state.isMobile && isOverWastebin) {
+                    // check if dropped on wastebin
+                    if (isOverWastebin) {
                         removeDocumentToMenu(this.target);
                         isOverWastebin = false;
                         return;
