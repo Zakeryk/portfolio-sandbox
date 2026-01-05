@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const projectsDir = path.join(__dirname, 'PROJECTS');
+const featuredDir = path.join(__dirname, 'PROJECTS', 'FEATURED');
 const archivedDir = path.join(__dirname, 'PROJECTS', 'ARCHIVED');
 const outputFile = path.join(__dirname, 'data.json');
 
@@ -25,7 +26,7 @@ const getProjects = (baseDir, pathPrefix, exclude = []) => {
             }
 
             // 3. Check Meta
-            let meta = { title: dir.name, active: true };
+            let meta = { title: dir.name, active: true, displayName: null };
             if (files.includes('meta.json')) {
                 try {
                     const m = JSON.parse(fs.readFileSync(path.join(dirPath, 'meta.json')));
@@ -45,7 +46,7 @@ const getProjects = (baseDir, pathPrefix, exclude = []) => {
             // Use whichever is newer (usually the file)
             const lastUpdated = indexStats.mtime > folderStats.mtime ? indexStats.mtime : folderStats.mtime;
 
-            return {
+            const project = {
                 id: dir.name,
                 path: `${pathPrefix}${dir.name}/`,
                 title: meta.title.toUpperCase().replace(/-/g, ' '),
@@ -54,6 +55,13 @@ const getProjects = (baseDir, pathPrefix, exclude = []) => {
                 image: files.includes('thumb.png') ? `${pathPrefix}${dir.name}/thumb.png` : (files.includes('thumb.jpg') ? `${pathPrefix}${dir.name}/thumb.jpg` : null),
                 date: lastUpdated
             };
+
+            // Add displayName if it exists
+            if (meta.displayName) {
+                project.displayName = meta.displayName;
+            }
+
+            return project;
         })
         .filter(Boolean)
         .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -64,13 +72,14 @@ const getProjects = (baseDir, pathPrefix, exclude = []) => {
 console.log("---------------------------------------------------");
 console.log("🔍 SCANNING FOR UPDATES...");
 
-const activeProjects = getProjects(projectsDir, './PROJECTS/', ['ARCHIVED', 'HIDDEN']);
+const activeProjects = getProjects(projectsDir, './PROJECTS/', ['ARCHIVED', 'HIDDEN', 'FEATURED']);
+const featuredProjects = getProjects(featuredDir, './PROJECTS/FEATURED/');
 const archivedProjects = getProjects(archivedDir, './PROJECTS/ARCHIVED/');
 
 const data = {
-    active: activeProjects,
+    active: [...featuredProjects, ...activeProjects],
     archived: archivedProjects
 };
 
 fs.writeFileSync(outputFile, JSON.stringify(data, null, 2));
-console.log(`✅ Success! Index updated with ${activeProjects.length} active + ${archivedProjects.length} archived projects.`);
+console.log(`✅ Success! Index updated with ${featuredProjects.length} featured + ${activeProjects.length} active + ${archivedProjects.length} archived projects.`);
