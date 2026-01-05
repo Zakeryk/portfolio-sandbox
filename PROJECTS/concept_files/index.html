@@ -1019,6 +1019,9 @@
                 }
             }
 
+            // Store in state for external access
+            state.toggleMobileMenu = toggleMenu;
+
             // hamburger click
             hamburgerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1287,8 +1290,9 @@
                     <div class="file-item-year">${item.year}</div>
                 `;
 
-                // make list item draggable - creates document on drag
-                listItem.addEventListener('mousedown', (e) => {
+                // make list item draggable - creates document on drag (desktop) or click (mobile)
+                const eventType = state.isMobile ? 'click' : 'mousedown';
+                listItem.addEventListener(eventType, (e) => {
                     handleListItemInteraction(listItem, e);
                 });
 
@@ -1539,7 +1543,13 @@
         function handleListItemInteraction(listItem, e) {
             // On mobile, use direct creation (bypass click/drag detection)
             if (state.isMobile) {
+                e.preventDefault(); // prevent any drag behavior
                 createDocumentFromListItem(listItem, e, false); // always spawn at center for mobile tap
+
+                // Close the mobile menu after creating document
+                if (state.toggleMobileMenu) {
+                    state.toggleMobileMenu(false);
+                }
                 return;
             }
 
@@ -2091,8 +2101,9 @@
                 <div class="file-item-year">${listItem.dataset.year}</div>
             `;
 
-            // make draggable
-            listItem.addEventListener('mousedown', (e) => {
+            // make draggable (desktop) or clickable (mobile)
+            const eventType = state.isMobile ? 'click' : 'mousedown';
+            listItem.addEventListener(eventType, (e) => {
                 handleListItemInteraction(listItem, e);
             });
 
