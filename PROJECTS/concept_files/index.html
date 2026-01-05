@@ -1000,6 +1000,143 @@
             });
         }
 
+        // mobile menu functions
+        function setupMobileMenu() {
+            if (!state.isMobile) return;
+
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const menuBackdrop = document.getElementById('menu-backdrop');
+            const filingArea = document.getElementById('filing-area');
+
+            // toggle menu
+            function toggleMenu(show) {
+                if (show) {
+                    hamburgerBtn.classList.add('active');
+                    menuBackdrop.classList.add('visible');
+                    filingArea.classList.add('visible');
+                } else {
+                    hamburgerBtn.classList.remove('active');
+                    menuBackdrop.classList.remove('visible');
+                    filingArea.classList.remove('visible');
+                }
+            }
+
+            // hamburger click
+            hamburgerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = filingArea.classList.contains('visible');
+                toggleMenu(!isOpen);
+            });
+
+            // backdrop click to close
+            menuBackdrop.addEventListener('click', () => {
+                toggleMenu(false);
+            });
+        }
+
+        // mobile tap-to-add functionality
+        function setupMobileTapToAdd() {
+            if (!state.isMobile) return;
+
+            // tap file list items to add them to desk
+            document.addEventListener('click', (e) => {
+                const fileItem = e.target.closest('.file-list-item');
+                if (!fileItem) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                // create document at center of screen
+                const item = WORK_ITEMS[fileItem.dataset.index];
+                const centerX = window.innerWidth / 2 - 110; // half document width
+                const centerY = window.innerHeight / 2 - 80; // half document height
+
+                // add small random offset if doc already exists at center
+                const randomOffset = Math.random() * 40 - 20;
+
+                createDocumentAtPosition(item, fileItem.dataset.index, centerX + randomOffset, centerY + randomOffset);
+            });
+        }
+
+        // mobile single-tap to open lightbox
+        function setupMobileLightboxTap() {
+            if (!state.isMobile) return;
+
+            // track touch start/end for tap detection
+            let touchStartTime = 0;
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                const doc = e.target.closest('.document');
+                if (!doc) return;
+
+                touchStartTime = Date.now();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', (e) => {
+                const doc = e.target.closest('.document');
+                if (!doc) return;
+
+                const touchDuration = Date.now() - touchStartTime;
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const distance = Math.sqrt(
+                    Math.pow(touchEndX - touchStartX, 2) +
+                    Math.pow(touchEndY - touchStartY, 2)
+                );
+
+                // tap detected: quick touch with minimal movement
+                if (touchDuration < 300 && distance < 10) {
+                    e.preventDefault();
+                    openGalleryFromDocument(doc);
+                }
+            });
+        }
+
+        // mobile wastebin drag detection
+        function setupMobileWastebin() {
+            if (!state.isMobile) return;
+
+            const wastebin = document.getElementById('wastebin');
+            let wastebinBounds = null;
+
+            // show wastebin when dragging starts
+            function showWastebin() {
+                wastebin.classList.add('visible');
+                wastebinBounds = wastebin.getBoundingClientRect();
+            }
+
+            // hide wastebin when dragging ends
+            function hideWastebin() {
+                wastebin.classList.remove('visible', 'active');
+                wastebinBounds = null;
+            }
+
+            // check if drag position is over wastebin
+            function updateWastebinState(x, y) {
+                if (!wastebinBounds) return false;
+
+                const isOver = x >= wastebinBounds.left &&
+                    x <= wastebinBounds.right &&
+                    y >= wastebinBounds.top &&
+                    y <= wastebinBounds.bottom;
+
+                if (isOver) {
+                    wastebin.classList.add('active');
+                } else {
+                    wastebin.classList.remove('active');
+                }
+
+                return isOver;
+            }
+
+            // return functions for drag lifecycle
+            return { showWastebin, hideWastebin, updateWastebinState };
+        }
+
         // initialization
         async function init() {
             // load real images from manifest first
@@ -1007,6 +1144,18 @@
 
             setupFilingAreaInteractions();
             addKeyboardShortcuts();
+
+            // mobile-specific setup
+            if (state.isMobile) {
+                setupMobileMenu();
+                setupMobileTapToAdd();
+                setupMobileLightboxTap();
+                state.wastebin = setupMobileWastebin();
+
+                // update filter hint for mobile
+                const filterHint = document.getElementById('filter-hint');
+                filterHint.textContent = 'tap to open • drag to move • drag to bin to remove';
+            }
 
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
@@ -1144,46 +1293,10 @@
             updateFileCounts();
         }
 
-        // create draggable document from list item
-        function createDocumentFromListItem(listItem, e) {
-            const container = document.getElementById('documents-area');
-            const containerRect = container.getBoundingClientRect();
+        // setup draggable for document element
+        function setupDocumentDraggable(doc) {
+            let isOverWastebin = false;
 
-            const doc = document.createElement('div');
-            const item = WORK_ITEMS[listItem.dataset.index];
-            doc.className = `document ${item.type}-style`;
-            doc.dataset.category = listItem.dataset.category;
-            doc.dataset.url = listItem.dataset.url;
-            doc.dataset.index = listItem.dataset.index;
-            doc.dataset.images = listItem.dataset.images;
-
-            // preload images immediately
-            preloadImages(JSON.parse(listItem.dataset.images));
-
-            // spawn in center with slight variation
-            const centerX = containerRect.width / 2;
-            const centerY = containerRect.height / 2;
-            const variationX = (Math.random() - 0.5) * 100; // ±50px variation
-            const variationY = (Math.random() - 0.5) * 100;
-
-            gsap.set(doc, {
-                x: centerX + variationX - 110, // center minus half doc width (220/2)
-                y: centerY + variationY - 80,  // center minus half doc height (160/2)
-                rotation: 0,
-                zIndex: state.currentZIndex++
-            });
-
-            doc.innerHTML = `
-                <div class="doc-content">
-                    <h3 class="doc-title">${listItem.dataset.title}</h3>
-                    <div class="doc-year">${listItem.dataset.year}</div>
-                    <div class="category-tag ${listItem.dataset.category}">${listItem.dataset.category.toUpperCase()}</div>
-                </div>
-            `;
-
-            container.appendChild(doc);
-
-            // setup draggable immediately
             const draggable = Draggable.create(doc, {
                 type: 'x,y',
                 cursor: 'pointer',
@@ -1194,6 +1307,11 @@
                 onPress: function () {
                     state.isDragging = true;
                     state.currentZIndex++;
+
+                    // show wastebin on mobile
+                    if (state.isMobile && state.wastebin) {
+                        state.wastebin.showWastebin();
+                    }
 
                     // Fade out peek images when drag starts
                     const peekImages = document.querySelectorAll('.peek-image');
@@ -1234,12 +1352,29 @@
                     // Move spilled images with document
                     updateSpilledImagesPosition(this.target);
 
+                    // Check wastebin overlap on mobile
+                    if (state.isMobile && state.wastebin) {
+                        isOverWastebin = state.wastebin.updateWastebinState(this.pointerX, this.pointerY);
+                    }
+
                     // Check drop zone overlap
                     checkDropZoneOverlap(this.target);
                 },
 
                 onDragEnd: function () {
                     state.isDragging = false;
+
+                    // hide wastebin on mobile
+                    if (state.isMobile && state.wastebin) {
+                        state.wastebin.hideWastebin();
+                    }
+
+                    // check if dropped on wastebin (mobile)
+                    if (state.isMobile && isOverWastebin) {
+                        removeDocumentToMenu(this.target);
+                        isOverWastebin = false;
+                        return;
+                    }
 
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
@@ -1274,13 +1409,148 @@
                 },
 
                 onClick: function () {
-                    // Open gallery directly on click
-                    const images = JSON.parse(this.target.dataset.images);
-                    if (images && images.length > 0) {
-                        openGalleryFromDocument(this.target);
+                    // Open gallery directly on click (desktop only, mobile uses tap detection)
+                    if (!state.isMobile) {
+                        const images = JSON.parse(this.target.dataset.images);
+                        if (images && images.length > 0) {
+                            openGalleryFromDocument(this.target);
+                        }
                     }
                 }
             })[0];
+
+            return draggable;
+        }
+
+        // remove document and return it to menu (mobile wastebin)
+        function removeDocumentToMenu(doc) {
+            const index = doc.dataset.index;
+            const item = WORK_ITEMS[index];
+
+            // animate out
+            gsap.to(doc, {
+                scale: 0,
+                rotation: 360,
+                opacity: 0,
+                duration: 0.4,
+                ease: 'back.in(1.7)',
+                onComplete: () => {
+                    // gather any spilled images first
+                    gatherImagesToFolder(doc);
+
+                    // remove document
+                    doc.remove();
+
+                    // add back to file list
+                    const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
+                    const fileList = folder.querySelector('.file-list');
+
+                    const listItem = document.createElement('div');
+                    listItem.className = 'file-list-item';
+                    listItem.dataset.category = item.category;
+                    listItem.dataset.title = item.title;
+                    listItem.dataset.url = item.url;
+                    listItem.dataset.year = item.year;
+                    listItem.dataset.index = index;
+                    listItem.dataset.images = JSON.stringify(item.images);
+
+                    listItem.innerHTML = `
+                        <div class="file-item-title">${item.title}</div>
+                        <div class="file-item-year">${item.year}</div>
+                    `;
+
+                    fileList.appendChild(listItem);
+                    updateFileCounts();
+                }
+            });
+        }
+
+        // create draggable document from list item
+        // create document at specific position (used by mobile tap-to-add)
+        function createDocumentAtPosition(item, index, x, y) {
+            const container = document.getElementById('documents-area');
+
+            const doc = document.createElement('div');
+            doc.className = `document ${item.type}-style`;
+            doc.dataset.category = item.category;
+            doc.dataset.url = item.url;
+            doc.dataset.index = index;
+            doc.dataset.images = JSON.stringify(item.images);
+
+            // preload images immediately
+            preloadImages(item.images);
+
+            gsap.set(doc, {
+                x: x,
+                y: y,
+                rotation: 0,
+                scale: 0,
+                zIndex: state.currentZIndex++
+            });
+
+            doc.innerHTML = `
+                <div class="doc-content">
+                    <h3 class="doc-title">${item.title}</h3>
+                    <div class="doc-year">${item.year}</div>
+                    <div class="category-tag ${item.category}">${item.category.toUpperCase()}</div>
+                </div>
+            `;
+
+            container.appendChild(doc);
+
+            // animate in
+            gsap.to(doc, {
+                scale: 1,
+                duration: 0.3,
+                ease: 'back.out(1.7)'
+            });
+
+            // setup draggable
+            setupDocumentDraggable(doc);
+
+            return doc;
+        }
+
+        function createDocumentFromListItem(listItem, e) {
+            const container = document.getElementById('documents-area');
+            const containerRect = container.getBoundingClientRect();
+
+            const doc = document.createElement('div');
+            const item = WORK_ITEMS[listItem.dataset.index];
+            doc.className = `document ${item.type}-style`;
+            doc.dataset.category = listItem.dataset.category;
+            doc.dataset.url = listItem.dataset.url;
+            doc.dataset.index = listItem.dataset.index;
+            doc.dataset.images = listItem.dataset.images;
+
+            // preload images immediately
+            preloadImages(JSON.parse(listItem.dataset.images));
+
+            // spawn in center with slight variation
+            const centerX = containerRect.width / 2;
+            const centerY = containerRect.height / 2;
+            const variationX = (Math.random() - 0.5) * 100; // ±50px variation
+            const variationY = (Math.random() - 0.5) * 100;
+
+            gsap.set(doc, {
+                x: centerX + variationX - 110, // center minus half doc width (220/2)
+                y: centerY + variationY - 80,  // center minus half doc height (160/2)
+                rotation: 0,
+                zIndex: state.currentZIndex++
+            });
+
+            doc.innerHTML = `
+                <div class="doc-content">
+                    <h3 class="doc-title">${listItem.dataset.title}</h3>
+                    <div class="doc-year">${listItem.dataset.year}</div>
+                    <div class="category-tag ${listItem.dataset.category}">${listItem.dataset.category.toUpperCase()}</div>
+                </div>
+            `;
+
+            container.appendChild(doc);
+
+            // setup draggable immediately
+            const draggable = setupDocumentDraggable(doc);
 
             // trigger drag immediately
             draggable.startDrag(e);
@@ -1367,84 +1637,12 @@
             });
         }
 
-        // gsap draggable setup
+        // gsap draggable setup (legacy - now using setupDocumentDraggable)
         function setupDraggables() {
             const docs = document.querySelectorAll('.document');
 
             docs.forEach(doc => {
-                let clickCount = 0;
-                let clickTimeout = null;
-
-                const draggable = Draggable.create(doc, {
-                    type: 'x,y',
-                    cursor: 'pointer',
-                    bounds: '#desk-container',
-                    inertia: state.isMobile ? false : true,
-                    edgeResistance: 0.8,
-
-                    onPress: function () {
-                        // bring to front
-                        state.isDragging = true;
-                        state.currentZIndex++;
-                        gsap.to(this.target, {
-                            zIndex: state.currentZIndex,
-                            scale: 1.05,
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.7)',
-                            duration: 0.1
-                        });
-                        state.selectedDoc = this.target;
-
-                        // Reset shake context
-                        state.shakeContext.history = [];
-                        state.shakeContext.lastX = this.x;
-                        state.shakeContext.reversals = 0;
-                        state.shakeContext.direction = 0;
-                    },
-
-                    onDrag: function () {
-                        // Check for shake gesture
-                        checkShake(this);
-
-                        // Move collected stack if any
-                        updateHeldStackPosition(this.target);
-
-                        // Move spilled images with document
-                        updateSpilledImagesPosition(this.target);
-
-                        // check overlapping with specific parent folder for swell
-                        checkDropZoneOverlap(this.target);
-                    },
-
-                    onDragEnd: function () {
-                        // reset scale
-                        state.isDragging = false;
-
-                        // Update filing area immediately (no longer dragging)
-                        updateFilingAreaVisibility();
-
-                        gsap.to(this.target, {
-                            scale: 1,
-                            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-                            duration: 0.15,
-                            ease: 'power2.out'
-                        });
-
-                        // Check if dropped on parent
-                        const droppedOnParent = handleDropZoneSnap(this.target);
-
-                        // Release stack (scatter or return to list)
-                        releaseStack(droppedOnParent);
-                    },
-
-                    onClick: function () {
-                        // Open gallery directly on click
-                        const images = JSON.parse(this.target.dataset.images);
-                        if (images && images.length > 0) {
-                            openGalleryFromDocument(this.target);
-                        }
-                    }
-                })[0];
-
+                const draggable = setupDocumentDraggable(doc);
                 state.draggables.push(draggable);
 
                 // add peek effect
