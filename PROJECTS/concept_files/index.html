@@ -1518,15 +1518,13 @@
             // preload images immediately
             preloadImages(JSON.parse(listItem.dataset.images));
 
-            // spawn in center with slight variation
-            const centerX = containerRect.width / 2;
-            const centerY = containerRect.height / 2;
-            const variationX = (Math.random() - 0.5) * 100; // ±50px variation
-            const variationY = (Math.random() - 0.5) * 100;
+            // spawn at cursor position when dragging
+            const cursorX = e.clientX - containerRect.left;
+            const cursorY = e.clientY - containerRect.top;
 
             gsap.set(doc, {
-                x: centerX + variationX - 110, // center minus half doc width (220/2)
-                y: centerY + variationY - 80,  // center minus half doc height (160/2)
+                x: cursorX - 110, // cursor position minus half doc width (220/2)
+                y: cursorY - 80,  // cursor position minus half doc height (160/2)
                 rotation: 0,
                 zIndex: state.currentZIndex++
             });
@@ -2670,13 +2668,25 @@
             const allGalleryImages = document.querySelectorAll('.lightbox-image');
 
             if (img.classList.contains('focused')) {
-                // Unfocus
+                // Unfocus - restore all to full opacity
                 img.classList.remove('focused');
+                allGalleryImages.forEach(i => {
+                    gsap.to(i, { opacity: 1, duration: 0.3 });
+                });
             } else {
                 // Remove focus from all others
                 allGalleryImages.forEach(i => i.classList.remove('focused'));
                 // Focus this one
                 img.classList.add('focused');
+
+                // Fade all others to low opacity
+                allGalleryImages.forEach(i => {
+                    if (i !== img) {
+                        gsap.to(i, { opacity: 0.2, duration: 0.3 });
+                    } else {
+                        gsap.to(i, { opacity: 1, duration: 0.3 });
+                    }
+                });
 
                 // Update current index
                 const index = parseInt(img.dataset.index);
