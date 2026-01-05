@@ -919,18 +919,36 @@
             isMobile = window.innerWidth <= 768;
 
             if (isMobile) {
-                COLS = 1;
-                ROWS = MAX_TILES;
+                COLS = 2;
+                ROWS = Math.ceil(MAX_TILES / COLS);
             } else {
                 COLS = 4;
                 ROWS = 3;
             }
 
-            const scaleFactor = isMobile ? MOBILE_SCALE_FACTOR : 1.0;
-            const limit = MAX_TILES;
+            let scaleFactor = 1.0;
+            let scaleX = 1.0;
+            let scaleY = 1.0;
 
-            const gap = PARAMS.gridSpacing - BASE_BLOCK_WIDTH;
-            const autoSpacingY = gap + BASE_BLOCK_HEIGHT;
+            if (isMobile) {
+                // calculate tile size to fit screen with padding
+                const visibleWidth = (camera.right - camera.left) / camera.zoom;
+                const padding = 0.3; // padding between tiles
+                const availableWidth = visibleWidth - (padding * (COLS + 1));
+                const tileWidth = availableWidth / COLS;
+
+                // make tiles square - scale height to match width
+                scaleFactor = tileWidth / BASE_BLOCK_WIDTH;
+                scaleX = scaleFactor;
+                scaleY = scaleFactor * (BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT); // adjust to make square
+            } else {
+                scaleFactor = 1.0;
+                scaleX = 1.0;
+                scaleY = 1.0;
+            }
+
+            const gap = isMobile ? 0.3 : (PARAMS.gridSpacing - BASE_BLOCK_WIDTH);
+            const autoSpacingY = gap + (isMobile ? BASE_BLOCK_WIDTH * scaleY : BASE_BLOCK_HEIGHT);
             const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
             scrollState.max = isMobile ? Math.max(0, totalContentHeight - 3.5) : 0;
 
@@ -938,18 +956,24 @@
                 b.visible = true;
                 if (b.userData.label) b.userData.label.classList.remove('tile-hidden');
 
-                b.scale.set(scaleFactor, scaleFactor, 1);
+                if (isMobile) {
+                    b.scale.set(scaleX, scaleY, 1);
+                } else {
+                    b.scale.set(scaleFactor, scaleFactor, 1);
+                }
 
-                const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
+                const totalW = (COLS - 1) * (isMobile ? (BASE_BLOCK_WIDTH * scaleX + 0.3) : PARAMS.gridSpacing * scaleFactor);
                 const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-                // FIXED: Mobile Start Y adjusted to -0.4 (refined from -0.6)
-                const startY = isMobile ? -0.4 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+                const startY = isMobile ? 0.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
 
                 const col = i % COLS;
                 const row = Math.floor(i / COLS);
 
-                b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
-                b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
+                const spacingX = isMobile ? (BASE_BLOCK_WIDTH * scaleX + 0.3) : PARAMS.gridSpacing * scaleFactor;
+                const spacingY = isMobile ? (BASE_BLOCK_WIDTH * scaleY + 0.3) : autoSpacingY * scaleFactor;
+
+                b.userData.baseX = xOffset + col * spacingX;
+                b.userData.baseY = startY - row * spacingY;
 
                 b.position.set(b.userData.baseX, b.userData.baseY, 0);
             });
