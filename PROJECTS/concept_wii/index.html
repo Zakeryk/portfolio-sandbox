@@ -929,28 +929,31 @@
             let scaleFactor = 1.0;
             let scaleX = 1.0;
             let scaleY = 1.0;
+            let mobileTileWidth = 0;
 
             if (isMobile) {
                 // calculate tile size to fit screen with padding
                 const visibleWidth = (camera.right - camera.left) / camera.zoom;
-                const padding = 0.3; // padding between tiles
-                const availableWidth = visibleWidth - (padding * (COLS + 1));
-                const tileWidth = availableWidth / COLS;
+                const edgePadding = 0.4; // padding on sides
+                const tilePadding = 0.25; // padding between tiles
 
-                // make tiles square - scale height to match width
-                scaleFactor = tileWidth / BASE_BLOCK_WIDTH;
-                scaleX = scaleFactor;
-                scaleY = scaleFactor * (BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT); // adjust to make square
+                const availableWidth = visibleWidth - (edgePadding * 2) - (tilePadding * (COLS - 1));
+                mobileTileWidth = availableWidth / COLS;
+
+                // make tiles square - scale both x and y by same factor
+                const squareScale = mobileTileWidth / BASE_BLOCK_WIDTH;
+                scaleX = squareScale;
+                scaleY = squareScale * (BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT); // compensate for original aspect
             } else {
                 scaleFactor = 1.0;
                 scaleX = 1.0;
                 scaleY = 1.0;
             }
 
-            const gap = isMobile ? 0.3 : (PARAMS.gridSpacing - BASE_BLOCK_WIDTH);
-            const autoSpacingY = gap + (isMobile ? BASE_BLOCK_WIDTH * scaleY : BASE_BLOCK_HEIGHT);
-            const totalContentHeight = (ROWS * autoSpacingY * scaleFactor);
-            scrollState.max = isMobile ? Math.max(0, totalContentHeight - 3.5) : 0;
+            const gap = isMobile ? 0.25 : (PARAMS.gridSpacing - BASE_BLOCK_WIDTH);
+            const autoSpacingY = gap + (isMobile ? mobileTileWidth : BASE_BLOCK_HEIGHT);
+            const totalContentHeight = isMobile ? (ROWS * (mobileTileWidth + gap)) : (ROWS * autoSpacingY * scaleFactor);
+            scrollState.max = isMobile ? Math.max(0, totalContentHeight - 4) : 0;
 
             channelBlocks.forEach((b, i) => {
                 b.visible = true;
@@ -962,18 +965,31 @@
                     b.scale.set(scaleFactor, scaleFactor, 1);
                 }
 
-                const totalW = (COLS - 1) * (isMobile ? (BASE_BLOCK_WIDTH * scaleX + 0.3) : PARAMS.gridSpacing * scaleFactor);
-                const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
-                const startY = isMobile ? 0.5 : ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+                if (isMobile) {
+                    const col = i % COLS;
+                    const row = Math.floor(i / COLS);
 
-                const col = i % COLS;
-                const row = Math.floor(i / COLS);
+                    const visibleWidth = (camera.right - camera.left) / camera.zoom;
+                    const edgePadding = 0.4;
+                    const tilePadding = 0.25;
+                    const tileWidth = (visibleWidth - (edgePadding * 2) - (tilePadding * (COLS - 1))) / COLS;
 
-                const spacingX = isMobile ? (BASE_BLOCK_WIDTH * scaleX + 0.3) : PARAMS.gridSpacing * scaleFactor;
-                const spacingY = isMobile ? (BASE_BLOCK_WIDTH * scaleY + 0.3) : autoSpacingY * scaleFactor;
+                    const startX = -(visibleWidth / 2) + edgePadding + (tileWidth / 2);
+                    const startY = 1.0;
 
-                b.userData.baseX = xOffset + col * spacingX;
-                b.userData.baseY = startY - row * spacingY;
+                    b.userData.baseX = startX + col * (tileWidth + tilePadding);
+                    b.userData.baseY = startY - row * (tileWidth + tilePadding);
+                } else {
+                    const totalW = (COLS - 1) * PARAMS.gridSpacing * scaleFactor;
+                    const xOffset = -totalW / 2 + PARAMS.gridOffsetX;
+                    const startY = ((ROWS - 1) * autoSpacingY) / 2 + PARAMS.gridOffsetY;
+
+                    const col = i % COLS;
+                    const row = Math.floor(i / COLS);
+
+                    b.userData.baseX = xOffset + col * PARAMS.gridSpacing * scaleFactor;
+                    b.userData.baseY = startY - row * autoSpacingY * scaleFactor;
+                }
 
                 b.position.set(b.userData.baseX, b.userData.baseY, 0);
             });
