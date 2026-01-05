@@ -595,8 +595,8 @@
         }
 
         .lightbox-image {
-            max-width: 500px;
-            max-height: 70vh;
+            max-width: 350px;
+            max-height: 50vh;
             cursor: pointer;
             transition: all 0.15s ease;
             object-fit: contain;
@@ -1276,7 +1276,7 @@
 
                 // make list item draggable - creates document on drag
                 listItem.addEventListener('mousedown', (e) => {
-                    createDocumentFromListItem(listItem, e);
+                    handleListItemInteraction(listItem, e);
                 });
 
                 fileList.appendChild(listItem);
@@ -1503,7 +1503,50 @@
             return doc;
         }
 
-        function createDocumentFromListItem(listItem, e) {
+        // handle click vs drag for list items
+        function handleListItemInteraction(listItem, e) {
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const dragThreshold = 5; // pixels
+            let hasMoved = false;
+            let handled = false;
+
+            const onMouseMove = (moveEvent) => {
+                const deltaX = Math.abs(moveEvent.clientX - startX);
+                const deltaY = Math.abs(moveEvent.clientY - startY);
+
+                if (deltaX > dragThreshold || deltaY > dragThreshold) {
+                    hasMoved = true;
+                    if (!handled) {
+                        handled = true;
+                        cleanup();
+                        // Create at cursor and start drag
+                        createDocumentFromListItem(listItem, e, true);
+                    }
+                }
+            };
+
+            const onMouseUp = (upEvent) => {
+                if (!handled) {
+                    handled = true;
+                    cleanup();
+                    if (!hasMoved) {
+                        // Click - create at center
+                        createDocumentFromListItem(listItem, upEvent, false);
+                    }
+                }
+            };
+
+            const cleanup = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function createDocumentFromListItem(listItem, e, isDrag = true) {
             const container = document.getElementById('documents-area');
             const containerRect = container.getBoundingClientRect();
 
@@ -1518,14 +1561,29 @@
             // preload images immediately
             preloadImages(JSON.parse(listItem.dataset.images));
 
-            // spawn at cursor position when dragging
-            const cursorX = e.clientX - containerRect.left;
-            const cursorY = e.clientY - containerRect.top;
+            // determine spawn position based on interaction type
+            let spawnX, spawnY;
+            if (isDrag) {
+                // spawn at cursor position when dragging
+                const cursorX = e.clientX - containerRect.left;
+                const cursorY = e.clientY - containerRect.top;
+                spawnX = cursorX - 110; // cursor position minus half doc width (220/2)
+                spawnY = cursorY - 80;  // cursor position minus half doc height (160/2)
+            } else {
+                // spawn in center when clicking
+                const centerX = containerRect.width / 2;
+                const centerY = containerRect.height / 2;
+                const variationX = (Math.random() - 0.5) * 100; // ±50px variation
+                const variationY = (Math.random() - 0.5) * 100;
+                spawnX = centerX + variationX - 110; // center minus half doc width (220/2)
+                spawnY = centerY + variationY - 80;  // center minus half doc height (160/2)
+            }
 
             gsap.set(doc, {
-                x: cursorX - 110, // cursor position minus half doc width (220/2)
-                y: cursorY - 80,  // cursor position minus half doc height (160/2)
+                x: spawnX,
+                y: spawnY,
                 rotation: 0,
+                scale: isDrag ? 1 : 0, // start small for click, full size for drag
                 zIndex: state.currentZIndex++
             });
 
@@ -1539,11 +1597,20 @@
 
             container.appendChild(doc);
 
-            // setup draggable immediately
+            // setup draggable
             const draggable = setupDocumentDraggable(doc);
 
-            // trigger drag immediately
-            draggable.startDrag(e);
+            if (isDrag) {
+                // trigger drag immediately for drag interaction
+                draggable.startDrag(e);
+            } else {
+                // animate in for click interaction
+                gsap.to(doc, {
+                    scale: 1,
+                    duration: 0.3,
+                    ease: 'back.out(1.7)'
+                });
+            }
 
             // add peek effect
             addPeekEffect(doc);
@@ -1987,7 +2054,7 @@
 
             // make draggable
             listItem.addEventListener('mousedown', (e) => {
-                createDocumentFromListItem(listItem, e);
+                handleListItemInteraction(listItem, e);
             });
 
             // animate document to list position then remove

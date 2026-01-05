@@ -491,6 +491,50 @@
             white-space: nowrap;
         }
 
+        /* MOBILE GRID */
+        #mobile-grid {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 80px 20px 120px 20px;
+            overflow-y: auto;
+            z-index: 50;
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 100%);
+        }
+
+        #mobile-grid-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .mobile-tile {
+            aspect-ratio: 1;
+            background: #d4d4d4;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.15s ease, opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-tile:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+
+        .mobile-tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         /* MOBILE ADJUSTMENTS */
         @media (max-width: 768px) {
             #custom-cursor {
@@ -500,6 +544,14 @@
             body,
             html {
                 cursor: auto;
+            }
+
+            #scene-container {
+                display: none;
+            }
+
+            #mobile-grid {
+                display: block;
             }
 
             #clock {
@@ -646,6 +698,10 @@
         <div id="debug-hotspot"></div>
     </div>
 
+    <div id="mobile-grid">
+        <div id="mobile-grid-container"></div>
+    </div>
+
     <script type="importmap">
     {
       "imports": {
@@ -716,6 +772,8 @@
 
         setTimeout(animateTitle, 800);
 
+        const MAX_TILES = 12;
+
         const ASSETS = {
             0: 'assets/anim_01_still.jpg',
             1: 'assets/channel_wii.jpg',
@@ -731,6 +789,28 @@
             3: null,
             4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
         };
+
+        // populate mobile grid
+        const mobileGridContainer = document.getElementById('mobile-grid-container');
+        for (let i = 0; i < MAX_TILES; i++) {
+            if (LINKS[i]) {
+                const tile = document.createElement('div');
+                tile.className = 'mobile-tile';
+
+                if (ASSETS[i]) {
+                    const img = document.createElement('img');
+                    img.src = ASSETS[i];
+                    img.alt = '';
+                    tile.appendChild(img);
+                }
+
+                tile.addEventListener('click', () => {
+                    window.location.href = LINKS[i];
+                });
+
+                mobileGridContainer.appendChild(tile);
+            }
+        }
 
         const PARAMS = {
             camX: 0, camY: -1.5, camZ: 10,
@@ -859,7 +939,6 @@
         const BASE_BLOCK_HEIGHT = 0.72;
         const MOBILE_SCALE_FACTOR = 1.35;
         const TILE_ASPECT = BASE_BLOCK_WIDTH / BASE_BLOCK_HEIGHT;
-        const MAX_TILES = 12;
 
         for (let i = 0; i < MAX_TILES; i++) {
             const geo = new RoundedBoxGeometry(BASE_BLOCK_WIDTH, BASE_BLOCK_HEIGHT, 0.2, 4, PARAMS.borderRadius);
