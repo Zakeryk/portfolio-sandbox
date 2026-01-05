@@ -480,6 +480,13 @@
             position: absolute;
             top: 20px;
             right: 20px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        #back-link.visible {
+            opacity: 1;
             pointer-events: all;
         }
 
@@ -515,9 +522,15 @@
             text-transform: uppercase;
             border-radius: 2px;
             cursor: pointer;
-            pointer-events: all;
+            pointer-events: none;
             transition: all 0.3s ease;
             letter-spacing: 1px;
+            opacity: 0;
+        }
+
+        #cleanup-btn.visible {
+            opacity: 1;
+            pointer-events: all;
         }
 
         #cleanup-btn:hover {
@@ -2987,6 +3000,22 @@
                 if (e.key === '2') filterByCategory('ecommerce');
                 if (e.key === '3') filterByCategory('design');
                 if (e.key === '0') showAllDocuments();
+
+                // tilde key: show tips
+                if (e.key === '`') {
+                    document.getElementById('filter-hint').classList.add('visible');
+                    document.getElementById('back-link').classList.add('visible');
+                    document.getElementById('cleanup-btn').classList.add('visible');
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                // tilde key: hide tips
+                if (e.key === '`') {
+                    document.getElementById('filter-hint').classList.remove('visible');
+                    document.getElementById('back-link').classList.remove('visible');
+                    document.getElementById('cleanup-btn').classList.remove('visible');
+                }
             });
         }
 
