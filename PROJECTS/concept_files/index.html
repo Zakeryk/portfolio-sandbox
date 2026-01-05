@@ -245,6 +245,10 @@
             transform: translateY(-8px) rotate(-45deg);
         }
 
+        #hamburger-btn.active {
+            left: 320px;
+        }
+
         #menu-backdrop {
             display: none;
             position: fixed;
@@ -1533,6 +1537,13 @@
 
         // handle click vs drag for list items
         function handleListItemInteraction(listItem, e) {
+            // On mobile, use direct creation (bypass click/drag detection)
+            if (state.isMobile) {
+                createDocumentFromListItem(listItem, e, false); // always spawn at center for mobile tap
+                return;
+            }
+
+            // Desktop: detect click vs drag
             const startX = e.clientX;
             const startY = e.clientY;
             const dragThreshold = 5; // pixels
