@@ -1,6 +1,19 @@
 {
   "active": [
     {
+      "id": "concept_files",
+      "path": "./PROJECTS/FEATURED/concept_files/",
+      "title": "CONCEPT_RESIDENT",
+      "tags": [
+        "Experiment",
+        "Interactive"
+      ],
+      "active": true,
+      "image": "./PROJECTS/FEATURED/concept_files/thumb.png",
+      "date": "2026-01-05T22:38:04.756Z",
+      "displayName": "MY_WORK"
+    },
+    {
       "id": "concept_wii",
       "path": "./PROJECTS/FEATURED/concept_wii/",
       "title": "CONCEPT_WII",
@@ -11,19 +24,6 @@
       "image": "./PROJECTS/FEATURED/concept_wii/thumb.png",
       "date": "2026-01-05T22:27:22.859Z",
       "displayName": "MY_DASHBOARD"
-    },
-    {
-      "id": "concept_files",
-      "path": "./PROJECTS/FEATURED/concept_files/",
-      "title": "CONCEPT_RESIDENT",
-      "tags": [
-        "Experiment",
-        "Interactive"
-      ],
-      "active": true,
-      "image": "./PROJECTS/FEATURED/concept_files/thumb.png",
-      "date": "2026-01-05T22:27:22.799Z",
-      "displayName": "MY_WORK"
     }
   ],
   "archived": [

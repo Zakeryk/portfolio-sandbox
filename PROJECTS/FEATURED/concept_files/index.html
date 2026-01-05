@@ -203,6 +203,25 @@
             letter-spacing: 1px;
         }
 
+        .filing-footer {
+            margin-top: auto;
+            padding: 15px;
+            border-top: 1px solid rgba(50, 150, 100, 0.2);
+        }
+
+        .filing-footer a {
+            color: #8ab;
+            text-decoration: none;
+            font-size: 10px;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .filing-footer a:hover {
+            opacity: 1;
+        }
+
         /* === MOBILE HAMBURGER MENU === */
         #hamburger-btn {
             display: none;
@@ -770,6 +789,9 @@
                     <span class="file-count">0</span>
                 </div>
                 <div class="file-list"></div>
+            </div>
+            <div class="filing-footer">
+                <a href="/">← back • esc to leave</a>
             </div>
         </div>
 
@@ -2256,7 +2278,7 @@
 
             // hide parent document temporarily and send to back
             gsap.to(doc, {
-                opacity: 0.3,
+                opacity: 1,
                 scale: 0.95,
                 zIndex: 5, // send opened files to back
                 duration: 0.1
@@ -2713,7 +2735,7 @@
             state.spilledFolders.add(folderIndex);
 
             gsap.to(doc, {
-                opacity: 0.3,
+                opacity: 1,
                 scale: 0.95,
                 zIndex: 5,
                 duration: 0.1
