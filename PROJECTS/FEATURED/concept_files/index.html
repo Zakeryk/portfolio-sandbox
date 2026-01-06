@@ -3017,11 +3017,17 @@
                 state.galleryKeyHandler = null;
             }
 
+            // Remove scroll handler (mobile)
+            const gallery = document.getElementById('lightbox-gallery');
+            if (state.galleryScrollHandler) {
+                gallery.removeEventListener('scroll', state.galleryScrollHandler);
+                state.galleryScrollHandler = null;
+            }
+
             // Hide overlay
             document.getElementById('lightbox-overlay').classList.remove('visible');
 
             // Hide gallery
-            const gallery = document.getElementById('lightbox-gallery');
             gallery.classList.remove('visible');
 
             setTimeout(() => {
