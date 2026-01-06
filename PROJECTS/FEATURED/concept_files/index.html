@@ -763,11 +763,22 @@
                 height: 100%;
             }
 
+            #lightbox-gallery.visible {
+                pointer-events: auto;
+            }
+
             .lightbox-image {
                 max-width: 100%;
                 width: auto;
                 max-height: none;
                 height: auto;
+            }
+
+            /* hide hamburger and wastebin when lightbox active */
+            #lightbox-overlay.visible ~ #hamburger-btn,
+            body:has(#lightbox-overlay.visible) #hamburger-btn,
+            body:has(#lightbox-overlay.visible) #wastebin {
+                display: none;
             }
 
             .lightbox-image:hover {
