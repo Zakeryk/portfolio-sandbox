@@ -1145,28 +1145,26 @@
         // wastebin drag detection (works for both mobile and desktop)
         function setupWastebin() {
             const wastebin = document.getElementById('wastebin');
-            let wastebinBounds = null;
 
             // show wastebin when dragging starts
             function showWastebin() {
                 wastebin.classList.add('visible');
-                wastebinBounds = wastebin.getBoundingClientRect();
             }
 
             // hide wastebin when dragging ends
             function hideWastebin() {
                 wastebin.classList.remove('visible', 'active');
-                wastebinBounds = null;
             }
 
             // check if drag position is over wastebin
             function updateWastebinState(x, y) {
-                if (!wastebinBounds) return false;
+                // always get fresh bounds to account for animation
+                const bounds = wastebin.getBoundingClientRect();
 
-                const isOver = x >= wastebinBounds.left &&
-                    x <= wastebinBounds.right &&
-                    y >= wastebinBounds.top &&
-                    y <= wastebinBounds.bottom;
+                const isOver = x >= bounds.left &&
+                    x <= bounds.right &&
+                    y >= bounds.top &&
+                    y <= bounds.bottom;
 
                 if (isOver) {
                     wastebin.classList.add('active');
