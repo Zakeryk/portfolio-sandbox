@@ -1576,10 +1576,18 @@
                 img.remove();
             });
 
-            // gather any spilled images first (if any)
+            // instantly remove any spilled images (no animation)
             const folderIndex = doc.dataset.index;
             if (state.spilledFolders.has(folderIndex)) {
-                gatherImagesToFolder(doc);
+                const spilledImgs = state.spilledImages[folderIndex];
+                if (spilledImgs) {
+                    spilledImgs.forEach(img => {
+                        gsap.killTweensOf(img);
+                        img.remove();
+                    });
+                    delete state.spilledImages[folderIndex];
+                    state.spilledFolders.delete(folderIndex);
+                }
             }
 
             // animate out - parent files fade without rotation
