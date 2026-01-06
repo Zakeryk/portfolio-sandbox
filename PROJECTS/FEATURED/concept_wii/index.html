@@ -842,9 +842,21 @@
 
         const MAX_TILES = 12;
 
+        // utah time helper (mountain time)
+        function isUtahDaytime() {
+            const now = new Date();
+            const utahTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Denver' }));
+            const hour = utahTime.getHours();
+            return hour >= 6 && hour < 20; // day: 6am-8pm
+        }
+
+        function getUtahTimeIcon() {
+            return isUtahDaytime() ? 'assets/icon-time-day.png' : 'assets/icon-time-night.png';
+        }
+
         const ASSETS = {
             0: 'assets/anim_01_still.jpg',
-            1: null,
+            1: getUtahTimeIcon(),
             2: null,
             3: null,
             4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
@@ -860,6 +872,8 @@
 
         // populate mobile grid
         const mobileGridContainer = document.getElementById('mobile-grid-container');
+        let mobileTile1Img = null; // reference for tile 1's time icon
+
         for (let i = 0; i < MAX_TILES; i++) {
             const tile = document.createElement('div');
             tile.className = 'mobile-tile';
@@ -869,6 +883,11 @@
                 img.src = ASSETS[i];
                 img.alt = '';
                 tile.appendChild(img);
+
+                // store reference to tile 1 for dynamic updates
+                if (i === 1) {
+                    mobileTile1Img = img;
+                }
             }
 
             if (LINKS[i]) {
@@ -882,6 +901,16 @@
 
             mobileGridContainer.appendChild(tile);
         }
+
+        // update tile 1 icon periodically (check every minute)
+        setInterval(() => {
+            if (mobileTile1Img) {
+                const newIcon = getUtahTimeIcon();
+                if (mobileTile1Img.src !== newIcon && !mobileTile1Img.src.endsWith(newIcon)) {
+                    mobileTile1Img.src = newIcon;
+                }
+            }
+        }, 60000); // check every minute
 
         // mobile sound toggle
         const mobileSoundToggle = document.getElementById('mobile-sound-toggle');
