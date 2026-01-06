@@ -1142,10 +1142,8 @@
             });
         }
 
-        // mobile wastebin drag detection
-        function setupMobileWastebin() {
-            if (!state.isMobile) return;
-
+        // wastebin drag detection (works for both mobile and desktop)
+        function setupWastebin() {
             const wastebin = document.getElementById('wastebin');
             let wastebinBounds = null;
 
@@ -1191,11 +1189,13 @@
             setupFilingAreaInteractions();
             addKeyboardShortcuts();
 
+            // wastebin setup (both mobile and desktop)
+            state.wastebin = setupWastebin();
+
             // mobile-specific setup
             if (state.isMobile) {
                 setupMobileMenu();
                 setupMobileLightboxTap();
-                state.wastebin = setupMobileWastebin();
             }
 
             // cleanup button
@@ -1379,8 +1379,8 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // show wastebin when dragging (desktop)
-                    if (state.wastebin && !state.isMobile) {
+                    // show wastebin when dragging
+                    if (state.wastebin) {
                         state.wastebin.showWastebin();
                     }
 
