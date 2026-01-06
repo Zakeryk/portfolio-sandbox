@@ -673,7 +673,13 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
         }
 
-        /* Remove shadow from PNGs in lightbox */
+        /* Remove shadow from PNGs */
+        .spilled-image[src$=".png"],
+        .spilled-image[src*=".png?"],
+        .spilled-image[src*=".png#"],
+        .peek-image[src$=".png"],
+        .peek-image[src*=".png?"],
+        .peek-image[src*=".png#"],
         .lightbox-image[src$=".png"],
         .lightbox-image[src*=".png?"],
         .lightbox-image[src*=".png#"] {
@@ -744,22 +750,24 @@
                 display: none;
             }
 
-            /* mobile lightbox carousel */
+            /* mobile lightbox - vertical scroll grid */
             #lightbox-gallery {
+                flex-direction: column;
                 justify-content: flex-start;
-                overflow-x: auto;
-                overflow-y: hidden;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                padding: 0 calc(50vw - 175px);
-                gap: 50px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 20px;
+                gap: 20px;
+                top: 0;
+                transform: none;
+                height: 100%;
             }
 
             .lightbox-image {
-                scroll-snap-align: center;
-                flex-shrink: 0;
-                max-width: 350px;
-                max-height: 60vh;
+                max-width: 100%;
+                width: auto;
+                max-height: none;
+                height: auto;
             }
 
             .lightbox-image:hover {
@@ -1474,19 +1482,29 @@
                 },
 
                 onDragEnd: function () {
-                    state.isDragging = false;
-
                     // hide wastebin
                     if (state.wastebin) {
                         state.wastebin.hideWastebin();
                     }
 
-                    // check if dropped on wastebin
+                    // check if dropped on wastebin - do this BEFORE setting isDragging = false
                     if (isOverWastebin) {
-                        removeDocumentToMenu(this.target);
+                        // settle document briefly before deletion to prevent ghost behaviors
+                        gsap.to(this.target, {
+                            scale: 1,
+                            duration: 0.1,
+                            ease: 'power2.out',
+                            onComplete: () => {
+                                state.isDragging = false;
+                                removeDocumentToMenu(this.target);
+                            }
+                        });
                         isOverWastebin = false;
                         return;
                     }
+
+                    // not deleting, so now safe to mark as not dragging
+                    state.isDragging = false;
 
                     // Update filing area immediately (no longer dragging)
                     updateFilingAreaVisibility();
@@ -2869,64 +2887,8 @@
         }
 
         function setupMobileGalleryCarousel() {
-            if (!state.isMobile) return;
-
-            const gallery = document.getElementById('lightbox-gallery');
-
-            // Function to find and focus centered image
-            const updateCenteredImage = () => {
-                const images = Array.from(gallery.querySelectorAll('.lightbox-image'));
-                if (images.length === 0) return;
-
-                const galleryCenter = gallery.offsetWidth / 2 + gallery.scrollLeft;
-
-                let closestImage = null;
-                let closestDistance = Infinity;
-
-                images.forEach(img => {
-                    const imgCenter = img.offsetLeft + img.offsetWidth / 2;
-                    const distance = Math.abs(galleryCenter - imgCenter);
-
-                    if (distance < closestDistance) {
-                        closestDistance = distance;
-                        closestImage = img;
-                    }
-                });
-
-                // Focus the closest image
-                if (closestImage && !closestImage.classList.contains('focused')) {
-                    const allGalleryImages = gallery.querySelectorAll('.lightbox-image');
-                    allGalleryImages.forEach(i => i.classList.remove('focused'));
-                    closestImage.classList.add('focused');
-
-                    // Fade others
-                    allGalleryImages.forEach(i => {
-                        if (i !== closestImage) {
-                            gsap.to(i, { opacity: 0.3, duration: 0.3 });
-                        } else {
-                            gsap.to(i, { opacity: 1, duration: 0.3 });
-                        }
-                    });
-                }
-            };
-
-            // Debounced scroll handler
-            let scrollTimeout;
-            const handleScroll = () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(updateCenteredImage, 100);
-            };
-
-            // Remove old listener if exists
-            if (state.galleryScrollHandler) {
-                gallery.removeEventListener('scroll', state.galleryScrollHandler);
-            }
-
-            state.galleryScrollHandler = handleScroll;
-            gallery.addEventListener('scroll', handleScroll);
-
-            // Initial focus
-            setTimeout(updateCenteredImage, 100);
+            // mobile uses simple vertical scroll - no setup needed
+            return;
         }
 
         function navigateGallery(direction) {
