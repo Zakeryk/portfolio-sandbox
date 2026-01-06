@@ -101,7 +101,7 @@
             gap: 15px;
             z-index: 1000;
             padding: 20px;
-            width: 300px;
+            width: var(--menu-width, 300px);
             background: rgba(10, 20, 15, 0.98);
             border-right: 1px solid rgba(50, 150, 100, 0.3);
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.7);
@@ -279,19 +279,19 @@
             display: none;
             position: fixed;
             top: 0;
-            left: 300px;
-            width: calc(100% - 300px);
+            left: 0;
+            width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
             z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
             pointer-events: all;
         }
 
         #menu-backdrop.visible {
-            opacity: 1;
+            transform: translateX(0);
         }
 
         /* === WASTEBIN === */
@@ -566,13 +566,13 @@
         /* === SPILLED IMAGES === */
         .spilled-image {
             position: absolute;
-            width: 220px;
-            height: 160px;
+            max-width: 180px;
+            max-height: 140px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
             cursor: pointer;
             will-change: transform;
             z-index: 50;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 2px;
             image-rendering: crisp-edges;
             image-rendering: -webkit-optimize-contrast;
@@ -673,6 +673,13 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
         }
 
+        /* Remove shadow from PNGs in lightbox */
+        .lightbox-image[src$=".png"],
+        .lightbox-image[src*=".png?"],
+        .lightbox-image[src*=".png#"] {
+            box-shadow: none !important;
+        }
+
         /* === RESPONSIVE === */
         @media (max-width: 768px) {
             .document {
@@ -703,12 +710,12 @@
             }
 
             #filing-area {
-                left: -300px !important;
+                left: calc(-1 * var(--menu-width, 300px)) !important;
                 transform: none !important;
                 top: 0 !important;
                 bottom: 0 !important;
                 flex-direction: column;
-                width: 300px;
+                width: var(--menu-width, 300px);
                 gap: 15px;
                 transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
@@ -1094,29 +1101,7 @@
             });
         }
 
-        // mobile tap-to-add functionality
-        function setupMobileTapToAdd() {
-            if (!state.isMobile) return;
-
-            // tap file list items to add them to desk
-            document.addEventListener('click', (e) => {
-                const fileItem = e.target.closest('.file-list-item');
-                if (!fileItem) return;
-
-                e.preventDefault();
-                e.stopPropagation();
-
-                // create document at center of screen
-                const item = WORK_ITEMS[fileItem.dataset.index];
-                const centerX = window.innerWidth / 2 - 110; // half document width
-                const centerY = window.innerHeight / 2 - 80; // half document height
-
-                // add small random offset if doc already exists at center
-                const randomOffset = Math.random() * 40 - 20;
-
-                createDocumentAtPosition(item, fileItem.dataset.index, centerX + randomOffset, centerY + randomOffset);
-            });
-        }
+        // removed - redundant with list item click handlers
 
         // mobile single-tap to open lightbox
         function setupMobileLightboxTap() {
@@ -1208,7 +1193,6 @@
             // mobile-specific setup
             if (state.isMobile) {
                 setupMobileMenu();
-                setupMobileTapToAdd();
                 setupMobileLightboxTap();
                 state.wastebin = setupMobileWastebin();
             }
@@ -1350,9 +1334,38 @@
             updateFileCounts();
         }
 
+        function calculateOptimalMenuWidth() {
+            const measureEl = document.createElement('div');
+            measureEl.style.cssText = 'position:absolute; visibility:hidden; white-space:nowrap; font-family:"Courier Prime",monospace; font-size:11px; padding:10px 15px;';
+            document.body.appendChild(measureEl);
+
+            let maxWidth = 0;
+            const folderHeaders = ['SAAS', 'ECOMMERCE', 'DESIGN'];
+
+            folderHeaders.forEach(header => {
+                measureEl.textContent = header;
+                maxWidth = Math.max(maxWidth, measureEl.scrollWidth);
+            });
+
+            WORK_ITEMS.forEach(item => {
+                measureEl.innerHTML = `<div>${item.title}</div><div>${item.year}</div>`;
+                maxWidth = Math.max(maxWidth, measureEl.scrollWidth);
+            });
+
+            measureEl.remove();
+            return Math.max(300, Math.min(450, maxWidth + 60));
+        }
+
         // setup draggable for document element
         function setupDocumentDraggable(doc) {
             let isOverWastebin = false;
+
+            // on mobile, show wastebin on touchstart (before drag)
+            if (state.isMobile && state.wastebin) {
+                doc.addEventListener('touchstart', () => {
+                    state.wastebin.showWastebin();
+                }, { passive: true });
+            }
 
             const draggable = Draggable.create(doc, {
                 type: 'x,y',
@@ -1365,8 +1378,8 @@
                     state.isDragging = true;
                     state.currentZIndex++;
 
-                    // show wastebin when dragging
-                    if (state.wastebin) {
+                    // show wastebin when dragging (desktop)
+                    if (state.wastebin && !state.isMobile) {
                         state.wastebin.showWastebin();
                     }
 
