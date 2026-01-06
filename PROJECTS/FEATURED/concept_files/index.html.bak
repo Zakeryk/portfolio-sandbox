@@ -794,7 +794,7 @@
                 justify-content: flex-start;
                 overflow-y: auto;
                 overflow-x: hidden;
-                padding: 80px 20px 20px 20px;
+                padding: 20px;
                 gap: 20px;
                 top: 0;
                 transform: none;
@@ -1652,18 +1652,12 @@
             // kill all existing animations on document before final animation
             gsap.killTweensOf(doc);
 
-            // instantly hide child content before fade
-            const children = doc.children;
-            for (let i = 0; i < children.length; i++) {
-                children[i].style.opacity = '0';
-            }
-
             // animate out - parent files fade without rotation
             gsap.to(doc, {
                 scale: 0,
                 rotation: hasImages ? 0 : 360,
                 opacity: 0,
-                duration: 0.2,
+                duration: 0.4,
                 ease: hasImages ? 'power2.in' : 'back.in(1.7)',
                 onComplete: () => {
                     // final cleanup - kill any remaining animations and remove document
