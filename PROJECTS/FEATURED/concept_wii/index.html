@@ -900,16 +900,16 @@
         }
 
         const ASSETS = {
-            0: 'assets/anim_01_still.jpg',
-            1: getUtahTimeIcon(),
+            0: getUtahTimeIcon(),
+            1: 'assets/anim_01_still.jpg',
             2: null,
             3: null,
             4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null,
         };
 
         const LINKS = {
-            0: 'https://sandbox.zakknowlton.com',
-            1: null,
+            0: null,
+            1: 'https://sandbox.zakknowlton.com',
             2: null,
             3: null,
             4: null, 5: null, 6: null, 7: null, 8: null, 9: null, 10: null, 11: null
@@ -917,7 +917,7 @@
 
         // populate mobile grid
         const mobileGridContainer = document.getElementById('mobile-grid-container');
-        let mobileTile1Img = null; // reference for tile 1's time icon
+        let mobileTile0Img = null; // reference for tile 0's time icon
 
         for (let i = 0; i < MAX_TILES; i++) {
             const tile = document.createElement('div');
@@ -929,9 +929,9 @@
                 img.alt = '';
                 tile.appendChild(img);
 
-                // store reference to tile 1 for dynamic updates
-                if (i === 1) {
-                    mobileTile1Img = img;
+                // store reference to tile 0 for dynamic updates
+                if (i === 0) {
+                    mobileTile0Img = img;
                 }
             }
 
@@ -947,12 +947,12 @@
             mobileGridContainer.appendChild(tile);
         }
 
-        // update tile 1 icon periodically (check every minute)
+        // update tile 0 icon periodically (check every minute)
         setInterval(() => {
-            if (mobileTile1Img) {
+            if (mobileTile0Img) {
                 const newIcon = getUtahTimeIcon();
-                if (mobileTile1Img.src !== newIcon && !mobileTile1Img.src.endsWith(newIcon)) {
-                    mobileTile1Img.src = newIcon;
+                if (mobileTile0Img.src !== newIcon && !mobileTile0Img.src.endsWith(newIcon)) {
+                    mobileTile0Img.src = newIcon;
                 }
             }
         }, 60000); // check every minute
@@ -985,7 +985,7 @@
             borderRadius: 0.018,
             activeSlot: 1,
             splitHeight: 0.86,
-            // tile 0 animation params
+            // tile 1 animation params
             animTriggerMode: 'hover', // 'hover' or 'interval'
             animFrequency: 4000,
             animEnabled: true,
@@ -1115,7 +1115,7 @@
                     tex.wrapS = THREE.RepeatWrapping;
                     tex.wrapT = THREE.RepeatWrapping;
 
-                    const ZOOM_FACTOR = i === 1 ? 0.97 : 0.9;
+                    const ZOOM_FACTOR = i === 0 ? 0.97 : 0.9;
                     const imageAspect = tex.image.width / tex.image.height;
                     const tileAspect = TILE_ASPECT;
 
@@ -1239,17 +1239,17 @@
 
         updateGrid();
 
-        // --- TILE 0 VIDEO ANIMATION SYSTEM ---
+        // --- TILE 1 VIDEO ANIMATION SYSTEM ---
         const videoOverlay = document.getElementById('tile-video-overlay');
         const videoEl = videoOverlay.querySelector('video');
         let animInterval = null;
         let isAnimPlaying = false;
-        let isTile0Hovered = false;
+        let isTile1Hovered = false;
 
         function updateVideoPosition() {
-            if (!channelBlocks[0]) return;
+            if (!channelBlocks[1]) return;
 
-            const tile = channelBlocks[0];
+            const tile = channelBlocks[1];
             tile.updateWorldMatrix(true, false);
             tile.getWorldPosition(worldPosition);
 
@@ -1488,7 +1488,7 @@
 
                 // MAGNETIC LOGIC
                 let hoveredTile = null;
-                const wasHoveringTile0 = isTile0Hovered;
+                const wasHoveringTile1 = isTile1Hovered;
 
                 if (intersects.length > 0) {
                     hoveredTile = intersects[0].object;
@@ -1501,24 +1501,24 @@
                         hoveredTile.position.lerp(new THREE.Vector3(magX, magY, 0), 0.1);
                     }
 
-                    // track tile 0 hover state
-                    isTile0Hovered = hoveredTile.userData.index === 0;
+                    // track tile 1 hover state
+                    isTile1Hovered = hoveredTile.userData.index === 1;
 
                     if (INTERSECTED !== hoveredTile) {
                         INTERSECTED = hoveredTile;
                     }
 
-                    // start animation when hovering tile 0
-                    if (PARAMS.animTriggerMode === 'hover' && isTile0Hovered && !wasHoveringTile0) {
+                    // start animation when hovering tile 1
+                    if (PARAMS.animTriggerMode === 'hover' && isTile1Hovered && !wasHoveringTile1) {
                         triggerTileAnimation();
                     }
                 } else {
-                    isTile0Hovered = false;
+                    isTile1Hovered = false;
                     INTERSECTED = null;
                 }
 
-                // stop animation when leaving tile 0 (moved outside else block to ensure it always runs)
-                if (PARAMS.animTriggerMode === 'hover' && wasHoveringTile0 && !isTile0Hovered) {
+                // stop animation when leaving tile 1 (moved outside else block to ensure it always runs)
+                if (PARAMS.animTriggerMode === 'hover' && wasHoveringTile1 && !isTile1Hovered) {
                     stopTileAnimation();
                 }
 
@@ -1667,7 +1667,7 @@
         folder.add(PARAMS, 'splitHeight', 0.5, 1.0).onChange(updateBorders);
         folder.open();
 
-        const animFolder = gui.addFolder('Tile 0 Animation');
+        const animFolder = gui.addFolder('Tile 1 Animation');
         animFolder.add(PARAMS, 'animEnabled').name('Enable Animation');
         animFolder.add(PARAMS, 'animTriggerMode', ['hover', 'interval']).name('Trigger Mode').onChange(startAnimationLoop);
         animFolder.add(PARAMS, 'animFrequency', 1000, 30000).name('Interval (ms)').onChange(startAnimationLoop);
