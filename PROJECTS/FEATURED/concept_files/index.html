@@ -1055,7 +1055,9 @@
             preloadedImages: {}, // cache of preloaded images
             currentGalleryIndex: 0, // current focused image in gallery
             gallerySourceDoc: null, // document that opened the gallery
-            galleryKeyHandler: null // keyboard handler for gallery
+            galleryKeyHandler: null, // keyboard handler for gallery
+            hoverCollectTarget: null, // doc being hovered over for collection
+            hoverCollectStart: null // timestamp when hover started
         };
 
         // preload images for a document
@@ -1109,6 +1111,7 @@
                     peekImg.className = 'peek-image';
                     peekImg.src = images[i];
                     peekImg.loading = 'eager';
+                    peekImg.dataset.parent = folderIndex; // track parent doc
 
                     const baseX = docRect.left - containerRect.left;
                     const baseY = docRect.top - containerRect.top;
@@ -1526,6 +1529,9 @@
                     // Check for shake gesture
                     checkShake(this);
 
+                    // Check for hover-to-collect
+                    checkHoverCollect(this);
+
                     // Move collected stack if any
                     updateHeldStackPosition(this.target);
 
@@ -1562,6 +1568,13 @@
                     if (state.wastebin) {
                         state.wastebin.hideWastebin();
                     }
+
+                    // reset hover collect state
+                    if (state.hoverCollectTarget) {
+                        gsap.to(state.hoverCollectTarget, { scale: 1, duration: 0.2 });
+                    }
+                    state.hoverCollectTarget = null;
+                    state.hoverCollectStart = null;
 
                     // check if dropped on wastebin - do this BEFORE setting isDragging = false
                     if (isOverWastebin) {
@@ -1634,11 +1647,18 @@
             const item = WORK_ITEMS[index];
             const hasImages = item.images && item.images.length > 0;
 
-            // instantly remove all peek images
+            // instantly remove all peek images, especially those belonging to this doc
             const peekImages = document.querySelectorAll('.peek-image');
             peekImages.forEach(img => {
                 gsap.killTweensOf(img);
                 img.remove();
+            });
+
+            // double check - remove any peek images specifically for this doc
+            const parentPeeks = document.querySelectorAll(`.peek-image[data-parent="${index}"]`);
+            parentPeeks.forEach(img => {
+                gsap.killTweensOf(img);
+                if (img.parentNode) img.remove();
             });
 
             // instantly remove any spilled images (no animation)
@@ -1995,6 +2015,78 @@
             if (ctx.reversals >= 3 && state.heldStack.length === 0) { // Reduced to 3
                 collectSiblings(draggable.target);
                 ctx.reversals = 0;
+            }
+        }
+
+        function checkHoverCollect(draggable) {
+            // skip if already holding stack
+            if (state.heldStack.length > 0) return;
+
+            const draggedDoc = draggable.target;
+            const category = draggedDoc.dataset.category;
+
+            // get center of dragged doc
+            const draggedRect = draggedDoc.getBoundingClientRect();
+            const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+            const draggedCenterY = draggedRect.top + draggedRect.height / 2;
+
+            // check all other docs on desk
+            const allDocs = document.querySelectorAll('.document');
+            let closestDoc = null;
+            let closestDist = 100; // threshold distance in px
+
+            allDocs.forEach(doc => {
+                if (doc === draggedDoc) return;
+                if (doc.dataset.category !== category) return;
+
+                const docRect = doc.getBoundingClientRect();
+                const docCenterX = docRect.left + docRect.width / 2;
+                const docCenterY = docRect.top + docRect.height / 2;
+
+                const dist = Math.sqrt(
+                    Math.pow(draggedCenterX - docCenterX, 2) +
+                    Math.pow(draggedCenterY - docCenterY, 2)
+                );
+
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestDoc = doc;
+                }
+            });
+
+            // clear previous hover state
+            if (state.hoverCollectTarget && state.hoverCollectTarget !== closestDoc) {
+                gsap.to(state.hoverCollectTarget, {
+                    scale: 1,
+                    duration: 0.2
+                });
+            }
+
+            // if hovering over valid target
+            if (closestDoc) {
+                // visual feedback - pulse the target
+                if (state.hoverCollectTarget !== closestDoc) {
+                    gsap.to(closestDoc, {
+                        scale: 1.08,
+                        duration: 0.2,
+                        ease: 'power2.out'
+                    });
+                }
+                state.hoverCollectTarget = closestDoc;
+
+                // if held long enough, collect
+                const now = Date.now();
+                if (!state.hoverCollectStart) {
+                    state.hoverCollectStart = now;
+                } else if (now - state.hoverCollectStart > 500) {
+                    // trigger collection
+                    collectSiblings(draggedDoc);
+                    state.hoverCollectTarget = null;
+                    state.hoverCollectStart = null;
+                }
+            } else {
+                state.hoverCollectTarget = null;
+                state.hoverCollectStart = null;
             }
         }
 
