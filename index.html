@@ -740,6 +740,123 @@
             font-size: 9px;
             opacity: 0.6;
         }
+
+        /* Y2K CLOCK WIDGET */
+        #y2k-clock {
+            position: fixed;
+            top: 100px;
+            right: 40px;
+            width: 200px;
+            background: linear-gradient(135deg, #c0c0c0, #808080);
+            border: 2px outset #fff;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4), inset 1px 1px 0 rgba(255, 255, 255, 0.8);
+            font-family: 'TechMono', monospace;
+            z-index: 10000;
+            cursor: move;
+            display: block;
+        }
+
+        #y2k-clock.hidden {
+            display: none;
+        }
+
+        .y2k-titlebar {
+            background: linear-gradient(180deg, #0054e3, #0039a6);
+            padding: 3px 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .y2k-title {
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+        }
+
+        .y2k-close {
+            background: #c0c0c0;
+            border: 1px outset #fff;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+            color: #000;
+            box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .y2k-close:hover {
+            background: #ff6060;
+            color: #fff;
+        }
+
+        .y2k-close:active {
+            border-style: inset;
+            box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .y2k-screen {
+            background: #001a00;
+            margin: 4px;
+            padding: 15px 10px;
+            border: 2px inset #808080;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .y2k-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 255, 0, 0.03) 50%, transparent 50%);
+            background-size: 100% 2px;
+            pointer-events: none;
+            animation: crt-flicker 0.15s infinite;
+        }
+
+        @keyframes crt-flicker {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 1; }
+        }
+
+        .crt-time {
+            font-size: 24px;
+            color: #00ff00;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 8px #00ff00, 0 0 4px #00ff00;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            font-family: 'TechMono', monospace;
+        }
+
+        .crt-weather {
+            font-size: 11px;
+            color: #00cc00;
+            text-align: center;
+            text-shadow: 0 0 6px #00ff00;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .crt-subtitle {
+            font-size: 8px;
+            color: #008800;
+            text-align: center;
+            text-shadow: 0 0 4px #00ff00;
+            opacity: 0.7;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 
@@ -756,6 +873,19 @@
             </select>
         </div>
         <div class="debug-hint">PRESS ~ TO TOGGLE</div>
+    </div>
+
+    <!-- Y2K CLOCK WIDGET -->
+    <div id="y2k-clock">
+        <div class="y2k-titlebar">
+            <span class="y2k-title">SYSTEM.CLOCK</span>
+            <div class="y2k-close" onclick="closeY2KClock()">×</div>
+        </div>
+        <div class="y2k-screen">
+            <div class="crt-time" id="crt-time">--:--:--</div>
+            <div class="crt-weather" id="crt-weather">LOADING...</div>
+            <div class="crt-subtitle">SALT LAKE CITY</div>
+        </div>
     </div>
 
     <div id="app">
@@ -1203,6 +1333,119 @@
             }
             localStorage.setItem('theme', newTheme);
         });
+
+        // Y2K CLOCK FUNCTIONALITY
+        const y2kClock = document.getElementById('y2k-clock');
+        const crtTime = document.getElementById('crt-time');
+        const crtWeather = document.getElementById('crt-weather');
+
+        // Load saved state
+        const clockClosed = localStorage.getItem('y2k-clock-closed') === 'true';
+        const savedX = localStorage.getItem('y2k-clock-x');
+        const savedY = localStorage.getItem('y2k-clock-y');
+
+        if (clockClosed) {
+            y2kClock.classList.add('hidden');
+        }
+
+        if (savedX && savedY) {
+            y2kClock.style.left = savedX + 'px';
+            y2kClock.style.right = 'auto';
+            y2kClock.style.top = savedY + 'px';
+        }
+
+        // Close function
+        function closeY2KClock() {
+            y2kClock.classList.add('hidden');
+            localStorage.setItem('y2k-clock-closed', 'true');
+        }
+        window.closeY2KClock = closeY2KClock;
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            crtTime.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // Fetch weather for Salt Lake City
+        async function fetchWeather() {
+            try {
+                const response = await fetch('https://wttr.in/SaltLakeCity?format=%t+%C');
+                const text = await response.text();
+                crtWeather.textContent = text.trim().toUpperCase();
+            } catch (error) {
+                crtWeather.textContent = '-- OFFLINE --';
+            }
+        }
+
+        fetchWeather();
+        setInterval(fetchWeather, 600000); // Update every 10 minutes
+
+        // Dragging functionality
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        const titlebar = y2kClock.querySelector('.y2k-titlebar');
+
+        titlebar.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
+
+        function dragStart(e) {
+            if (e.target.classList.contains('y2k-close')) return;
+
+            initialX = e.clientX - xOffset;
+            initialY = e.clientY - yOffset;
+
+            if (e.target === titlebar || e.target.classList.contains('y2k-title')) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                setTranslate(currentX, currentY, y2kClock);
+            }
+        }
+
+        function dragEnd(e) {
+            if (isDragging) {
+                initialX = currentX;
+                initialY = currentY;
+
+                // Save position
+                const rect = y2kClock.getBoundingClientRect();
+                localStorage.setItem('y2k-clock-x', rect.left);
+                localStorage.setItem('y2k-clock-y', rect.top);
+
+                isDragging = false;
+            }
+        }
+
+        function setTranslate(xPos, yPos, el) {
+            const rect = el.getBoundingClientRect();
+            el.style.left = (rect.left + xPos - xOffset + currentX) + 'px';
+            el.style.top = (rect.top + yPos - yOffset + currentY) + 'px';
+            el.style.right = 'auto';
+        }
 
     </script>
     <a href="https://zakknowlton.com" class="portfolio-link">PORTFOLIO</a>
