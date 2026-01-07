@@ -3032,6 +3032,19 @@
             const parentIndex = img.dataset.parent;
             const allImages = Array.from(document.querySelectorAll(`.spilled-image[data-parent="${parentIndex}"]`));
 
+            // Get parent document
+            const parentDoc = document.querySelector(`.document[data-index="${parentIndex}"]`);
+            if (parentDoc) {
+                state.gallerySourceDoc = parentDoc;
+            }
+
+            // Disable all document dragging to prevent wastebin from showing
+            const allDocs = document.querySelectorAll('.document');
+            allDocs.forEach(doc => {
+                const dragInstance = Draggable.get(doc);
+                if (dragInstance) dragInstance.disable();
+            });
+
             // Hide all original images
             allImages.forEach(image => {
                 const dragInstance = Draggable.get(image);
