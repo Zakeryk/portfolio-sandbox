@@ -3243,6 +3243,13 @@
                 gatherImagesToFolder(state.gallerySourceDoc);
             }
 
+            // Re-enable all document dragging
+            const allDocs = document.querySelectorAll('.document');
+            allDocs.forEach(doc => {
+                const dragInstance = Draggable.get(doc);
+                if (dragInstance) dragInstance.enable();
+            });
+
             // Show original images if they exist (for enterLightbox path)
             if (state.galleryImages) {
                 state.galleryImages.forEach(image => {
