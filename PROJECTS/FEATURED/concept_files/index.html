@@ -3178,6 +3178,13 @@
                 // Focus this one
                 img.classList.add('focused');
 
+                // Scroll focused image into view
+                img.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
+
                 // Fade all others to low opacity
                 allGalleryImages.forEach(i => {
                     if (i !== img) {
