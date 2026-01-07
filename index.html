@@ -872,6 +872,10 @@
                 <option value="kojima">KOJIMA</option>
             </select>
         </div>
+        <div class="debug-row">
+            <label>CLOCK:</label>
+            <button id="clock-toggle" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; font-family: 'TechMono', monospace; font-size: 9px; cursor: pointer; letter-spacing: 1px;">SHOW</button>
+        </div>
         <div class="debug-hint">PRESS ~ TO TOGGLE</div>
     </div>
 
@@ -1338,15 +1342,22 @@
         const y2kClock = document.getElementById('y2k-clock');
         const crtTime = document.getElementById('crt-time');
         const crtWeather = document.getElementById('crt-weather');
+        const clockToggleBtn = document.getElementById('clock-toggle');
 
         // Load saved state
         const clockClosed = localStorage.getItem('y2k-clock-closed') === 'true';
         const savedX = localStorage.getItem('y2k-clock-x');
         const savedY = localStorage.getItem('y2k-clock-y');
 
+        function updateClockToggleBtn() {
+            const isHidden = y2kClock.classList.contains('hidden');
+            clockToggleBtn.textContent = isHidden ? 'SHOW' : 'HIDE';
+        }
+
         if (clockClosed) {
             y2kClock.classList.add('hidden');
         }
+        updateClockToggleBtn();
 
         if (savedX && savedY) {
             y2kClock.style.left = savedX + 'px';
@@ -1358,8 +1369,22 @@
         function closeY2KClock() {
             y2kClock.classList.add('hidden');
             localStorage.setItem('y2k-clock-closed', 'true');
+            updateClockToggleBtn();
         }
         window.closeY2KClock = closeY2KClock;
+
+        // Toggle button
+        clockToggleBtn.addEventListener('click', () => {
+            const isHidden = y2kClock.classList.contains('hidden');
+            if (isHidden) {
+                y2kClock.classList.remove('hidden');
+                localStorage.setItem('y2k-clock-closed', 'false');
+            } else {
+                y2kClock.classList.add('hidden');
+                localStorage.setItem('y2k-clock-closed', 'true');
+            }
+            updateClockToggleBtn();
+        });
 
         // Update time
         function updateTime() {
