@@ -1348,13 +1348,13 @@
         // clear all button setup (desktop only)
         function setupClearAllButton() {
             const clearAllBtn = document.getElementById('clear-all-btn');
-            const wastebinArea = document.getElementById('wastebin');
+            const wastebin = document.getElementById('wastebin');
             let hoverTimeout = null;
 
             // show button when hovering over wastebin area (not while dragging)
             document.addEventListener('mousemove', (e) => {
-                // don't show if dragging or no documents on desk
-                if (state.isDragging) {
+                // don't show if dragging, no documents, or wastebin is visible
+                if (state.isDragging || wastebin.classList.contains('visible')) {
                     clearAllBtn.classList.remove('visible');
                     return;
                 }
@@ -1419,6 +1419,14 @@
 
             // wastebin setup (both mobile and desktop)
             state.wastebin = setupWastebin();
+
+            // safety check to ensure wastebin is only visible when actually dragging
+            setInterval(() => {
+                const wastebin = document.getElementById('wastebin');
+                if (!state.isDragging && wastebin.classList.contains('visible')) {
+                    wastebin.classList.remove('visible', 'active');
+                }
+            }, 100);
 
             // clear all button setup (desktop only)
             if (!state.isMobile) {
