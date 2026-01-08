@@ -673,21 +673,22 @@
         /* === LIGHTBOX GALLERY === */
         #lightbox-gallery {
             position: fixed;
-            top: 50%;
+            top: 0;
             left: 0;
             right: 0;
-            transform: translateY(-50%);
+            bottom: 0;
             display: flex;
-            gap: 30px;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
-            justify-content: center;
+            gap: 20px;
             z-index: 1002;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.2s ease, left 0.3s ease;
-            padding: 15vh 5vw;
-            overflow-x: auto;
-            overflow-y: visible;
+            transition: opacity 0.2s ease;
+            padding: 80px 20px 20px 20px;
+            overflow-y: auto;
+            overflow-x: hidden;
             scroll-behavior: smooth;
         }
 
@@ -697,12 +698,14 @@
 
         #lightbox-gallery.visible {
             opacity: 1;
-            pointer-events: none;
+            pointer-events: auto;
         }
 
         .lightbox-image {
-            max-width: 350px;
-            max-height: 50vh;
+            max-width: 90%;
+            width: auto;
+            max-height: none;
+            height: auto;
             cursor: pointer;
             transition: all 0.15s ease;
             object-fit: contain;
@@ -712,12 +715,12 @@
         }
 
         .lightbox-image:hover {
-            transform: scale(1.05) translateY(-8px);
+            transform: scale(1.02);
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8);
         }
 
         .lightbox-image.focused {
-            transform: scale(1.5);
+            transform: scale(1.05);
             z-index: 1003;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
         }
@@ -840,45 +843,12 @@
                 display: none;
             }
 
-            /* mobile lightbox - vertical scroll grid */
-            #lightbox-gallery {
-                flex-direction: column;
-                justify-content: flex-start;
-                overflow-y: auto;
-                overflow-x: hidden;
-                padding: 80px 20px 20px 20px;
-                gap: 20px;
-                top: 0;
-                transform: none;
-                height: 100%;
-            }
-
-            #lightbox-gallery.visible {
-                pointer-events: auto;
-            }
-
-            .lightbox-image {
-                max-width: 100%;
-                width: auto;
-                max-height: none;
-                height: auto;
-            }
-
             /* hide hamburger, wastebin, and clear all when lightbox active */
             #lightbox-overlay.visible ~ #hamburger-btn,
             body:has(#lightbox-overlay.visible) #hamburger-btn,
             body:has(#lightbox-overlay.visible) #wastebin,
             body:has(#lightbox-overlay.visible) #clear-all-btn {
                 display: none;
-            }
-
-            .lightbox-image:hover {
-                transform: none;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-            }
-
-            .lightbox-image.focused {
-                transform: scale(1.2);
             }
         }
     </style>
