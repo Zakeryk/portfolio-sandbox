@@ -35,5 +35,4 @@ fi
 echo "--------------------------------------"
 
 # --- 3. FINISH ---
-# Comment out the next line if you want the window to stay open on errors
-osascript -e 'tell application "Terminal" to close front window' & exit
+exit 0
