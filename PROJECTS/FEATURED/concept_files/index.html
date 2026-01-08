@@ -3339,6 +3339,12 @@
         function exitLightbox() {
             if (!state.galleryActive) return;
 
+            // CRITICAL: Immediately hide wastebin and reset drag state
+            state.isDragging = false;
+            if (state.wastebin) {
+                state.wastebin.hideWastebin();
+            }
+
             // Remove keyboard handler
             if (state.galleryKeyHandler) {
                 document.removeEventListener('keydown', state.galleryKeyHandler);
@@ -3366,7 +3372,6 @@
             // Reset source document to default state
             if (state.gallerySourceDoc) {
                 // Reset drag state and visual properties
-                state.isDragging = false;
                 state.selectedDoc = null;
 
                 gsap.to(state.gallerySourceDoc, {
