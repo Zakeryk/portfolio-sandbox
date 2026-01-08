@@ -23,11 +23,39 @@
 ### next up
 - [ ] set up supabase project (via cli or dashboard)
 - [ ] run migration to create db schema
-- [ ] install app dependencies (supabase-js, daily-co, expo modules)
-- [ ] create `.env` file with credentials
-- [ ] scaffold services layer (supabase client, handshake logic)
-- [ ] build basic ui screens (home, seeking, call)
-- [ ] test handshake flow locally
+- [ ] add real auth flow
+- [ ] implement real-time subscriptions
+- [ ] build seeking/call screens
+- [ ] integrate webrtc for calls
+- [ ] test handshake flow with 2 devices
+
+---
+
+## 2026-01-07 - mvp boilerplate
+
+### completed
+- ✅ installed core dependencies (supabase-js, expo modules)
+- ✅ created `.env` template + placeholder file
+- ✅ wrote typescript types (User, Friend, SyncRequest)
+- ✅ scaffolded services layer:
+  - `services/supabase.ts` - client setup
+  - `services/handshake.ts` - sync request logic
+- ✅ built HomeScreen with mock data:
+  - friend list with online status
+  - tap to seek (1min window simulation)
+  - long-press for quantum ping
+  - seeking state visualization
+- ✅ updated App.tsx to render HomeScreen
+
+### to run locally
+```bash
+cd app
+npm install  # if not done already
+npx expo start
+# press 'i' for ios simulator or 'a' for android
+```
+
+**note**: currently using mock data. supabase integration works but needs real project setup.
 
 ### decisions made
 - **backend**: supabase (postgres + real-time + auth)
