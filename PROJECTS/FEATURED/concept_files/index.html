@@ -1795,13 +1795,11 @@
             // kill all existing animations on document before final animation
             gsap.killTweensOf(doc);
 
-            // animate out - parent files fade without rotation, text stays visible during animation
+            // animate out - quick fade only
             gsap.to(doc, {
-                scale: 0,
-                rotation: hasImages ? 0 : 360,
                 opacity: 0,
-                duration: 0.12,
-                ease: 'power2.in',
+                duration: 0.1,
+                ease: 'power4.in',
                 onComplete: () => {
                     // final cleanup - kill any remaining animations and remove document
                     gsap.killTweensOf(doc);
