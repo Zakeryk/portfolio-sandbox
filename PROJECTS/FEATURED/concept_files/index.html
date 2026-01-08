@@ -1114,8 +1114,8 @@
             let peekImages = [];
 
             doc.addEventListener('mouseenter', () => {
-                // Don't show peek if already spilled, dragging, or document not in DOM
-                if (!doc.parentNode || state.isDragging) return;
+                // Don't show peek if already spilled, dragging, document not in DOM, or being deleted
+                if (!doc.parentNode || state.isDragging || doc.dataset.beingDeleted === 'true') return;
 
                 const folderIndex = doc.dataset.index;
                 if (state.spilledFolders.has(folderIndex)) return;
@@ -1759,6 +1759,9 @@
             const item = WORK_ITEMS[index];
             const hasImages = item.images && item.images.length > 0;
 
+            // CRITICAL: mark document as being deleted to prevent peek images from being created
+            doc.dataset.beingDeleted = 'true';
+
             // instantly remove all peek images, especially those belonging to this doc
             const peekImages = document.querySelectorAll('.peek-image');
             peekImages.forEach(img => {
@@ -1806,6 +1809,14 @@
                 onComplete: () => {
                     // final cleanup - kill any remaining animations and remove document
                     gsap.killTweensOf(doc);
+
+                    // CRITICAL: one more sweep to remove any peek images that snuck in during animation
+                    const finalPeekCheck = document.querySelectorAll(`.peek-image[data-parent="${index}"]`);
+                    finalPeekCheck.forEach(img => {
+                        gsap.killTweensOf(img);
+                        img.remove();
+                    });
+
                     doc.remove();
 
                     // add back to file list
