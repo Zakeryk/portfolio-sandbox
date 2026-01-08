@@ -1846,6 +1846,12 @@
                         <div class="file-item-year">${item.year}</div>
                     `;
 
+                    // CRITICAL: re-attach event listener so item is interactive again
+                    const eventType = state.isMobile ? 'click' : 'mousedown';
+                    listItem.addEventListener(eventType, (e) => {
+                        handleListItemInteraction(listItem, e);
+                    });
+
                     fileList.appendChild(listItem);
                     updateFileCounts();
                 }
