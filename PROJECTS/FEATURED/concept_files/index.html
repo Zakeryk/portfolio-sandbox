@@ -393,6 +393,12 @@
             transform: translateX(-50%) scale(0.95);
         }
 
+        /* hide wastebin and clear all when lightbox is active */
+        body:has(#lightbox-overlay.visible) #wastebin,
+        body:has(#lightbox-overlay.visible) #clear-all-btn {
+            display: none !important;
+        }
+
         /* === DOCUMENTS AREA === */
         #documents-area {
             position: absolute;
@@ -855,10 +861,11 @@
                 height: auto;
             }
 
-            /* hide hamburger and wastebin when lightbox active */
+            /* hide hamburger, wastebin, and clear all when lightbox active */
             #lightbox-overlay.visible ~ #hamburger-btn,
             body:has(#lightbox-overlay.visible) #hamburger-btn,
-            body:has(#lightbox-overlay.visible) #wastebin {
+            body:has(#lightbox-overlay.visible) #wastebin,
+            body:has(#lightbox-overlay.visible) #clear-all-btn {
                 display: none;
             }
 
