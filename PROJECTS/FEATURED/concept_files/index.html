@@ -673,10 +673,12 @@
         /* === LIGHTBOX GALLERY === */
         #lightbox-gallery {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            max-width: 1200px;
+            height: 80vh;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -686,14 +688,30 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
-            padding: 80px 20px 20px 20px;
+            padding: 60px 40px 40px 40px;
             overflow-y: auto;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            background: rgba(10, 15, 12, 0.98);
+            border: 1px solid rgba(50, 150, 100, 0.2);
+            border-radius: 4px;
         }
 
         #lightbox-gallery::-webkit-scrollbar {
-            display: none;
+            width: 8px;
+        }
+
+        #lightbox-gallery::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #lightbox-gallery::-webkit-scrollbar-thumb {
+            background: rgba(50, 150, 100, 0.4);
+            border-radius: 4px;
+        }
+
+        #lightbox-gallery::-webkit-scrollbar-thumb:hover {
+            background: rgba(50, 150, 100, 0.6);
         }
 
         #lightbox-gallery.visible {
@@ -702,7 +720,7 @@
         }
 
         .lightbox-image {
-            max-width: 90%;
+            max-width: 100%;
             width: auto;
             max-height: none;
             height: auto;
@@ -746,23 +764,37 @@
             right: 20px;
             width: 44px;
             height: 44px;
-            background: rgba(255, 255, 255, 0.95);
-            border: none;
-            border-radius: 50%;
+            background: rgba(20, 40, 30, 0.8);
+            border: 1px solid rgba(50, 150, 100, 0.4);
+            border-radius: 2px;
             z-index: 1004;
             cursor: pointer;
             pointer-events: none;
             transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            flex-direction: column;
+            gap: 6px;
         }
 
-        #lightbox-close svg {
+        #lightbox-close span {
+            display: block;
             width: 20px;
-            height: 20px;
-            color: rgba(0, 0, 0, 0.7);
-            transition: color 0.2s ease;
+            height: 2px;
+            background: rgba(50, 150, 100, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        #lightbox-close span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        #lightbox-close span:nth-child(2) {
+            opacity: 0;
+        }
+
+        #lightbox-close span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
         }
 
         #lightbox-close.visible {
@@ -771,12 +803,12 @@
         }
 
         #lightbox-close:hover {
-            background: rgba(255, 255, 255, 1);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+            background: rgba(50, 150, 100, 0.2);
+            border-color: rgba(50, 150, 100, 0.6);
         }
 
-        #lightbox-close:hover svg {
-            color: rgba(0, 0, 0, 1);
+        #lightbox-close:hover span {
+            background: rgba(50, 150, 100, 1);
         }
 
         /* === RESPONSIVE === */
@@ -841,6 +873,18 @@
 
             #cleanup-btn {
                 display: none;
+            }
+
+            /* mobile lightbox fullscreen */
+            #lightbox-gallery {
+                width: 100vw;
+                height: 100vh;
+                top: 0;
+                left: 0;
+                transform: none;
+                border: none;
+                border-radius: 0;
+                padding: 80px 20px 20px 20px;
             }
 
             /* hide hamburger, wastebin, and clear all when lightbox active */
@@ -932,10 +976,9 @@
 
     <!-- lightbox close button -->
     <button id="lightbox-close" aria-label="Close gallery">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
+        <span></span>
+        <span></span>
+        <span></span>
     </button>
 
     <!-- gsap cdn -->
