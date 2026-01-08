@@ -1730,21 +1730,13 @@
 
                     // check if dropped on wastebin - do this BEFORE setting isDragging = false
                     if (isOverWastebin) {
-                        // settle document briefly before deletion to prevent ghost behaviors
-                        gsap.to(this.target, {
-                            scale: 1,
-                            duration: 0.1,
-                            ease: 'power2.out',
-                            onComplete: () => {
-                                state.isDragging = false;
-                                // delete entire stack if holding one, otherwise just the single doc
-                                if (state.heldStack.length > 0) {
-                                    deleteStackToMenu(this.target);
-                                } else {
-                                    removeDocumentToMenu(this.target);
-                                }
-                            }
-                        });
+                        state.isDragging = false;
+                        // delete entire stack if holding one, otherwise just the single doc
+                        if (state.heldStack.length > 0) {
+                            deleteStackToMenu(this.target);
+                        } else {
+                            removeDocumentToMenu(this.target);
+                        }
                         isOverWastebin = false;
                         return;
                     }
