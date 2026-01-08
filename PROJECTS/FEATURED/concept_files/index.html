@@ -1838,11 +1838,12 @@
             // kill all existing animations on document before final animation
             gsap.killTweensOf(doc);
 
-            // animate out - quick fade only
+            // animate out - quick fade and shrink
             gsap.to(doc, {
                 opacity: 0,
-                duration: 0.1,
-                ease: 'power4.in',
+                scale: 0.8,
+                duration: 0.08,
+                ease: 'power2.in',
                 onComplete: () => {
                     // final cleanup - kill any remaining animations and remove document
                     gsap.killTweensOf(doc);
@@ -3347,14 +3348,26 @@
                 // Focus this one
                 img.classList.add('focused');
 
-                // Scroll focused image into view with proper offset to ensure it's fully visible
-                // Use scrollTo on gallery container for better control
+                // Scroll focused image into view with proper padding to ensure it's fully visible
                 const gallery = document.getElementById('lightbox-gallery');
                 const imgRect = img.getBoundingClientRect();
                 const galleryRect = gallery.getBoundingClientRect();
 
-                // Calculate optimal scroll position to center the focused image
-                const targetScrollLeft = gallery.scrollLeft + (imgRect.left - galleryRect.left) - (galleryRect.width / 2) + (imgRect.width / 2);
+                // Calculate scroll position with padding (20% of viewport width on each side)
+                const paddingAmount = galleryRect.width * 0.2;
+                const imgLeftRelative = imgRect.left - galleryRect.left;
+                const imgRightRelative = imgRect.right - galleryRect.left;
+
+                let targetScrollLeft = gallery.scrollLeft;
+
+                // Check if image is cut off on the left
+                if (imgLeftRelative < paddingAmount) {
+                    targetScrollLeft = gallery.scrollLeft + imgLeftRelative - paddingAmount;
+                }
+                // Check if image is cut off on the right
+                else if (imgRightRelative > galleryRect.width - paddingAmount) {
+                    targetScrollLeft = gallery.scrollLeft + (imgRightRelative - (galleryRect.width - paddingAmount));
+                }
 
                 gallery.scrollTo({
                     left: targetScrollLeft,
