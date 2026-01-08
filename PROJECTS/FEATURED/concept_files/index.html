@@ -1800,8 +1800,8 @@
                 scale: 0,
                 rotation: hasImages ? 0 : 360,
                 opacity: 0,
-                duration: 0.2,
-                ease: hasImages ? 'power2.in' : 'back.in(1.7)',
+                duration: 0.12,
+                ease: 'power2.in',
                 onComplete: () => {
                     // final cleanup - kill any remaining animations and remove document
                     gsap.killTweensOf(doc);
