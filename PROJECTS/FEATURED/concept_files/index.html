@@ -722,6 +722,26 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
         }
 
+        /* === LIGHTBOX TIP === */
+        #lightbox-tip {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-family: 'Courier Prime', monospace;
+            z-index: 1004;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            text-align: center;
+        }
+
+        #lightbox-tip.visible {
+            opacity: 1;
+        }
+
         /* Remove shadow from PNGs */
         .spilled-image[src$=".png"],
         .spilled-image[src*=".png?"],
@@ -878,6 +898,11 @@
                 height: auto;
             }
 
+            /* hide tip on mobile */
+            #lightbox-tip {
+                display: none;
+            }
+
             /* hide hamburger, wastebin, and clear all when lightbox active */
             #lightbox-overlay.visible ~ #hamburger-btn,
             body:has(#lightbox-overlay.visible) #hamburger-btn,
@@ -971,6 +996,9 @@
         <span></span>
         <span></span>
     </button>
+
+    <!-- lightbox tip -->
+    <div id="lightbox-tip">use arrow keys to navigate • click to focus</div>
 
     <!-- gsap cdn -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -3062,6 +3090,10 @@
             setTimeout(() => {
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
+                // Show tip on desktop only
+                if (!state.isMobile) {
+                    document.getElementById('lightbox-tip').classList.add('visible');
+                }
             }, 50);
 
             state.galleryActive = true;
@@ -3215,6 +3247,10 @@
             setTimeout(() => {
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
+                // Show tip on desktop only
+                if (!state.isMobile) {
+                    document.getElementById('lightbox-tip').classList.add('visible');
+                }
             }, 50);
 
             state.galleryActive = true;
@@ -3370,6 +3406,7 @@
             // Hide gallery
             gallery.classList.remove('visible');
             document.getElementById('lightbox-close').classList.remove('visible');
+            document.getElementById('lightbox-tip').classList.remove('visible');
 
             setTimeout(() => {
                 gallery.innerHTML = '';
