@@ -2771,6 +2771,14 @@
             const category = doc.dataset.category;
             const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
             const fileList = folder.querySelector('.file-list');
+            const index = doc.dataset.index;
+
+            // remove peek images for this doc
+            const peekImages = document.querySelectorAll(`.peek-image[data-parent="${index}"]`);
+            peekImages.forEach(img => {
+                gsap.killTweensOf(img);
+                img.remove();
+            });
 
             // gather spilled images first
             gatherImagesToFolder(doc);
