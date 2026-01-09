@@ -95,7 +95,7 @@
         /* === FILING AREA === */
         #filing-area {
             position: fixed;
-            left: 0px;
+            left: calc(-1 * var(--menu-width, 260px));
             top: 20px;
             bottom: 20px;
             display: flex;
@@ -108,6 +108,60 @@
             border-right: 1px solid rgba(50, 150, 100, 0.3);
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.7);
             overflow-y: auto;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #filing-area.visible {
+            left: 0;
+        }
+
+        /* desktop menu arrow hint */
+        #menu-arrow {
+            position: fixed;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            opacity: 0.7;
+            transition: opacity 0.3s ease, left 0.3s ease;
+        }
+
+        #menu-arrow.hidden {
+            opacity: 0;
+            left: -50px;
+        }
+
+        #menu-arrow svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: rgba(100, 200, 150, 0.8);
+            stroke-width: 2;
+            animation: arrow-pulse 2s ease-in-out infinite;
+        }
+
+        #menu-arrow span {
+            font-size: 10px;
+            color: rgba(100, 200, 150, 0.8);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        @keyframes arrow-pulse {
+            0%, 100% { transform: translateX(0); opacity: 0.7; }
+            50% { transform: translateX(5px); opacity: 1; }
+        }
+
+        /* hide arrow when menu visible */
+        #filing-area.visible ~ #menu-arrow,
+        body:has(#filing-area.visible) #menu-arrow {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .folder-stack {
@@ -855,6 +909,10 @@
                 left: 0 !important;
             }
 
+            #menu-arrow {
+                display: none;
+            }
+
             .folder-stack {
                 width: 100%;
                 height: auto;
@@ -977,6 +1035,12 @@
         <div class="filing-footer">
             <a href="/">← back • esc to leave</a>
         </div>
+    </div>
+
+    <!-- desktop menu arrow hint -->
+    <div id="menu-arrow">
+        <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        <span>projects</span>
     </div>
 
     <!-- desk surface -->
@@ -1304,7 +1368,46 @@
             });
         }
 
-        // removed - redundant with list item click handlers
+        // desktop offcanvas menu with edge detection
+        function setupDesktopMenu() {
+            if (state.isMobile) return;
+
+            const filingArea = document.getElementById('filing-area');
+            const menuArrow = document.getElementById('menu-arrow');
+            const edgeThreshold = 50; // px from left edge to trigger
+            let isOverMenu = false;
+
+            // show menu when mouse near left edge
+            document.addEventListener('mousemove', (e) => {
+                if (state.galleryActive) return; // don't show during lightbox
+
+                const nearEdge = e.clientX < edgeThreshold;
+                const overMenu = filingArea.contains(e.target) ||
+                                 (e.clientX < filingArea.getBoundingClientRect().right &&
+                                  filingArea.classList.contains('visible'));
+
+                if (nearEdge || overMenu) {
+                    filingArea.classList.add('visible');
+                    isOverMenu = true;
+                } else if (isOverMenu && !overMenu) {
+                    filingArea.classList.remove('visible');
+                    isOverMenu = false;
+                }
+            });
+
+            // hide when mouse leaves window on left side
+            document.addEventListener('mouseleave', (e) => {
+                if (e.clientX <= 0) {
+                    filingArea.classList.remove('visible');
+                    isOverMenu = false;
+                }
+            });
+
+            // animate arrow on page load
+            setTimeout(() => {
+                menuArrow.classList.add('visible');
+            }, 500);
+        }
 
         // mobile single-tap to open lightbox
         function setupMobileLightboxTap() {
@@ -1473,6 +1576,8 @@
             if (state.isMobile) {
                 setupMobileMenu();
                 setupMobileLightboxTap();
+            } else {
+                setupDesktopMenu();
             }
 
             // cleanup button
