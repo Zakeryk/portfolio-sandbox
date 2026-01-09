@@ -1834,6 +1834,14 @@
                     // Check for hover-to-collect
                     checkHoverCollect(this);
 
+                    // Show menu when dragging near left edge (desktop only)
+                    if (!state.isMobile) {
+                        const filingArea = document.getElementById('filing-area');
+                        if (this.pointerX < 50) {
+                            filingArea.classList.add('visible');
+                        }
+                    }
+
                     // Move collected stack if any
                     updateHeldStackPosition(this.target);
 
