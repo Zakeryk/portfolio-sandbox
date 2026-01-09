@@ -943,36 +943,36 @@
     <!-- clear all button -->
     <button id="clear-all-btn">clear all</button>
 
+    <!-- filing system (drop zones) - outside desk-container for proper z-index stacking -->
+    <div id="filing-area">
+        <div class="folder-stack" data-category="saas">
+            <div class="folder-header">
+                <span>SAAS</span>
+                <span class="file-count">0</span>
+            </div>
+            <div class="file-list"></div>
+        </div>
+        <div class="folder-stack" data-category="ecommerce">
+            <div class="folder-header">
+                <span>ECOMMERCE</span>
+                <span class="file-count">0</span>
+            </div>
+            <div class="file-list"></div>
+        </div>
+        <div class="folder-stack" data-category="design">
+            <div class="folder-header">
+                <span>DESIGN</span>
+                <span class="file-count">0</span>
+            </div>
+            <div class="file-list"></div>
+        </div>
+        <div class="filing-footer">
+            <a href="/">← back • esc to leave</a>
+        </div>
+    </div>
+
     <!-- desk surface -->
     <div id="desk-container">
-        <!-- filing system (drop zones) -->
-        <div id="filing-area">
-            <div class="folder-stack" data-category="saas">
-                <div class="folder-header">
-                    <span>SAAS</span>
-                    <span class="file-count">0</span>
-                </div>
-                <div class="file-list"></div>
-            </div>
-            <div class="folder-stack" data-category="ecommerce">
-                <div class="folder-header">
-                    <span>ECOMMERCE</span>
-                    <span class="file-count">0</span>
-                </div>
-                <div class="file-list"></div>
-            </div>
-            <div class="folder-stack" data-category="design">
-                <div class="folder-header">
-                    <span>DESIGN</span>
-                    <span class="file-count">0</span>
-                </div>
-                <div class="file-list"></div>
-            </div>
-            <div class="filing-footer">
-                <a href="/">← back • esc to leave</a>
-            </div>
-        </div>
-
         <!-- draggable documents container -->
         <div id="documents-area"></div>
     </div>
