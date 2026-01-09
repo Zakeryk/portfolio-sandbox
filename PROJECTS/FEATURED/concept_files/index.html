@@ -1410,13 +1410,15 @@
                 hideMenu();
             });
 
-            // also track via pointermove for drag scenarios
-            document.addEventListener('pointermove', (e) => {
+            // also track via pointermove/mousemove for drag scenarios
+            const handlePointerNearEdge = (e) => {
                 if (state.galleryActive) return;
                 if (e.clientX < triggerWidth) {
                     showMenu();
                 }
-            });
+            };
+            document.addEventListener('pointermove', handlePointerNearEdge);
+            document.addEventListener('mousemove', handlePointerNearEdge);
 
             // animate arrow on page load
             setTimeout(() => {
@@ -1850,9 +1852,10 @@
                     checkHoverCollect(this);
 
                     // Show menu when dragging near left edge (desktop only)
-                    if (!state.isMobile) {
+                    if (!state.isMobile && !state.galleryActive) {
                         const filingArea = document.getElementById('filing-area');
-                        if (this.pointerX < 80) {
+                        const pointerX = this.pointerEvent?.clientX ?? this.pointerX;
+                        if (pointerX < 100) {
                             filingArea.classList.add('visible');
                         }
                     }
