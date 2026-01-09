@@ -2299,7 +2299,7 @@
                 const now = Date.now();
                 if (!state.hoverCollectStart) {
                     state.hoverCollectStart = now;
-                } else if (now - state.hoverCollectStart > 300) {
+                } else if (now - state.hoverCollectStart > 150) {
                     // trigger collection of single hovered doc only
                     collectSingleDoc(draggedDoc, state.hoverCollectTarget);
                     state.hoverCollectTarget = null;
