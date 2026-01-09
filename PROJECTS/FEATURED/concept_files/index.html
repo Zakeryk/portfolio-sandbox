@@ -896,6 +896,14 @@
                 width: auto;
                 max-height: none;
                 height: auto;
+                cursor: default;
+            }
+
+            /* disable hover/focus transforms on mobile - keep static size */
+            .lightbox-image:hover,
+            .lightbox-image.focused {
+                transform: none;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             }
 
             /* hide tip on mobile */
