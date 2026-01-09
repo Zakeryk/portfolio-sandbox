@@ -741,8 +741,9 @@
             opacity: 0.6;
         }
 
-        /* Y2K CLOCK WIDGET */
+        /* Y2K CLOCK WIDGET - disabled for now */
         #y2k-clock {
+            display: none !important;
             position: fixed;
             top: 100px;
             right: 40px;
@@ -753,7 +754,6 @@
             font-family: 'TechMono', monospace;
             z-index: 10000;
             cursor: move;
-            display: block;
         }
 
         #y2k-clock.hidden {
@@ -872,10 +872,12 @@
                 <option value="kojima">KOJIMA</option>
             </select>
         </div>
+        <!-- clock toggle disabled for now
         <div class="debug-row">
             <label>CLOCK:</label>
             <button id="clock-toggle" style="background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; font-family: 'TechMono', monospace; font-size: 9px; cursor: pointer; letter-spacing: 1px;">SHOW</button>
         </div>
+        -->
         <div class="debug-hint">PRESS ~ TO TOGGLE</div>
     </div>
 
@@ -1350,6 +1352,7 @@
         const savedY = localStorage.getItem('y2k-clock-y');
 
         function updateClockToggleBtn() {
+            if (!clockToggleBtn) return;
             const isHidden = y2kClock.classList.contains('hidden');
             clockToggleBtn.textContent = isHidden ? 'SHOW' : 'HIDE';
         }
@@ -1357,7 +1360,7 @@
         if (clockClosed) {
             y2kClock.classList.add('hidden');
         }
-        updateClockToggleBtn();
+        if (clockToggleBtn) updateClockToggleBtn();
 
         if (savedX && savedY) {
             y2kClock.style.left = savedX + 'px';
@@ -1374,17 +1377,19 @@
         window.closeY2KClock = closeY2KClock;
 
         // Toggle button
-        clockToggleBtn.addEventListener('click', () => {
-            const isHidden = y2kClock.classList.contains('hidden');
-            if (isHidden) {
-                y2kClock.classList.remove('hidden');
-                localStorage.setItem('y2k-clock-closed', 'false');
-            } else {
-                y2kClock.classList.add('hidden');
-                localStorage.setItem('y2k-clock-closed', 'true');
-            }
-            updateClockToggleBtn();
-        });
+        if (clockToggleBtn) {
+            clockToggleBtn.addEventListener('click', () => {
+                const isHidden = y2kClock.classList.contains('hidden');
+                if (isHidden) {
+                    y2kClock.classList.remove('hidden');
+                    localStorage.setItem('y2k-clock-closed', 'false');
+                } else {
+                    y2kClock.classList.add('hidden');
+                    localStorage.setItem('y2k-clock-closed', 'true');
+                }
+                updateClockToggleBtn();
+            });
+        }
 
         // Update time
         function updateTime() {
