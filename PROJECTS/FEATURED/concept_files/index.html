@@ -1374,32 +1374,46 @@
 
             const filingArea = document.getElementById('filing-area');
             const menuArrow = document.getElementById('menu-arrow');
-            const edgeThreshold = 50; // px from left edge to trigger
-            let isOverMenu = false;
 
-            // show menu when mouse near left edge
-            document.addEventListener('mousemove', (e) => {
-                if (state.galleryActive) return; // don't show during lightbox
+            // create invisible trigger zone on left edge
+            const triggerZone = document.createElement('div');
+            triggerZone.id = 'menu-trigger-zone';
+            triggerZone.style.cssText = `
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 30px;
+                height: 100%;
+                z-index: 999;
+            `;
+            document.body.appendChild(triggerZone);
 
-                const nearEdge = e.clientX < edgeThreshold;
-                const overMenu = filingArea.contains(e.target) ||
-                                 (e.clientX < filingArea.getBoundingClientRect().right &&
-                                  filingArea.classList.contains('visible'));
+            // show menu function
+            function showMenu() {
+                if (state.galleryActive) return;
+                filingArea.classList.add('visible');
+            }
 
-                if (nearEdge || overMenu) {
-                    filingArea.classList.add('visible');
-                    isOverMenu = true;
-                } else if (isOverMenu && !overMenu) {
-                    filingArea.classList.remove('visible');
-                    isOverMenu = false;
-                }
+            function hideMenu() {
+                filingArea.classList.remove('visible');
+            }
+
+            // trigger zone events - works even during drag
+            triggerZone.addEventListener('pointerenter', showMenu);
+            triggerZone.addEventListener('mouseenter', showMenu);
+
+            // hide when leaving menu area (but not into trigger zone)
+            filingArea.addEventListener('mouseleave', (e) => {
+                // don't hide if moving into trigger zone
+                if (e.clientX <= 30) return;
+                hideMenu();
             });
 
-            // hide when mouse leaves window on left side
-            document.addEventListener('mouseleave', (e) => {
-                if (e.clientX <= 0) {
-                    filingArea.classList.remove('visible');
-                    isOverMenu = false;
+            // also track via pointermove for drag scenarios
+            document.addEventListener('pointermove', (e) => {
+                if (state.galleryActive) return;
+                if (e.clientX < 30) {
+                    showMenu();
                 }
             });
 
