@@ -1573,9 +1573,33 @@
             populateFileLists();
         }
 
+        // insert list item sorted by year (descending - latest first)
+        function insertSortedByYear(fileList, listItem) {
+            const year = parseInt(listItem.dataset.year) || 0;
+            const existingItems = fileList.querySelectorAll('.file-list-item');
+
+            let insertBefore = null;
+            for (const item of existingItems) {
+                const itemYear = parseInt(item.dataset.year) || 0;
+                if (year > itemYear) {
+                    insertBefore = item;
+                    break;
+                }
+            }
+
+            if (insertBefore) {
+                fileList.insertBefore(listItem, insertBefore);
+            } else {
+                fileList.appendChild(listItem);
+            }
+        }
+
         // populate file lists in buckets
         function populateFileLists() {
-            WORK_ITEMS.forEach(item => {
+            // sort by year descending before populating
+            const sortedItems = [...WORK_ITEMS].sort((a, b) => (b.year || 0) - (a.year || 0));
+
+            sortedItems.forEach(item => {
                 const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
                 const fileList = folder.querySelector('.file-list');
 
@@ -1873,7 +1897,7 @@
                         handleListItemInteraction(listItem, e);
                     });
 
-                    fileList.appendChild(listItem);
+                    insertSortedByYear(fileList, listItem);
                     updateFileCounts();
                 }
             });
@@ -2599,7 +2623,7 @@
                 ease: 'power3.in',
                 onComplete: () => {
                     doc.remove();
-                    fileList.appendChild(listItem);
+                    insertSortedByYear(fileList, listItem);
                     updateFileCounts();
 
                     // expand folder to show file was added
