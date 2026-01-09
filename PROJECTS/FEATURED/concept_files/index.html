@@ -2301,9 +2301,9 @@
                 const now = Date.now();
                 if (!state.hoverCollectStart) {
                     state.hoverCollectStart = now;
-                } else if (now - state.hoverCollectStart > 500) {
-                    // trigger collection
-                    collectSiblings(draggedDoc);
+                } else if (now - state.hoverCollectStart > 300) {
+                    // trigger collection of single hovered doc only
+                    collectSingleDoc(draggedDoc, state.hoverCollectTarget);
                     state.hoverCollectTarget = null;
                     state.hoverCollectStart = null;
                 }
@@ -2311,6 +2311,48 @@
                 state.hoverCollectTarget = null;
                 state.hoverCollectStart = null;
             }
+        }
+
+        // collect single doc to stack (hover-to-collect)
+        function collectSingleDoc(leaderDoc, targetDoc) {
+            if (!targetDoc || targetDoc === leaderDoc) return;
+            if (state.heldStack.some(item => item.el === targetDoc)) return;
+
+            // gather spilled contents from target
+            const targetIndex = targetDoc.dataset.index;
+            if (state.spilledFolders.has(targetIndex)) {
+                gatherImagesToFolder(targetDoc);
+            }
+
+            // disable dragging
+            const dragInstance = Draggable.get(targetDoc);
+            if (dragInstance) dragInstance.disable();
+
+            // add to stack
+            state.heldStack.push({
+                el: targetDoc,
+                offsetX: (Math.random() * 10 - 5),
+                offsetY: (Math.random() * 10 - 5) + 5
+            });
+
+            // animate to leader
+            gsap.to(targetDoc, {
+                x: gsap.getProperty(leaderDoc, "x") + (Math.random() * 10 - 5),
+                y: gsap.getProperty(leaderDoc, "y") + (Math.random() * 20 - 10) + 10,
+                rotation: gsap.getProperty(leaderDoc, "rotation") + (Math.random() * 10 - 5),
+                scale: 1,
+                zIndex: state.currentZIndex - 1,
+                duration: 0.4,
+                ease: "back.out(1.2)"
+            });
+
+            // pulse leader
+            gsap.fromTo(leaderDoc,
+                { scale: 1.1 },
+                { scale: 1.05, duration: 0.2, ease: "elastic.out(1, 0.3)" }
+            );
+
+            updateFilingAreaVisibility();
         }
 
         function collectSiblings(leaderDoc) {
