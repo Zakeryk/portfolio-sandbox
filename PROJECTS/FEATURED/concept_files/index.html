@@ -2242,9 +2242,6 @@
         }
 
         function checkHoverCollect(draggable) {
-            // skip if already holding stack
-            if (state.heldStack.length > 0) return;
-
             const draggedDoc = draggable.target;
             const category = draggedDoc.dataset.category;
 
