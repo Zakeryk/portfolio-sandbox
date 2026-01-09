@@ -792,7 +792,7 @@
 
         <div id="clock">12:00</div>
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
-        <div id="instructions">[~] Toggle Debug Config</div>
+        <div id="instructions">[~] ⚙ settings</div>
     </div>
 
     <div id="gui-container"></div>
@@ -1387,6 +1387,17 @@
             const rect = container.getBoundingClientRect();
             pointer.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1;
             pointer.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+            // hide custom cursor below blue line, show default
+            const splitY = window.innerHeight * PARAMS.splitHeight;
+            const cursorEl = document.getElementById('custom-cursor');
+            if (e.clientY > splitY) {
+                cursorEl.style.opacity = '0';
+                document.body.style.cursor = 'auto';
+            } else {
+                cursorEl.style.opacity = '1';
+                document.body.style.cursor = 'none';
+            }
         });
 
         window.addEventListener('wheel', (e) => {
