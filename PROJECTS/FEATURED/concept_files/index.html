@@ -1368,17 +1368,36 @@
             });
         }
 
-        // desktop offcanvas menu with edge detection
+        // desktop offcanvas menu - stays open when docs on desk
         function setupDesktopMenu() {
             if (state.isMobile) return;
 
             const filingArea = document.getElementById('filing-area');
             const menuArrow = document.getElementById('menu-arrow');
 
-            // create invisible trigger zone on left edge
+            // update menu visibility based on docs on desk
+            function updateMenuVisibility() {
+                if (state.galleryActive) {
+                    filingArea.classList.remove('visible');
+                    return;
+                }
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk > 0) {
+                    filingArea.classList.add('visible');
+                    menuArrow.classList.add('hidden');
+                } else {
+                    filingArea.classList.remove('visible');
+                    menuArrow.classList.remove('hidden');
+                }
+            }
+
+            // expose globally so other functions can call it
+            state.updateDesktopMenu = updateMenuVisibility;
+
+            // edge detection for when no docs on desk
+            const triggerWidth = 60;
             const triggerZone = document.createElement('div');
             triggerZone.id = 'menu-trigger-zone';
-            const triggerWidth = 60; // px from left edge
             triggerZone.style.cssText = `
                 position: fixed;
                 left: 0;
@@ -1389,40 +1408,21 @@
             `;
             document.body.appendChild(triggerZone);
 
-            // show menu function
-            function showMenu() {
+            triggerZone.addEventListener('mouseenter', () => {
                 if (state.galleryActive) return;
                 filingArea.classList.add('visible');
-            }
-
-            function hideMenu() {
-                filingArea.classList.remove('visible');
-            }
-
-            // trigger zone events - works even during drag
-            triggerZone.addEventListener('pointerenter', showMenu);
-            triggerZone.addEventListener('mouseenter', showMenu);
-
-            // hide when leaving menu area (but not into trigger zone)
-            filingArea.addEventListener('mouseleave', (e) => {
-                // don't hide if moving into trigger zone
-                if (e.clientX <= triggerWidth) return;
-                hideMenu();
             });
 
-            // also track via pointermove/mousemove for drag scenarios
-            const handlePointerNearEdge = (e) => {
-                if (state.galleryActive) return;
-                if (e.clientX < triggerWidth) {
-                    showMenu();
-                }
-            };
-            document.addEventListener('pointermove', handlePointerNearEdge);
-            document.addEventListener('mousemove', handlePointerNearEdge);
+            filingArea.addEventListener('mouseleave', (e) => {
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk > 0) return; // keep open if docs on desk
+                if (e.clientX <= triggerWidth) return;
+                filingArea.classList.remove('visible');
+            });
 
-            // animate arrow on page load
+            // animate arrow on page load (hidden once docs appear)
             setTimeout(() => {
-                menuArrow.classList.add('visible');
+                menuArrow.classList.remove('hidden');
             }, 500);
         }
 
@@ -1851,15 +1851,6 @@
                     // Check for hover-to-collect
                     checkHoverCollect(this);
 
-                    // Show menu when dragging near left edge (desktop only)
-                    if (!state.isMobile && !state.galleryActive) {
-                        const filingArea = document.getElementById('filing-area');
-                        const pointerX = this.pointerEvent?.clientX ?? this.pointerX;
-                        if (pointerX < 100) {
-                            filingArea.classList.add('visible');
-                        }
-                    }
-
                     // Move collected stack if any
                     updateHeldStackPosition(this.target);
 
@@ -2051,6 +2042,9 @@
 
                     insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
+
+                    // update desktop menu visibility
+                    if (state.updateDesktopMenu) state.updateDesktopMenu();
                 }
             });
         }
@@ -2116,6 +2110,9 @@
 
             // setup draggable
             setupDocumentDraggable(doc);
+
+            // update desktop menu visibility
+            if (state.updateDesktopMenu) state.updateDesktopMenu();
 
             return doc;
         }
@@ -2828,6 +2825,9 @@
 
                     // expand folder to show file was added
                     folder.classList.add('expanded');
+
+                    // update desktop menu visibility
+                    if (state.updateDesktopMenu) state.updateDesktopMenu();
                 }
             });
         }
