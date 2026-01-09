@@ -1127,6 +1127,7 @@
     <script>
         // CONFIG
         const GITHUB_USERNAME = 'Zakeryk'; // <--- PUT YOUR USERNAME HERE
+        const CACHE_VERSION = Date.now(); // cache buster for thumbnails (safari fix)
 
         // Helper function to create project card
         function createProjectCard(p, forceNoThumbnail = false) {
@@ -1135,7 +1136,7 @@
             const hasImage = !forceNoThumbnail && p.image && p.image !== null;
             card.className = hasImage ? 'card' : 'card no-thumbnail';
             const imgContent = hasImage ? '' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>';
-            const imgStyle = hasImage ? `background-image: url('${p.image}')` : '';
+            const imgStyle = hasImage ? `background-image: url('${p.image}?v=${CACHE_VERSION}')` : '';
             const noImgClass = hasImage ? '' : 'background-color: transparent;';
 
             const imgDiv = `<div class="card-img"><div class="card-img-inner" style="${imgStyle}; ${noImgClass}">${imgContent}</div></div>`;
