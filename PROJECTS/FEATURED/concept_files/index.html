@@ -1408,16 +1408,26 @@
             `;
             document.body.appendChild(triggerZone);
 
+            // edge triggers menu open (for discovering when desk is empty)
             triggerZone.addEventListener('mouseenter', () => {
                 if (state.galleryActive) return;
                 filingArea.classList.add('visible');
             });
 
+            // only close via mouseleave when NO docs on desk
+            let closeTimeout;
             filingArea.addEventListener('mouseleave', (e) => {
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk > 0) return; // keep open if docs on desk
-                if (e.clientX <= triggerWidth) return;
-                filingArea.classList.remove('visible');
+                clearTimeout(closeTimeout);
+                closeTimeout = setTimeout(() => {
+                    const docsOnDesk = document.querySelectorAll('.document').length;
+                    if (docsOnDesk > 0) return; // never close if docs on desk
+                    if (e.clientX <= triggerWidth) return;
+                    filingArea.classList.remove('visible');
+                }, 100); // small delay to avoid race conditions
+            });
+
+            filingArea.addEventListener('mouseenter', () => {
+                clearTimeout(closeTimeout);
             });
 
             // animate arrow on page load (hidden once docs appear)
