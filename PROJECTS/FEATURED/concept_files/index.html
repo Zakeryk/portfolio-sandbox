@@ -3425,29 +3425,22 @@
                 // Focus this one
                 img.classList.add('focused');
 
-                // Scroll focused image into view with proper padding to ensure it's fully visible
+                // Center focused image in viewport (accounting for 1.5x scale)
                 const gallery = document.getElementById('lightbox-gallery');
                 const imgRect = img.getBoundingClientRect();
                 const galleryRect = gallery.getBoundingClientRect();
 
-                // Calculate scroll position with padding (20% of viewport width on each side)
-                const paddingAmount = galleryRect.width * 0.2;
-                const imgLeftRelative = imgRect.left - galleryRect.left;
-                const imgRightRelative = imgRect.right - galleryRect.left;
+                // image center relative to gallery scroll position
+                const imgCenter = imgRect.left + imgRect.width / 2 - galleryRect.left + gallery.scrollLeft;
+                // account for 1.5x scale - need extra padding
+                const scaledHalfWidth = (imgRect.width * 1.5) / 2;
+                const viewportCenter = galleryRect.width / 2;
 
-                let targetScrollLeft = gallery.scrollLeft;
-
-                // Check if image is cut off on the left
-                if (imgLeftRelative < paddingAmount) {
-                    targetScrollLeft = gallery.scrollLeft + imgLeftRelative - paddingAmount;
-                }
-                // Check if image is cut off on the right
-                else if (imgRightRelative > galleryRect.width - paddingAmount) {
-                    targetScrollLeft = gallery.scrollLeft + (imgRightRelative - (galleryRect.width - paddingAmount));
-                }
+                // scroll so image center lands at viewport center
+                const targetScrollLeft = imgCenter - viewportCenter;
 
                 gallery.scrollTo({
-                    left: targetScrollLeft,
+                    left: Math.max(0, targetScrollLeft),
                     behavior: 'smooth'
                 });
 
