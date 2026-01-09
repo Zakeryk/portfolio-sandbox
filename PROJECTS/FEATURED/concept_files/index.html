@@ -1411,23 +1411,19 @@
             // edge triggers menu open (for discovering when desk is empty)
             triggerZone.addEventListener('mouseenter', () => {
                 if (state.galleryActive) return;
-                filingArea.classList.add('visible');
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
+                    filingArea.classList.add('visible');
+                }
             });
 
-            // only close via mouseleave when NO docs on desk
-            let closeTimeout;
-            filingArea.addEventListener('mouseleave', (e) => {
-                clearTimeout(closeTimeout);
-                closeTimeout = setTimeout(() => {
-                    const docsOnDesk = document.querySelectorAll('.document').length;
-                    if (docsOnDesk > 0) return; // never close if docs on desk
-                    if (e.clientX <= triggerWidth) return;
+            // close only when mouse leaves AND no docs on desk
+            filingArea.addEventListener('mouseleave', () => {
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
                     filingArea.classList.remove('visible');
-                }, 100); // small delay to avoid race conditions
-            });
-
-            filingArea.addEventListener('mouseenter', () => {
-                clearTimeout(closeTimeout);
+                }
+                // if docs on desk, menu stays open NO MATTER WHAT
             });
 
             // animate arrow on page load (hidden once docs appear)
