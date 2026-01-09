@@ -1581,15 +1581,15 @@
             populateFileLists();
         }
 
-        // insert list item sorted by year (descending - latest first)
-        function insertSortedByYear(fileList, listItem) {
-            const year = parseInt(listItem.dataset.year) || 0;
+        // insert list item sorted alphabetically by title
+        function insertSortedAlpha(fileList, listItem) {
+            const title = (listItem.dataset.title || '').toLowerCase();
             const existingItems = fileList.querySelectorAll('.file-list-item');
 
             let insertBefore = null;
             for (const item of existingItems) {
-                const itemYear = parseInt(item.dataset.year) || 0;
-                if (year > itemYear) {
+                const itemTitle = (item.dataset.title || '').toLowerCase();
+                if (title < itemTitle) {
                     insertBefore = item;
                     break;
                 }
@@ -1604,8 +1604,8 @@
 
         // populate file lists in buckets
         function populateFileLists() {
-            // sort by year descending before populating
-            const sortedItems = [...WORK_ITEMS].sort((a, b) => (b.year || 0) - (a.year || 0));
+            // sort alphabetically by title
+            const sortedItems = [...WORK_ITEMS].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
 
             sortedItems.forEach(item => {
                 const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
@@ -1905,7 +1905,7 @@
                         handleListItemInteraction(listItem, e);
                     });
 
-                    insertSortedByYear(fileList, listItem);
+                    insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
                 }
             });
@@ -2631,7 +2631,7 @@
                 ease: 'power3.in',
                 onComplete: () => {
                     doc.remove();
-                    insertSortedByYear(fileList, listItem);
+                    insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
 
                     // expand folder to show file was added
