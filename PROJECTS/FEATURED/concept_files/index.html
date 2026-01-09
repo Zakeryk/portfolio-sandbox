@@ -1378,11 +1378,12 @@
             // create invisible trigger zone on left edge
             const triggerZone = document.createElement('div');
             triggerZone.id = 'menu-trigger-zone';
+            const triggerWidth = 60; // px from left edge
             triggerZone.style.cssText = `
                 position: fixed;
                 left: 0;
                 top: 0;
-                width: 30px;
+                width: ${triggerWidth}px;
                 height: 100%;
                 z-index: 999;
             `;
@@ -1405,14 +1406,14 @@
             // hide when leaving menu area (but not into trigger zone)
             filingArea.addEventListener('mouseleave', (e) => {
                 // don't hide if moving into trigger zone
-                if (e.clientX <= 30) return;
+                if (e.clientX <= triggerWidth) return;
                 hideMenu();
             });
 
             // also track via pointermove for drag scenarios
             document.addEventListener('pointermove', (e) => {
                 if (state.galleryActive) return;
-                if (e.clientX < 30) {
+                if (e.clientX < triggerWidth) {
                     showMenu();
                 }
             });
@@ -1851,7 +1852,7 @@
                     // Show menu when dragging near left edge (desktop only)
                     if (!state.isMobile) {
                         const filingArea = document.getElementById('filing-area');
-                        if (this.pointerX < 50) {
+                        if (this.pointerX < 80) {
                             filingArea.classList.add('visible');
                         }
                     }
