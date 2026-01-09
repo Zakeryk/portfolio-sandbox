@@ -1581,15 +1581,24 @@
             populateFileLists();
         }
 
-        // insert list item sorted alphabetically by title
+        // insert list item sorted by year (desc) then alphabetically within year
         function insertSortedAlpha(fileList, listItem) {
+            const year = parseInt(listItem.dataset.year) || 0;
             const title = (listItem.dataset.title || '').toLowerCase();
             const existingItems = fileList.querySelectorAll('.file-list-item');
 
             let insertBefore = null;
             for (const item of existingItems) {
+                const itemYear = parseInt(item.dataset.year) || 0;
                 const itemTitle = (item.dataset.title || '').toLowerCase();
-                if (title < itemTitle) {
+
+                // newer year comes first
+                if (year > itemYear) {
+                    insertBefore = item;
+                    break;
+                }
+                // same year - sort alphabetically
+                if (year === itemYear && title < itemTitle) {
                     insertBefore = item;
                     break;
                 }
@@ -1604,8 +1613,12 @@
 
         // populate file lists in buckets
         function populateFileLists() {
-            // sort alphabetically by title
-            const sortedItems = [...WORK_ITEMS].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+            // sort by year (desc) then alphabetically within year
+            const sortedItems = [...WORK_ITEMS].sort((a, b) => {
+                const yearDiff = (b.year || 0) - (a.year || 0);
+                if (yearDiff !== 0) return yearDiff;
+                return (a.title || '').localeCompare(b.title || '');
+            });
 
             sortedItems.forEach(item => {
                 const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
