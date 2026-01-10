@@ -1107,10 +1107,11 @@
             /* mobile lightbox - vertical scroll */
             #lightbox-gallery {
                 flex-direction: column;
-                justify-content: flex-start;
+                justify-content: center;
+                align-items: center;
                 overflow-y: auto;
                 overflow-x: hidden;
-                padding: 80px 20px 20px 20px;
+                padding: 60px 20px;
                 gap: 20px;
                 top: 0;
                 transform: none;
@@ -1136,9 +1137,14 @@
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             }
 
-            /* hide tip on mobile */
+            /* mobile tip - show tap to dismiss */
             #lightbox-tip {
-                display: none;
+                font-size: 0;
+                bottom: 30px;
+            }
+            #lightbox-tip::after {
+                content: 'tap anywhere to dismiss';
+                font-size: 12px;
             }
 
             /* hide hamburger, wastebin, and clear all when lightbox active */
