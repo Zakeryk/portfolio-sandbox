@@ -2473,6 +2473,31 @@
                         return;
                     }
 
+                    // mobile: flick downward to delete
+                    if (state.isMobile && typeof InertiaPlugin !== 'undefined') {
+                        const velocityY = InertiaPlugin.getVelocity(this.target, 'y');
+                        const velocityX = InertiaPlugin.getVelocity(this.target, 'x');
+
+                        // flicking downward fast enough (mostly vertical direction)
+                        if (velocityY > 600 && Math.abs(velocityY) > Math.abs(velocityX) * 1.2) {
+                            state.isDragging = false;
+
+                            // animate off screen with momentum
+                            gsap.to(this.target, {
+                                y: '+=400',
+                                opacity: 0,
+                                scale: 0.7,
+                                rotation: (Math.random() - 0.5) * 15,
+                                duration: 0.25,
+                                ease: 'power2.in',
+                                onComplete: () => {
+                                    removeDocumentToMenu(this.target);
+                                }
+                            });
+                            return;
+                        }
+                    }
+
                     // not deleting, so now safe to mark as not dragging
                     state.isDragging = false;
 
