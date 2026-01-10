@@ -1454,6 +1454,7 @@
             galleryImages: null, // stores original images while gallery is open
             isDragging: false, // tracks if currently dragging a document
             isDeleting: false, // tracks if delete animation in progress (prevents menu flicker)
+            isDeletingStack: false, // tracks if stack deletion in progress
             heldImageStack: [], // items collected via shake for images
             imageShakeContext: {
                 lastX: 0,
@@ -2432,10 +2433,12 @@
                     insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
 
-                    // update menu visibility
-                    if (state.updateDesktopMenu) state.updateDesktopMenu();
-                    if (state.updateMobileMenu) state.updateMobileMenu();
-                    if (state.updateRightMenu) state.updateRightMenu();
+                    // update menu visibility (skip if deleting a stack - will update after last one)
+                    if (!state.isDeletingStack) {
+                        if (state.updateDesktopMenu) state.updateDesktopMenu();
+                        if (state.updateMobileMenu) state.updateMobileMenu();
+                        if (state.updateRightMenu) state.updateRightMenu();
+                    }
 
                     // allow menu changes again
                     state.isDeleting = false;
@@ -2449,6 +2452,9 @@
             const stackCopy = [...state.heldStack]; // copy before clearing
             state.heldStack = []; // clear immediately to prevent interference
 
+            // prevent menu flicker for entire stack deletion
+            state.isDeletingStack = true;
+
             // delete siblings first with stagger
             stackCopy.forEach((item, idx) => {
                 setTimeout(() => {
@@ -2459,6 +2465,8 @@
             // delete leader last for visual clarity
             setTimeout(() => {
                 removeDocumentToMenu(leaderDoc);
+                // only now allow menu updates
+                state.isDeletingStack = false;
             }, stackCopy.length * 50);
         }
 
