@@ -1749,30 +1749,24 @@
 
             state.updateRightMenu = updateVisibility;
 
-            // edge trigger zone
-            const triggerZone = document.createElement('div');
-            triggerZone.style.cssText = `
-                position: fixed;
-                right: 0;
-                top: 0;
-                bottom: 0;
-                width: 40px;
-                z-index: 999;
-            `;
-            document.body.appendChild(triggerZone);
-
-            triggerZone.addEventListener('mouseenter', () => {
-                if (state.galleryActive) return;
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
-                    rightMenu.classList.add('visible');
-                }
-            });
-
-            rightMenu.addEventListener('mouseleave', () => {
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
+            // mouse proximity detection - same as left side (200px open, 350px close)
+            document.addEventListener('mousemove', (e) => {
+                if (state.galleryActive) {
                     rightMenu.classList.remove('visible');
+                    return;
+                }
+
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk > 0) return; // already visible when docs on desk
+
+                const distanceFromRight = window.innerWidth - e.clientX;
+
+                if (distanceFromRight < 200) {
+                    rightMenu.classList.add('visible');
+                    if (menuArrowRight) menuArrowRight.classList.add('hidden');
+                } else if (distanceFromRight > 350) {
+                    rightMenu.classList.remove('visible');
+                    if (menuArrowRight) menuArrowRight.classList.remove('hidden');
                 }
             });
 
