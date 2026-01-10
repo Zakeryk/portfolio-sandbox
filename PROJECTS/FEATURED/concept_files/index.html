@@ -466,13 +466,15 @@
             background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(4px);
             z-index: 900;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: opacity 0.3s ease, transform 0.3s ease;
             pointer-events: all;
         }
 
         #menu-backdrop.visible {
-            transform: translateX(0);
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* === WASTEBIN === */
@@ -1045,8 +1047,7 @@
                 transform: translateY(100%) !important;
                 width: 100% !important;
                 max-height: 70vh;
-                flex-direction: row;
-                flex-wrap: wrap;
+                flex-direction: column;
                 gap: 10px;
                 padding: 20px 15px 100px 15px;
                 border-right: none;
@@ -1068,20 +1069,19 @@
             }
 
             .folder-stack {
-                width: calc(33.33% - 7px);
+                width: 100%;
                 height: auto;
                 font-size: 10px;
                 padding: 0;
-                flex-shrink: 0;
             }
 
             .folder-header {
-                padding: 12px 10px;
-                font-size: 9px;
+                padding: 14px 12px;
+                font-size: 10px;
             }
 
             .file-count {
-                font-size: 9px;
+                font-size: 10px;
             }
 
             .filing-footer {
