@@ -1401,8 +1401,11 @@
             });
         }
 
-        // add peek effect to document
+        // add peek effect to document (desktop only)
         function addPeekEffect(doc) {
+            // no peek/tilt on mobile - hover not supported
+            if (state.isMobile) return;
+
             let peekImages = [];
 
             doc.addEventListener('mouseenter', () => {
