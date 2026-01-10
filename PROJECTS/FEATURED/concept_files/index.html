@@ -1121,9 +1121,9 @@
                 display: none;
             }
 
-            /* mobile close button - no top bar so keep at 20px */
-            #lightbox-close.visible {
-                top: 20px;
+            /* hide close button on mobile - tap to dismiss instead */
+            #lightbox-close {
+                display: none !important;
             }
         }
 
@@ -1982,6 +1982,11 @@
             // lightbox dismissal
             document.getElementById('lightbox-overlay').addEventListener('click', exitLightbox);
             document.getElementById('lightbox-close').addEventListener('click', exitLightbox);
+
+            // mobile: tap anywhere on gallery to dismiss
+            if (state.isMobile) {
+                document.getElementById('lightbox-gallery').addEventListener('click', exitLightbox);
+            }
 
             // click on desk background to cleanup
             document.getElementById('desk-container').addEventListener('click', (e) => {
