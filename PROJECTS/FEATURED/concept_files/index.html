@@ -164,6 +164,79 @@
             pointer-events: none;
         }
 
+        /* top menu */
+        #top-menu {
+            position: fixed;
+            top: calc(-1 * var(--top-menu-height, 60px));
+            left: 20px;
+            right: 20px;
+            height: var(--top-menu-height, 60px);
+            z-index: 1000;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            background: rgba(10, 20, 15, 0.98);
+            border-bottom: 1px solid rgba(50, 150, 100, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+            transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #top-menu.visible {
+            top: 0;
+        }
+
+        #top-menu .menu-item {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(100, 150, 120, 0.6);
+            cursor: default;
+        }
+
+        /* right menu */
+        #right-menu {
+            position: fixed;
+            right: calc(-1 * var(--right-menu-width, 220px));
+            top: 20px;
+            bottom: 20px;
+            width: var(--right-menu-width, 220px);
+            z-index: 1000;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: rgba(10, 20, 15, 0.98);
+            border-left: 1px solid rgba(50, 150, 100, 0.3);
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.7);
+            overflow-y: auto;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #right-menu.visible {
+            right: 0;
+        }
+
+        #right-menu .menu-header {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #7a9;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(50, 150, 100, 0.2);
+            margin-bottom: 5px;
+        }
+
+        #right-menu .menu-item {
+            font-size: 12px;
+            color: rgba(100, 150, 120, 0.6);
+            padding: 8px 0;
+            cursor: default;
+        }
+
         .folder-stack {
             position: relative;
             width: 100%;
@@ -893,6 +966,12 @@
                 display: flex;
             }
 
+            /* hide top and right menus on mobile */
+            #top-menu,
+            #right-menu {
+                display: none;
+            }
+
             #filing-area {
                 left: calc(-1 * var(--menu-width, 260px)) !important;
                 transform: none !important;
@@ -1068,10 +1147,11 @@
     <!-- welcome overlay -->
     <div id="welcome-overlay">
         <div id="welcome-content">
-            <div class="window-title">notice</div>
+            <div class="window-title">welcome</div>
             <div class="window-body">
-                <p>a curated collection of selected works — an ongoing archive that's actively being organized and updated.</p>
-                <p>some projects may shift around as new work is added and older pieces are revisited.</p>
+                <p>welcome to my curated collection of selected works — an ongoing archive that's actively being organized and updated.</p>
+                <p>some projects may shift around as new work is added and projects are updated.</p>
+                <p>— zak</p>
                 <p class="hint">click anywhere to continue</p>
             </div>
         </div>
@@ -1137,6 +1217,23 @@
     <div id="menu-arrow">
         <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
         <span>projects</span>
+    </div>
+
+    <!-- top menu -->
+    <div id="top-menu">
+        <span class="menu-item">placeholder</span>
+        <span class="menu-item">placeholder</span>
+        <span class="menu-item">placeholder</span>
+    </div>
+
+    <!-- right menu (clients) -->
+    <div id="right-menu">
+        <div class="menu-header">clients</div>
+        <div class="menu-item">placeholder</div>
+        <div class="menu-item">placeholder</div>
+        <div class="menu-item">placeholder</div>
+        <div class="menu-item">placeholder</div>
+        <div class="menu-item">placeholder</div>
     </div>
 
     <!-- desk surface -->
@@ -1544,6 +1641,106 @@
             }, 500);
         }
 
+        // top menu - same logic as left menu
+        function setupTopMenu() {
+            if (state.isMobile) return;
+
+            const topMenu = document.getElementById('top-menu');
+            if (!topMenu) return;
+
+            function updateVisibility() {
+                if (state.galleryActive) {
+                    topMenu.classList.remove('visible');
+                    return;
+                }
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk > 0) {
+                    topMenu.classList.add('visible');
+                } else {
+                    topMenu.classList.remove('visible');
+                }
+            }
+
+            state.updateTopMenu = updateVisibility;
+
+            // edge trigger zone
+            const triggerZone = document.createElement('div');
+            triggerZone.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 40px;
+                z-index: 999;
+            `;
+            document.body.appendChild(triggerZone);
+
+            triggerZone.addEventListener('mouseenter', () => {
+                if (state.galleryActive) return;
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
+                    topMenu.classList.add('visible');
+                }
+            });
+
+            topMenu.addEventListener('mouseleave', () => {
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
+                    topMenu.classList.remove('visible');
+                }
+            });
+        }
+
+        // right menu - same logic as left menu
+        function setupRightMenu() {
+            if (state.isMobile) return;
+
+            const rightMenu = document.getElementById('right-menu');
+            if (!rightMenu) return;
+
+            function updateVisibility() {
+                if (state.galleryActive) {
+                    rightMenu.classList.remove('visible');
+                    return;
+                }
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk > 0) {
+                    rightMenu.classList.add('visible');
+                } else {
+                    rightMenu.classList.remove('visible');
+                }
+            }
+
+            state.updateRightMenu = updateVisibility;
+
+            // edge trigger zone
+            const triggerZone = document.createElement('div');
+            triggerZone.style.cssText = `
+                position: fixed;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 40px;
+                z-index: 999;
+            `;
+            document.body.appendChild(triggerZone);
+
+            triggerZone.addEventListener('mouseenter', () => {
+                if (state.galleryActive) return;
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
+                    rightMenu.classList.add('visible');
+                }
+            });
+
+            rightMenu.addEventListener('mouseleave', () => {
+                const docsOnDesk = document.querySelectorAll('.document').length;
+                if (docsOnDesk === 0) {
+                    rightMenu.classList.remove('visible');
+                }
+            });
+        }
+
         // mobile single-tap to open lightbox
         function setupMobileLightboxTap() {
             if (!state.isMobile) return;
@@ -1727,6 +1924,8 @@
                 setupMobileLightboxTap();
             } else {
                 setupDesktopMenu();
+                setupTopMenu();
+                setupRightMenu();
             }
 
             // cleanup button
@@ -2180,6 +2379,8 @@
                     // update menu visibility
                     if (state.updateDesktopMenu) state.updateDesktopMenu();
                     if (state.updateMobileMenu) state.updateMobileMenu();
+                    if (state.updateTopMenu) state.updateTopMenu();
+                    if (state.updateRightMenu) state.updateRightMenu();
                 }
             });
         }
@@ -2249,6 +2450,8 @@
             // update menu visibility
             if (state.updateDesktopMenu) state.updateDesktopMenu();
             if (state.updateMobileMenu) state.updateMobileMenu();
+            if (state.updateTopMenu) state.updateTopMenu();
+            if (state.updateRightMenu) state.updateRightMenu();
 
             return doc;
         }
@@ -2965,6 +3168,8 @@
                     // update menu visibility
                     if (state.updateDesktopMenu) state.updateDesktopMenu();
                     if (state.updateMobileMenu) state.updateMobileMenu();
+                    if (state.updateTopMenu) state.updateTopMenu();
+                    if (state.updateRightMenu) state.updateRightMenu();
                 }
             });
         }
@@ -3815,6 +4020,8 @@
             // restore menu visibility based on docs on desk
             if (state.updateDesktopMenu) state.updateDesktopMenu();
             if (state.updateMobileMenu) state.updateMobileMenu();
+            if (state.updateTopMenu) state.updateTopMenu();
+            if (state.updateRightMenu) state.updateRightMenu();
         }
 
         // double-click to open original url
