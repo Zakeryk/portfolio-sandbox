@@ -982,7 +982,7 @@
         #welcome-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(10, 10, 10, 0.92);
+            background: rgba(5, 10, 8, 0.6);
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -998,56 +998,56 @@
         }
 
         #welcome-content {
-            max-width: 420px;
-            background: linear-gradient(145deg, #f5f0e6 0%, #e8e2d6 100%);
-            border: 1px solid #c4b89a;
-            border-radius: 4px;
+            max-width: 320px;
+            background: rgba(10, 20, 15, 0.98);
+            border: 1px solid rgba(50, 150, 100, 0.4);
+            border-radius: 2px;
             box-shadow:
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                0 0 0 1px rgba(255, 255, 255, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                0 0 30px rgba(50, 150, 100, 0.15),
+                0 10px 40px rgba(0, 0, 0, 0.5);
             padding: 0;
             text-align: center;
-            color: #3a3632;
             overflow: hidden;
         }
 
         #welcome-content .window-title {
-            background: linear-gradient(180deg, #d4cfc3 0%, #c4bfb3 100%);
-            border-bottom: 1px solid #a89f8a;
+            background: rgba(20, 40, 30, 0.6);
+            border-bottom: 1px solid rgba(50, 150, 100, 0.3);
             padding: 10px 16px;
-            font-size: 0.75rem;
-            font-weight: 500;
+            font-size: 10px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #5a554c;
+            letter-spacing: 1.5px;
+            color: #7a9;
         }
 
         #welcome-content .window-body {
-            padding: 32px 36px;
+            padding: 24px 28px;
         }
 
         #welcome-content h1 {
             font-family: 'EB Garamond', Georgia, serif;
-            font-size: 2rem;
+            font-size: 1.6rem;
             font-weight: 400;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             letter-spacing: 0.02em;
-            color: #2a2622;
+            color: rgba(100, 200, 150, 0.9);
         }
 
         #welcome-content p {
-            font-size: 0.95rem;
-            line-height: 1.7;
-            color: #5a554a;
-            margin-bottom: 14px;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: rgba(150, 180, 160, 0.8);
+            margin-bottom: 12px;
         }
 
         #welcome-content .hint {
-            font-size: 0.8rem;
-            color: #8a857a;
-            margin-top: 24px;
+            font-size: 0.75rem;
+            color: rgba(100, 150, 120, 0.6);
+            margin-top: 20px;
             margin-bottom: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         @media (max-width: 768px) {
@@ -1056,10 +1056,10 @@
                 max-width: calc(100% - 40px);
             }
             #welcome-content .window-body {
-                padding: 24px 20px;
+                padding: 20px;
             }
             #welcome-content h1 {
-                font-size: 1.6rem;
+                font-size: 1.4rem;
             }
         }
     </style>
