@@ -2465,9 +2465,12 @@
             // delete leader last for visual clarity
             setTimeout(() => {
                 removeDocumentToMenu(leaderDoc);
-                // only now allow menu updates
-                state.isDeletingStack = false;
             }, stackCopy.length * 50);
+
+            // reset flag after all animations complete (stagger + animation duration)
+            setTimeout(() => {
+                state.isDeletingStack = false;
+            }, (stackCopy.length * 50) + 150);
         }
 
         // create draggable document from list item

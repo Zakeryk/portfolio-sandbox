@@ -1,6 +1,18 @@
 {
   "active": [
     {
+      "id": "concept_wii",
+      "path": "./PROJECTS/FEATURED/concept_wii/",
+      "title": "CONCEPT_WII",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": "./PROJECTS/FEATURED/concept_wii/thumb.png",
+      "date": "2026-01-10T04:49:31.371Z",
+      "displayName": "ZAK'S GAMES"
+    },
+    {
       "id": "concept_files",
       "path": "./PROJECTS/FEATURED/concept_files/",
       "title": "CONCEPT_RESIDENT",
@@ -10,20 +22,8 @@
       ],
       "active": true,
       "image": "./PROJECTS/FEATURED/concept_files/thumb.png",
-      "date": "2026-01-10T04:49:06.570Z",
-      "displayName": "MY_WORK"
-    },
-    {
-      "id": "concept_wii",
-      "path": "./PROJECTS/FEATURED/concept_wii/",
-      "title": "CONCEPT_WII",
-      "tags": [
-        "Experiment"
-      ],
-      "active": true,
-      "image": "./PROJECTS/FEATURED/concept_wii/thumb.png",
-      "date": "2026-01-09T19:33:17.565Z",
-      "displayName": "MY_DASHBOARD"
+      "date": "2026-01-10T04:49:26.540Z",
+      "displayName": "ZAK'S WORK"
     }
   ],
   "archived": [
