@@ -479,26 +479,29 @@
         #wastebin {
             display: flex;
             position: fixed;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 80px;
+            bottom: -120px;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100px;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            background: rgba(201, 85, 77, 0.2);
-            border: 2px solid rgba(201, 85, 77, 0.5);
-            border-radius: 4px;
+            background: linear-gradient(to bottom,
+                rgba(201, 85, 77, 0) 0%,
+                rgba(201, 85, 77, 0.15) 30%,
+                rgba(201, 85, 77, 0.3) 100%);
+            border: none;
+            border-top: 1px solid rgba(201, 85, 77, 0.3);
             color: rgba(201, 85, 77, 0.8);
             z-index: 950;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         #wastebin svg {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
         }
 
         #wastebin span {
@@ -508,27 +511,24 @@
         }
 
         #wastebin.visible {
-            bottom: 30px;
+            bottom: 0;
         }
 
         #wastebin.active {
-            transform: translateX(-50%) scale(1.2);
-            background: rgba(201, 85, 77, 0.5);
-            border-color: rgba(201, 85, 77, 1);
-            border-width: 3px;
+            background: linear-gradient(to bottom,
+                rgba(201, 85, 77, 0) 0%,
+                rgba(201, 85, 77, 0.4) 30%,
+                rgba(201, 85, 77, 0.6) 100%);
+            border-top-color: rgba(201, 85, 77, 0.8);
             color: rgba(255, 255, 255, 1);
-            box-shadow: 0 0 20px rgba(201, 85, 77, 0.8), 0 0 40px rgba(201, 85, 77, 0.4);
-            animation: pulse 0.8s ease-in-out infinite;
         }
 
         @keyframes pulse {
             0%, 100% {
-                transform: translateX(-50%) scale(1.2);
-                box-shadow: 0 0 20px rgba(201, 85, 77, 0.8), 0 0 40px rgba(201, 85, 77, 0.4);
+                opacity: 1;
             }
             50% {
-                transform: translateX(-50%) scale(1.25);
-                box-shadow: 0 0 30px rgba(201, 85, 77, 1), 0 0 50px rgba(201, 85, 77, 0.6);
+                opacity: 0.7;
             }
         }
 
@@ -1869,15 +1869,13 @@
                 wastebin.classList.remove('visible', 'active');
             }
 
-            // check if drag position is over wastebin
+            // check if drag position is near bottom edge
             function updateWastebinState(x, y) {
-                // always get fresh bounds to account for animation
-                const bounds = wastebin.getBoundingClientRect();
+                const screenHeight = window.innerHeight;
+                const dropZoneHeight = 100; // matches wastebin height
 
-                const isOver = x >= bounds.left &&
-                    x <= bounds.right &&
-                    y >= bounds.top &&
-                    y <= bounds.bottom;
+                // activate when within bottom 100px of screen
+                const isOver = y >= screenHeight - dropZoneHeight;
 
                 if (isOver) {
                     wastebin.classList.add('active');
