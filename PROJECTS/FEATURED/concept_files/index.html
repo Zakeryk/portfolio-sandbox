@@ -977,10 +977,76 @@
                 display: none;
             }
         }
+
+        /* welcome overlay */
+        #welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.92);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        #welcome-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #welcome-content {
+            max-width: 480px;
+            padding: 40px;
+            text-align: center;
+            color: #e8e4dc;
+        }
+
+        #welcome-content h1 {
+            font-family: 'EB Garamond', Georgia, serif;
+            font-size: 2.4rem;
+            font-weight: 400;
+            margin-bottom: 24px;
+            letter-spacing: 0.02em;
+        }
+
+        #welcome-content p {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: #a09a90;
+            margin-bottom: 16px;
+        }
+
+        #welcome-content .hint {
+            font-size: 0.85rem;
+            color: #6a655c;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 768px) {
+            #welcome-content {
+                padding: 30px 24px;
+            }
+            #welcome-content h1 {
+                font-size: 1.8rem;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- welcome overlay -->
+    <div id="welcome-overlay">
+        <div id="welcome-content">
+            <h1>zak knowlton</h1>
+            <p>welcome to my portfolio — a collection of creative work spanning branding, design, and digital experiences.</p>
+            <p>currently under maintenance as projects are being updated and new work is uploaded. things might shift around a bit.</p>
+            <p class="hint">click anywhere to enter</p>
+        </div>
+    </div>
+
     <!-- film grain overlay -->
     <div id="grain-overlay"></div>
 
@@ -1587,8 +1653,22 @@
             });
         }
 
+        // welcome overlay dismiss
+        function setupWelcomeOverlay() {
+            const overlay = document.getElementById('welcome-overlay');
+            if (!overlay) return;
+
+            overlay.addEventListener('click', () => {
+                overlay.classList.add('hidden');
+                setTimeout(() => overlay.remove(), 400);
+            });
+        }
+
         // initialization
         async function init() {
+            // welcome overlay
+            setupWelcomeOverlay();
+
             // load real images from manifest first
             await loadImageManifest();
 
