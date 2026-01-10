@@ -3781,6 +3781,10 @@
             state.galleryImages = null;
             state.gallerySourceDoc = null;
             state.currentGalleryIndex = 0;
+
+            // restore menu visibility based on docs on desk
+            if (state.updateDesktopMenu) state.updateDesktopMenu();
+            if (state.updateMobileMenu) state.updateMobileMenu();
         }
 
         // double-click to open original url
