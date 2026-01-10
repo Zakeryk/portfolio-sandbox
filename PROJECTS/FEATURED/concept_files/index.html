@@ -1065,14 +1065,19 @@
 
             .folder-stack {
                 width: 100%;
-                height: auto;
                 font-size: 10px;
                 padding: 0;
+                flex-shrink: 0;
             }
 
             .folder-header {
                 padding: 14px 12px;
                 font-size: 10px;
+            }
+
+            .file-list {
+                max-height: 120px;
+                overflow-y: auto;
             }
 
             .file-count {
