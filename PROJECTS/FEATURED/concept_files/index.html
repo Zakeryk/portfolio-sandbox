@@ -274,10 +274,18 @@
         }
 
         #right-menu .menu-item {
-            font-size: 12px;
-            color: rgba(100, 150, 120, 0.6);
-            padding: 8px 0;
-            cursor: default;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(100, 150, 120, 0.7);
+            padding: 10px 0;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+
+        #right-menu a.menu-item:hover {
+            color: rgba(100, 200, 150, 1);
         }
 
         .folder-stack {
@@ -983,9 +991,9 @@
         /* === RESPONSIVE === */
         @media (max-width: 768px) {
             .document {
-                width: 220px;
-                height: 160px;
-                padding: 15px;
+                width: 154px;
+                height: 112px;
+                padding: 10px;
             }
 
             .document.photo-style {
@@ -993,7 +1001,16 @@
             }
 
             .doc-title {
-                font-size: 14px;
+                font-size: 11px;
+            }
+
+            .doc-year {
+                font-size: 9px;
+            }
+
+            .category-tag {
+                font-size: 7px;
+                padding: 2px 4px;
             }
 
             /* mobile: show hamburger, convert filing area to offcanvas */
@@ -1267,20 +1284,17 @@
         <span class="clock" id="clock"></span>
     </div>
 
-    <!-- right menu (clients) -->
+    <!-- right menu -->
     <div id="right-menu">
-        <div class="menu-header">clients</div>
-        <div class="menu-item">placeholder</div>
-        <div class="menu-item">placeholder</div>
-        <div class="menu-item">placeholder</div>
-        <div class="menu-item">placeholder</div>
-        <div class="menu-item">placeholder</div>
+        <div class="menu-header">MENU</div>
+        <a href="https://sandbox.zakknowlton.com/" class="menu-item">SANDBOX</a>
+        <a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/" class="menu-item">DASHBOARD</a>
     </div>
 
     <!-- right menu arrow hint -->
     <div id="menu-arrow-right">
         <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
-        <span>clients</span>
+        <span>menu</span>
     </div>
 
     <!-- desk surface -->
