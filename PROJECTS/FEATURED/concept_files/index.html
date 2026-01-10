@@ -96,7 +96,7 @@
         #filing-area {
             position: fixed;
             left: calc(-1 * var(--menu-width, 260px));
-            top: calc(var(--top-menu-height, 50px) + 10px);
+            top: var(--top-menu-height, 50px);
             bottom: 20px;
             display: flex;
             flex-direction: column;
@@ -243,7 +243,7 @@
         #right-menu {
             position: fixed;
             right: calc(-1 * var(--right-menu-width, 220px));
-            top: calc(var(--top-menu-height, 50px) + 10px);
+            top: var(--top-menu-height, 50px);
             bottom: 20px;
             width: var(--right-menu-width, 220px);
             z-index: 1000;
