@@ -489,7 +489,7 @@
         #menu-hint-arrow svg {
             width: 100%;
             height: 100%;
-            fill: rgba(50, 150, 100, 0.9);
+            color: rgba(50, 150, 100, 0.9);
         }
 
         @keyframes bounce-arrow {
@@ -1376,6 +1376,14 @@
         <span></span>
     </button>
 
+    <!-- mobile menu hint -->
+    <div id="menu-hint">
+        <div id="menu-hint-text">tap to view projects</div>
+        <div id="menu-hint-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16m0 0l-6-6m6 6l6-6"/></svg>
+        </div>
+    </div>
+
     <!-- mobile menu backdrop -->
     <div id="menu-backdrop"></div>
 
@@ -2112,6 +2120,18 @@
             overlay.addEventListener('click', () => {
                 overlay.classList.add('hidden');
                 setTimeout(() => overlay.remove(), 400);
+
+                // show menu hint on mobile after welcome dismissed
+                if (state.isMobile) {
+                    const hint = document.getElementById('menu-hint');
+                    if (hint) {
+                        setTimeout(() => hint.classList.add('visible'), 500);
+                        // hide on first tap anywhere
+                        document.addEventListener('click', () => {
+                            hint.classList.remove('visible');
+                        }, { once: true });
+                    }
+                }
             });
         }
 
