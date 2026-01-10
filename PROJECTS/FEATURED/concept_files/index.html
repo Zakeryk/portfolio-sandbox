@@ -3106,8 +3106,11 @@
             }
         }
 
-        // snap to drop zone (return to list)
+        // snap to drop zone (return to list) - desktop only
         function handleDropZoneSnap(doc) {
+            // mobile: only wastebin can remove files
+            if (state.isMobile) return false;
+
             if (state.isHoveringParent) {
                 // Return main file
                 returnFileToList(doc);
