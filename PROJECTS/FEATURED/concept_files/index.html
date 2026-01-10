@@ -1444,6 +1444,7 @@
             galleryActive: false, // tracks if gallery is open
             galleryImages: null, // stores original images while gallery is open
             isDragging: false, // tracks if currently dragging a document
+            isDeleting: false, // tracks if delete animation in progress (prevents menu flicker)
             heldImageStack: [], // items collected via shake for images
             imageShakeContext: {
                 lastX: 0,
@@ -1610,6 +1611,7 @@
 
             // backdrop click to close (only if no docs on desk)
             menuBackdrop.addEventListener('click', () => {
+                if (state.isDeleting) return; // don't close during delete animation
                 const docsOnDesk = document.querySelectorAll('.document').length;
                 if (docsOnDesk === 0) {
                     toggleMenu(false);
@@ -1618,6 +1620,7 @@
 
             // also close menu when tapping anywhere outside filing area (only if no docs)
             document.addEventListener('click', (e) => {
+                if (state.isDeleting) return; // don't close during delete animation
                 const isClickInsideMenu = filingArea.contains(e.target);
                 const isClickOnHamburger = hamburgerBtn.contains(e.target);
                 const isMenuOpen = filingArea.classList.contains('visible');
@@ -2337,6 +2340,9 @@
             const item = WORK_ITEMS[index];
             const hasImages = item.images && item.images.length > 0;
 
+            // prevent menu flicker during delete animation
+            state.isDeleting = true;
+
             // CRITICAL: mark document as being deleted to prevent peek images from being created
             doc.dataset.beingDeleted = 'true';
 
@@ -2421,6 +2427,9 @@
                     if (state.updateDesktopMenu) state.updateDesktopMenu();
                     if (state.updateMobileMenu) state.updateMobileMenu();
                     if (state.updateRightMenu) state.updateRightMenu();
+
+                    // allow menu changes again
+                    state.isDeleting = false;
                 }
             });
         }
