@@ -1679,11 +1679,13 @@
             );
 
             // conditions to CLOSE:
-            // mouse far from left AND not in any filing action
+            // mouse far from left AND not in any filing action AND no docs on desk
+            const docsOnDesk = document.querySelectorAll('.document').length;
             const shouldClose = (
                 distanceFromLeft > 350 &&
                 !draggingUnopenedFile &&
-                !holdingUnopenedStack
+                !holdingUnopenedStack &&
+                docsOnDesk === 0
             );
 
             if (shouldOpen) {
