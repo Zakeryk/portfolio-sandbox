@@ -96,7 +96,7 @@
         #filing-area {
             position: fixed;
             left: calc(-1 * var(--menu-width, 260px));
-            top: 20px;
+            top: calc(var(--top-menu-height, 50px) + 10px);
             bottom: 20px;
             display: flex;
             flex-direction: column;
@@ -164,43 +164,36 @@
             pointer-events: none;
         }
 
-        /* top menu */
+        /* top menu - persistent on desktop */
         #top-menu {
             position: fixed;
-            top: calc(-1 * var(--top-menu-height, 60px));
-            left: 20px;
-            right: 20px;
-            height: var(--top-menu-height, 60px);
-            z-index: 1000;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--top-menu-height, 50px);
+            z-index: 1001;
             padding: 0 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 30px;
             background: rgba(10, 20, 15, 0.98);
             border-bottom: 1px solid rgba(50, 150, 100, 0.3);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-            transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #top-menu.visible {
-            top: 0;
-        }
-
-        #top-menu .menu-item {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: rgba(100, 150, 120, 0.6);
-            cursor: default;
+        #top-menu .clock {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            color: rgba(100, 200, 150, 0.8);
+            font-variant-numeric: tabular-nums;
         }
 
         /* right menu */
         #right-menu {
             position: fixed;
             right: calc(-1 * var(--right-menu-width, 220px));
-            top: 20px;
+            top: calc(var(--top-menu-height, 50px) + 10px);
             bottom: 20px;
             width: var(--right-menu-width, 220px);
             z-index: 1000;
@@ -1220,9 +1213,7 @@
 
     <!-- top menu -->
     <div id="top-menu">
-        <span class="menu-item">placeholder</span>
-        <span class="menu-item">placeholder</span>
-        <span class="menu-item">placeholder</span>
+        <span class="clock" id="clock"></span>
     </div>
 
     <!-- right menu (clients) -->
@@ -1640,54 +1631,23 @@
             }, 500);
         }
 
-        // top menu - same logic as left menu
+        // top menu - persistent with clock (desktop only)
         function setupTopMenu() {
             if (state.isMobile) return;
 
-            const topMenu = document.getElementById('top-menu');
-            if (!topMenu) return;
+            const clockEl = document.getElementById('clock');
+            if (!clockEl) return;
 
-            function updateVisibility() {
-                if (state.galleryActive) {
-                    topMenu.classList.remove('visible');
-                    return;
-                }
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk > 0) {
-                    topMenu.classList.add('visible');
-                } else {
-                    topMenu.classList.remove('visible');
-                }
+            function updateClock() {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                clockEl.textContent = `${hours}:${minutes}:${seconds}`;
             }
 
-            state.updateTopMenu = updateVisibility;
-
-            // edge trigger zone
-            const triggerZone = document.createElement('div');
-            triggerZone.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 40px;
-                z-index: 999;
-            `;
-            document.body.appendChild(triggerZone);
-
-            triggerZone.addEventListener('mouseenter', () => {
-                if (state.galleryActive) return;
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
-                    topMenu.classList.add('visible');
-                }
-            });
-
-            topMenu.addEventListener('mouseleave', () => {
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
-                    topMenu.classList.remove('visible');
-                }
-            });
+            updateClock();
+            setInterval(updateClock, 1000);
         }
 
         // right menu - same logic as left menu
@@ -2378,7 +2338,6 @@
                     // update menu visibility
                     if (state.updateDesktopMenu) state.updateDesktopMenu();
                     if (state.updateMobileMenu) state.updateMobileMenu();
-                    if (state.updateTopMenu) state.updateTopMenu();
                     if (state.updateRightMenu) state.updateRightMenu();
                 }
             });
@@ -2449,7 +2408,6 @@
             // update menu visibility
             if (state.updateDesktopMenu) state.updateDesktopMenu();
             if (state.updateMobileMenu) state.updateMobileMenu();
-            if (state.updateTopMenu) state.updateTopMenu();
             if (state.updateRightMenu) state.updateRightMenu();
 
             return doc;
@@ -3167,7 +3125,6 @@
                     // update menu visibility
                     if (state.updateDesktopMenu) state.updateDesktopMenu();
                     if (state.updateMobileMenu) state.updateMobileMenu();
-                    if (state.updateTopMenu) state.updateTopMenu();
                     if (state.updateRightMenu) state.updateRightMenu();
                 }
             });
@@ -4019,7 +3976,6 @@
             // restore menu visibility based on docs on desk
             if (state.updateDesktopMenu) state.updateDesktopMenu();
             if (state.updateMobileMenu) state.updateMobileMenu();
-            if (state.updateTopMenu) state.updateTopMenu();
             if (state.updateRightMenu) state.updateRightMenu();
         }
 
