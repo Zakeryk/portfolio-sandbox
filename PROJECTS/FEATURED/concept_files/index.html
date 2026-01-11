@@ -313,8 +313,7 @@
         }
 
         .folder-stack:hover {
-            background: rgba(50, 150, 100, 0.2);
-            border-color: rgba(50, 150, 100, 0.5);
+            /* hover glow disabled */
         }
 
         .file-list {
@@ -337,7 +336,7 @@
         }
 
         .file-list-item:hover {
-            background: rgba(50, 150, 100, 0.15);
+            /* hover glow disabled */
         }
 
         .file-list-item:active {
@@ -511,6 +510,8 @@
             transform: translateY(100%);
             transition: opacity 0.3s ease, transform 0.3s ease;
             pointer-events: all;
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 8%, black 92%, transparent 100%);
         }
 
         #menu-backdrop.visible {
