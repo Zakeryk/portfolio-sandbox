@@ -3962,8 +3962,10 @@
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
                 document.getElementById('lightbox-tip').classList.add('visible');
-                // Mobile: scroll to top and show scroll hint
+                // Mobile: center if 1-2 images, top-align if more
                 if (state.isMobile) {
+                    const imageCount = gallery.querySelectorAll('.lightbox-image').length;
+                    gallery.style.justifyContent = imageCount <= 2 ? 'center' : 'flex-start';
                     gallery.scrollTop = 0;
                     if (state.showScrollHint) state.showScrollHint();
                 }
@@ -4121,8 +4123,10 @@
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
                 document.getElementById('lightbox-tip').classList.add('visible');
-                // Mobile: scroll to top and show scroll hint
+                // Mobile: center if 1-2 images, top-align if more
                 if (state.isMobile) {
+                    const imageCount = gallery.querySelectorAll('.lightbox-image').length;
+                    gallery.style.justifyContent = imageCount <= 2 ? 'center' : 'flex-start';
                     gallery.scrollTop = 0;
                     if (state.showScrollHint) state.showScrollHint();
                 }
