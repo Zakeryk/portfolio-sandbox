@@ -3347,26 +3347,11 @@
             if (isOverlapping) {
                 if (!state.isHoveringParent) {
                     state.isHoveringParent = true;
-                    // SWELL ANIMATION
-                    gsap.to(targetFolder, {
-                        scale: 1,
-                        boxShadow: '0 15px 30px rgba(255, 255, 255, 0.2)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        duration: 0.3,
-                        ease: 'back.out(1.7)'
-                    });
+                    // swell glow disabled
                 }
             } else {
                 if (state.isHoveringParent) {
                     state.isHoveringParent = false;
-                    // RETURN TO NORMAL
-                    gsap.to(targetFolder, {
-                        scale: 1,
-                        boxShadow: 'none',
-                        backgroundColor: 'transparent', // Reset to css default
-                        clearProps: 'backgroundColor,boxShadow', // cleaner reset
-                        duration: 0.2
-                    });
                 }
             }
         }
@@ -3379,18 +3364,6 @@
             if (state.isHoveringParent) {
                 // Return main file
                 returnFileToList(doc);
-
-                // Reset folder visual immediately
-                const category = doc.dataset.category;
-                const folder = document.querySelector(`.folder-stack[data-category="${category}"]`);
-                if (folder) {
-                    gsap.to(folder, {
-                        scale: 1,
-                        clearProps: 'all',
-                        duration: 0.3
-                    });
-                }
-
                 state.isHoveringParent = false;
                 return true; // Dropped on parent
             }
@@ -3400,16 +3373,11 @@
         // reset all folder visuals (called when sidebar hides)
         function resetFolderStates() {
             state.isHoveringParent = false;
-            // Clear specific swell states
+            // clear any lingering inline styles
             const folders = document.querySelectorAll('.folder-stack');
             folders.forEach(folder => {
-                gsap.to(folder, {
-                    scale: 1,
-                    boxShadow: 'none',
-                    backgroundColor: 'transparent',
-                    clearProps: 'backgroundColor,boxShadow',
-                    duration: 0.2
-                });
+                folder.style.boxShadow = '';
+                folder.style.backgroundColor = '';
             });
         }
 
