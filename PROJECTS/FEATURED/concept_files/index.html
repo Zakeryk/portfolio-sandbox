@@ -1779,13 +1779,10 @@
                 toggleMenu(!isOpen);
             });
 
-            // backdrop click to close (only if no docs on desk)
+            // backdrop click to close
             menuBackdrop.addEventListener('click', () => {
                 if (state.isDeleting) return; // don't close during delete animation
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
-                    toggleMenu(false);
-                }
+                toggleMenu(false);
             });
 
             // also close menu when tapping anywhere outside filing area (only if no docs)
