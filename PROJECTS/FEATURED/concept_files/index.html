@@ -634,7 +634,7 @@
             height: 160px;
             background: rgba(15, 25, 20, 0.9);
             border-radius: 2px;
-            border: 1px solid rgba(50, 150, 100, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
             cursor: pointer;
             transition: box-shadow 0.15s ease;
@@ -3074,7 +3074,6 @@
 
             allDocs.forEach(doc => {
                 if (doc === draggedDoc) return;
-                if (doc.dataset.category !== category) return;
                 if (state.heldStack.some(item => item.el === doc)) return; // skip already collected
 
                 const docRect = doc.getBoundingClientRect();
@@ -3180,10 +3179,9 @@
                 gatherImagesToFolder(leaderDoc);
             }
 
-            // Find valid siblings on the desk
+            // Find valid siblings on the desk (allow any category)
             const siblings = Array.from(allDocs).filter(doc =>
                 doc !== leaderDoc &&
-                doc.dataset.category === category &&
                 !state.heldStack.some(item => item.el === doc)
             );
 
