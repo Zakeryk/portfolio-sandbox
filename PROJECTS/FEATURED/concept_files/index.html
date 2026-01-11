@@ -97,7 +97,7 @@
             position: fixed;
             left: calc(-1 * var(--menu-width, 260px));
             top: var(--top-menu-height, 50px);
-            bottom: 20px;
+            bottom: 0;
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -244,7 +244,7 @@
             position: fixed;
             right: calc(-1 * var(--right-menu-width, 220px));
             top: var(--top-menu-height, 50px);
-            bottom: 20px;
+            bottom: 0;
             width: var(--right-menu-width, 220px);
             z-index: 1000;
             padding: 20px;
@@ -1140,7 +1140,7 @@
                 bottom: 0 !important;
                 transform: translateY(100%) !important;
                 width: 100% !important;
-                max-height: 70vh;
+                max-height: 100vh;
                 flex-direction: column;
                 gap: 10px;
                 padding: 20px 15px 100px 15px;
@@ -1405,9 +1405,9 @@
 
     <!-- filing system (drop zones) - outside desk-container for proper z-index stacking -->
     <div id="filing-area">
-        <div class="folder-stack" data-category="saas">
+        <div class="folder-stack" data-category="design">
             <div class="folder-header">
-                <span>SAAS</span>
+                <span>DESIGN</span>
                 <span class="file-count">0</span>
             </div>
             <div class="file-list"></div>
@@ -1419,9 +1419,9 @@
             </div>
             <div class="file-list"></div>
         </div>
-        <div class="folder-stack" data-category="design">
+        <div class="folder-stack" data-category="saas">
             <div class="folder-header">
-                <span>DESIGN</span>
+                <span>SAAS</span>
                 <span class="file-count">0</span>
             </div>
             <div class="file-list"></div>
