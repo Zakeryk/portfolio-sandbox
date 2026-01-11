@@ -904,6 +904,9 @@
             return isUtahDaytime() ? 'assets/icon-time-day.png' : 'assets/icon-time-night.png';
         }
 
+        // tiles to temporarily hide (by index)
+        const HIDDEN_TILES = [1];
+
         const ASSETS = {
             0: 'assets/anim_01_still.jpg',
             1: getUtahTimeIcon(),

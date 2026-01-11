@@ -1249,8 +1249,8 @@
                 font-size: 12px;
             }
 
-            /* mobile scroll hint */
-            #scroll-hint {
+            /* mobile scroll hint - only in lightbox */
+            body:has(#lightbox-overlay.visible) #scroll-hint {
                 display: flex;
             }
 
@@ -1813,33 +1813,35 @@
             state.updateMobileMenu = updateMobileMenuVisibility;
         }
 
-        // mobile scroll hint
+        // mobile scroll hint (lightbox only)
         function setupScrollHint() {
             if (!state.isMobile) return;
 
             const scrollHint = document.getElementById('scroll-hint');
+            const lightboxGallery = document.getElementById('lightbox-gallery');
             let hasScrolled = false;
+            let showTimeout = null;
 
-            // show hint initially after a delay
-            setTimeout(() => {
-                if (!hasScrolled) {
-                    scrollHint.classList.add('visible');
-                }
-            }, 1500);
+            // store show/hide in state for lightbox to call
+            state.showScrollHint = () => {
+                hasScrolled = false;
+                showTimeout = setTimeout(() => {
+                    if (!hasScrolled && state.galleryActive) {
+                        scrollHint.classList.add('visible');
+                    }
+                }, 1000);
+            };
 
-            // hide hint when user scrolls/drags
-            document.addEventListener('touchmove', () => {
+            state.hideScrollHint = () => {
+                if (showTimeout) clearTimeout(showTimeout);
+                scrollHint.classList.remove('visible');
+            };
+
+            // hide hint when user scrolls the lightbox
+            lightboxGallery.addEventListener('scroll', () => {
                 if (!hasScrolled) {
                     hasScrolled = true;
                     scrollHint.classList.remove('visible');
-                }
-            }, { passive: true });
-
-            // also hide when dragging starts
-            document.addEventListener('touchstart', (e) => {
-                if (e.target.closest('.document')) {
-                    scrollHint.classList.remove('visible');
-                    hasScrolled = true;
                 }
             }, { passive: true });
         }
@@ -2130,10 +2132,11 @@
                     const hint = document.getElementById('menu-hint');
                     if (hint) {
                         setTimeout(() => hint.classList.add('visible'), 500);
-                        // hide on first tap anywhere
-                        document.addEventListener('click', () => {
-                            hint.classList.remove('visible');
-                        }, { once: true });
+                        // hide on any interaction
+                        const hideHint = () => hint.classList.remove('visible');
+                        ['touchstart', 'click', 'scroll'].forEach(evt => {
+                            document.addEventListener(evt, hideHint, { once: true, passive: true });
+                        });
                     }
                 }
             });
@@ -3950,9 +3953,10 @@
             setTimeout(() => {
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
-                // Show tip on desktop only
-                if (!state.isMobile) {
-                    document.getElementById('lightbox-tip').classList.add('visible');
+                document.getElementById('lightbox-tip').classList.add('visible');
+                // Show scroll hint on mobile
+                if (state.isMobile && state.showScrollHint) {
+                    state.showScrollHint();
                 }
             }, 50);
 
@@ -4107,9 +4111,10 @@
             setTimeout(() => {
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
-                // Show tip on desktop only
-                if (!state.isMobile) {
-                    document.getElementById('lightbox-tip').classList.add('visible');
+                document.getElementById('lightbox-tip').classList.add('visible');
+                // Show scroll hint on mobile
+                if (state.isMobile && state.showScrollHint) {
+                    state.showScrollHint();
                 }
             }, 50);
 
@@ -4272,6 +4277,10 @@
             gallery.classList.remove('visible');
             document.getElementById('lightbox-close').classList.remove('visible');
             document.getElementById('lightbox-tip').classList.remove('visible');
+            // Hide scroll hint on mobile
+            if (state.hideScrollHint) {
+                state.hideScrollHint();
+            }
 
             setTimeout(() => {
                 gallery.innerHTML = '';
