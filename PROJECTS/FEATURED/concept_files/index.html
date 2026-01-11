@@ -75,7 +75,6 @@
             pointer-events: none;
             z-index: 100;
             mix-blend-mode: overlay;
-            will-change: transform;
         }
 
         /* === AMBIENT GLOW === */
@@ -627,7 +626,6 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            will-change: transform;
         }
 
         .document {
@@ -875,16 +873,17 @@
         /* === LIGHTBOX OVERLAY === */
         #lightbox-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
             background: rgba(5, 10, 8, 0.25);
             opacity: 0;
             pointer-events: none;
             z-index: 900;
             transition: opacity 0.2s ease;
             backdrop-filter: blur(2px);
+            will-change: transform;
         }
 
         #lightbox-overlay.visible {
@@ -1724,9 +1723,11 @@
                 parallaxState.currentX += (parallaxState.targetX - parallaxState.currentX) * smoothing;
                 parallaxState.currentY += (parallaxState.targetY - parallaxState.currentY) * smoothing;
 
-                // only apply if not in lightbox, not dragging, and in portrait
-                if (!state.galleryActive && !state.isDragging && isPortrait()) {
+                // only apply when lightbox is open and in portrait
+                if (state.galleryActive && isPortrait()) {
                     applyParallaxToLayers();
+                } else {
+                    resetParallaxTransforms();
                 }
 
                 parallaxState.rafId = requestAnimationFrame(updateParallax);
@@ -1735,30 +1736,17 @@
             updateParallax();
         }
 
-        // apply parallax transforms to layers
+        // apply parallax transforms to lightbox overlay
         function applyParallaxToLayers() {
             const x = parallaxState.currentX;
             const y = parallaxState.currentY;
 
-            // background - shift via background-position
-            const bgOffsetX = x * 0.3;
-            const bgOffsetY = y * 0.3;
-            document.body.style.backgroundPosition = `calc(50% + ${bgOffsetX}px) calc(50% + ${bgOffsetY}px)`;
-
-            // grain overlay
-            const grainEl = document.getElementById('grain-overlay');
-            if (grainEl) {
-                const grainX = x * 0.5;
-                const grainY = y * 0.5;
-                grainEl.style.transform = `translate3d(${grainX}px, ${grainY}px, 0)`;
-            }
-
-            // documents area - moves all docs together
-            const docsArea = document.getElementById('documents-area');
-            if (docsArea) {
-                const areaX = x * 1.2;
-                const areaY = y * 1.2;
-                docsArea.style.transform = `translate3d(${areaX}px, ${areaY}px, 0)`;
+            // lightbox overlay background - shift via translate3d
+            const overlay = document.getElementById('lightbox-overlay');
+            if (overlay) {
+                const overlayX = x * 1.5;
+                const overlayY = y * 1.5;
+                overlay.style.transform = `translate3d(${overlayX}px, ${overlayY}px, 0) scale(1.1)`;
             }
         }
 
@@ -1772,11 +1760,8 @@
 
         // reset parallax transforms
         function resetParallaxTransforms() {
-            document.body.style.backgroundPosition = 'center';
-            const grainEl = document.getElementById('grain-overlay');
-            if (grainEl) grainEl.style.transform = '';
-            const docsArea = document.getElementById('documents-area');
-            if (docsArea) docsArea.style.transform = '';
+            const overlay = document.getElementById('lightbox-overlay');
+            if (overlay) overlay.style.transform = '';
         }
 
         // pause/resume parallax on visibility change
