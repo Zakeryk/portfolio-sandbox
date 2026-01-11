@@ -1059,14 +1059,25 @@
             isPlaying = !isPlaying;
         }
 
+        // scroll hint idle timer (mobile only)
+        let scrollHintTimeout = null;
+        const scrollHintEl = document.getElementById('scroll-hint');
+
+        function resetScrollHintTimer() {
+            if (!isMobile) return;
+            scrollHintEl.classList.remove('visible');
+            clearTimeout(scrollHintTimeout);
+            scrollHintTimeout = setTimeout(() => {
+                scrollHintEl.classList.add('visible');
+            }, 1000);
+        }
+
         window.addEventListener('load', () => {
             document.getElementById('preloader').classList.add('fade-out');
 
             if (isMobile) {
                 setTimeout(() => {
-                    if (scrollState.target < 0.2) {
-                        document.getElementById('scroll-hint').classList.add('visible');
-                    }
+                    scrollHintEl.classList.add('visible');
                 }, 500);
             }
 
@@ -1421,12 +1432,7 @@
             if (isMobile) {
                 scrollState.target += e.deltaY * 0.005;
                 scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
-
-                if (scrollState.target < 0.2) {
-                    document.getElementById('scroll-hint').classList.add('visible');
-                } else {
-                    document.getElementById('scroll-hint').classList.remove('visible');
-                }
+                resetScrollHintTimer();
             }
         });
 
@@ -1465,12 +1471,7 @@
             scrollState.target += delta * 0.018;
             scrollState.target = Math.max(0, Math.min(scrollState.target, scrollState.max));
             scrollState.lastTouchY = touchY;
-
-            if (scrollState.target < 0.2) {
-                document.getElementById('scroll-hint').classList.add('visible');
-            } else {
-                document.getElementById('scroll-hint').classList.remove('visible');
-            }
+            resetScrollHintTimer();
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
