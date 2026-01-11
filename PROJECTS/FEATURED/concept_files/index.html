@@ -2488,6 +2488,8 @@
                     // check if dropped on wastebin - do this BEFORE setting isDragging = false
                     if (isOverWastebin) {
                         state.isDragging = false;
+                        // reset folder glow states
+                        resetFolderStates();
                         // delete entire stack if holding one, otherwise just the single doc
                         if (state.heldStack.length > 0) {
                             deleteStackToMenu(this.target);
@@ -2506,6 +2508,8 @@
                         // flicking downward fast enough (mostly vertical direction)
                         if (velocityY > 600 && Math.abs(velocityY) > Math.abs(velocityX) * 1.2) {
                             state.isDragging = false;
+                            // reset folder glow states
+                            resetFolderStates();
 
                             // animate off screen with momentum
                             gsap.to(this.target, {
