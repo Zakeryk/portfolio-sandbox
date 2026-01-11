@@ -429,8 +429,14 @@
             color: #888;
             font-size: 12px;
             z-index: 100;
-            pointer-events: none;
+            pointer-events: auto;
             font-family: sans-serif;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        #instructions:hover {
+            color: #7ec1d9;
         }
 
         /* --- CUSTOM CURSOR --- */
@@ -793,7 +799,7 @@
 
         <div id="clock">12:00</div>
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
-        <div id="instructions">[~] <span style="font-size: 1.3em; vertical-align: middle;">⚙</span> settings</div>
+        <div id="instructions" onclick="window.location.href='https://sandbox.zakknowlton.com/'">[~] <span style="font-size: 1.3em; vertical-align: middle;">⚙</span> settings</div>
     </div>
 
     <div id="gui-container"></div>
@@ -916,7 +922,7 @@
         };
 
         const LINKS = {
-            0: 'https://sandbox.zakknowlton.com',
+            0: 'https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_files/',
             1: null,
             2: null,
             3: null,
