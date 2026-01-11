@@ -646,7 +646,7 @@
             }
 
             #mobile-sound-toggle {
-                display: flex;
+                display: none; /* temporarily disabled */
             }
 
             #mobile-bottom-section {
@@ -1068,7 +1068,10 @@
 
             setTimeout(() => {
                 document.getElementById('radio-player').classList.add('slide-in');
-                audio.play().catch(e => console.log("Audio autoplay blocked:", e));
+                // only autoplay on desktop
+                if (!isMobile) {
+                    audio.play().catch(e => console.log("Audio autoplay blocked:", e));
+                }
             }, 1200);
         });
 
