@@ -1840,6 +1840,9 @@
 
             // store show/hide in state for lightbox to call
             state.showScrollHint = () => {
+                // only show hint if more than 2 images
+                const imageCount = lightboxGallery.querySelectorAll('.lightbox-image').length;
+                if (imageCount <= 2) return;
                 resetIdleTimer();
             };
 
