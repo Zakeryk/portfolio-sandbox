@@ -1766,6 +1766,8 @@
                     hamburgerBtn.classList.remove('active');
                     menuBackdrop.classList.remove('visible');
                     filingArea.classList.remove('visible');
+                    // collapse all accordions when menu closes
+                    filingArea.querySelectorAll('.folder-stack.expanded').forEach(f => f.classList.remove('expanded'));
                 }
             }
 
@@ -1854,10 +1856,16 @@
             const filingArea = document.getElementById('filing-area');
             const menuArrow = document.getElementById('menu-arrow');
 
+            // collapse all accordions
+            function collapseAccordions() {
+                filingArea.querySelectorAll('.folder-stack.expanded').forEach(f => f.classList.remove('expanded'));
+            }
+
             // update menu visibility based on docs on desk
             function updateMenuVisibility() {
                 if (state.galleryActive) {
                     filingArea.classList.remove('visible');
+                    collapseAccordions();
                     return;
                 }
                 const docsOnDesk = document.querySelectorAll('.document').length;
@@ -1867,6 +1875,7 @@
                 } else {
                     filingArea.classList.remove('visible');
                     menuArrow.classList.remove('hidden');
+                    collapseAccordions();
                 }
             }
 
@@ -1901,6 +1910,7 @@
                 const docsOnDesk = document.querySelectorAll('.document').length;
                 if (docsOnDesk === 0) {
                     filingArea.classList.remove('visible');
+                    collapseAccordions();
                 }
                 // if docs on desk, menu stays open NO MATTER WHAT
             });
