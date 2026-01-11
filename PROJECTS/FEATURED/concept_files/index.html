@@ -2130,10 +2130,23 @@
                     const hint = document.getElementById('menu-hint');
                     if (hint) {
                         setTimeout(() => hint.classList.add('visible'), 500);
-                        // hide on any interaction
-                        const hideHint = () => hint.classList.remove('visible');
+
+                        let idleTimer = null;
+
+                        const hideHint = () => {
+                            hint.classList.remove('visible');
+                            // reset idle timer on any interaction
+                            clearTimeout(idleTimer);
+                            idleTimer = setTimeout(() => {
+                                const docsOnDesk = document.querySelectorAll('.document').length;
+                                if (docsOnDesk === 0) {
+                                    hint.classList.add('visible');
+                                }
+                            }, 3000);
+                        };
+
                         ['touchstart', 'click', 'scroll'].forEach(evt => {
-                            document.addEventListener(evt, hideHint, { once: true, passive: true });
+                            document.addEventListener(evt, hideHint, { passive: true });
                         });
                     }
                 }
