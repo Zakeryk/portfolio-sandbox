@@ -873,17 +873,16 @@
         /* === LIGHTBOX OVERLAY === */
         #lightbox-overlay {
             position: fixed;
-            top: -5%;
-            left: -5%;
-            width: 110%;
-            height: 110%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: rgba(5, 10, 8, 0.25);
             opacity: 0;
             pointer-events: none;
             z-index: 900;
             transition: opacity 0.2s ease;
             backdrop-filter: blur(2px);
-            will-change: transform;
         }
 
         #lightbox-overlay.visible {
@@ -1643,137 +1642,6 @@
             hoverCollectStart: null // timestamp when hover started
         };
 
-        // parallax state (iphone device motion)
-        const parallaxState = {
-            baseX: 0,           // calibration point
-            baseY: 0,
-            currentX: 0,        // smoothed values
-            currentY: 0,
-            targetX: 0,         // raw sensor values
-            targetY: 0,
-            rafId: null,
-            initialized: false,
-            permission: null    // 'granted' | 'denied' | 'unsupported' | null
-        };
-
-        // check if device is in portrait mode
-        function isPortrait() {
-            return window.matchMedia('(orientation: portrait)').matches;
-        }
-
-        // request ios motion permission
-        async function requestMotionPermission() {
-            if (!state.isMobile) return false;
-
-            // ios 13+ requires permission request
-            if (typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    parallaxState.permission = permission;
-                    return permission === 'granted';
-                } catch (e) {
-                    parallaxState.permission = 'denied';
-                    return false;
-                }
-            } else if ('DeviceOrientationEvent' in window) {
-                // android or older ios - no permission needed
-                parallaxState.permission = 'granted';
-                return true;
-            }
-            parallaxState.permission = 'unsupported';
-            return false;
-        }
-
-        // init parallax system
-        function initParallax() {
-            if (!state.isMobile || parallaxState.permission !== 'granted') return;
-
-            let calibrated = false;
-
-            window.addEventListener('deviceorientation', (e) => {
-                // skip if not portrait
-                if (!isPortrait()) return;
-
-                const beta = e.beta || 0;   // front-back tilt
-                const gamma = e.gamma || 0; // left-right tilt
-
-                // calibrate on first reading
-                if (!calibrated) {
-                    parallaxState.baseX = gamma;
-                    parallaxState.baseY = beta;
-                    calibrated = true;
-                    parallaxState.initialized = true;
-                    startParallaxLoop();
-                }
-
-                // clamp to reasonable range
-                const maxTilt = 30;
-                parallaxState.targetX = Math.max(-maxTilt, Math.min(maxTilt, gamma - parallaxState.baseX));
-                parallaxState.targetY = Math.max(-maxTilt, Math.min(maxTilt, beta - parallaxState.baseY));
-            }, { passive: true });
-        }
-
-        // parallax render loop
-        function startParallaxLoop() {
-            const smoothing = 0.08;
-
-            function updateParallax() {
-                // lerp for smooth movement
-                parallaxState.currentX += (parallaxState.targetX - parallaxState.currentX) * smoothing;
-                parallaxState.currentY += (parallaxState.targetY - parallaxState.currentY) * smoothing;
-
-                // only apply when lightbox is open and in portrait
-                if (state.galleryActive && isPortrait()) {
-                    applyParallaxToLayers();
-                } else {
-                    resetParallaxTransforms();
-                }
-
-                parallaxState.rafId = requestAnimationFrame(updateParallax);
-            }
-
-            updateParallax();
-        }
-
-        // apply parallax transforms to lightbox overlay
-        function applyParallaxToLayers() {
-            const x = parallaxState.currentX;
-            const y = parallaxState.currentY;
-
-            // lightbox overlay background - shift via translate3d
-            const overlay = document.getElementById('lightbox-overlay');
-            if (overlay) {
-                const overlayX = x * 1.5;
-                const overlayY = y * 1.5;
-                overlay.style.transform = `translate3d(${overlayX}px, ${overlayY}px, 0) scale(1.1)`;
-            }
-        }
-
-        // stop parallax loop
-        function stopParallax() {
-            if (parallaxState.rafId) {
-                cancelAnimationFrame(parallaxState.rafId);
-                parallaxState.rafId = null;
-            }
-        }
-
-        // reset parallax transforms
-        function resetParallaxTransforms() {
-            const overlay = document.getElementById('lightbox-overlay');
-            if (overlay) overlay.style.transform = '';
-        }
-
-        // pause/resume parallax on visibility change
-        document.addEventListener('visibilitychange', () => {
-            if (!parallaxState.initialized) return;
-            if (document.hidden) {
-                stopParallax();
-            } else {
-                startParallaxLoop();
-            }
-        });
-
         // preload images for a document
         function preloadImages(images) {
             images.forEach(src => {
@@ -2285,17 +2153,9 @@
                 if (clickTap) clickTap.textContent = 'tap';
             }
 
-            overlay.addEventListener('click', async () => {
+            overlay.addEventListener('click', () => {
                 overlay.classList.add('hidden');
                 setTimeout(() => overlay.remove(), 400);
-
-                // init parallax on mobile (requires user gesture for ios permission)
-                if (state.isMobile) {
-                    const granted = await requestMotionPermission();
-                    if (granted) {
-                        initParallax();
-                    }
-                }
 
                 // show menu hint on mobile after welcome dismissed
                 if (state.isMobile) {
