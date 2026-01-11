@@ -1207,7 +1207,7 @@
             /* mobile lightbox - vertical scroll */
             #lightbox-gallery {
                 flex-direction: column;
-                justify-content: center;
+                justify-content: flex-start;
                 align-items: center;
                 overflow-y: auto;
                 overflow-x: hidden;
@@ -1823,11 +1823,15 @@
             // store show/hide in state for lightbox to call
             state.showScrollHint = () => {
                 hasScrolled = false;
+                // only show hint if more than 2 images
+                const imageCount = lightboxGallery.querySelectorAll('.lightbox-image').length;
+                if (imageCount <= 2) return;
+
                 showTimeout = setTimeout(() => {
                     if (!hasScrolled && state.galleryActive) {
                         scrollHint.classList.add('visible');
                     }
-                }, 1000);
+                }, 2000);
             };
 
             state.hideScrollHint = () => {
@@ -3937,9 +3941,10 @@
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
                 document.getElementById('lightbox-tip').classList.add('visible');
-                // Show scroll hint on mobile
-                if (state.isMobile && state.showScrollHint) {
-                    state.showScrollHint();
+                // Mobile: scroll to top and show scroll hint
+                if (state.isMobile) {
+                    gallery.scrollTop = 0;
+                    if (state.showScrollHint) state.showScrollHint();
                 }
             }, 50);
 
@@ -4095,9 +4100,10 @@
                 gallery.classList.add('visible');
                 document.getElementById('lightbox-close').classList.add('visible');
                 document.getElementById('lightbox-tip').classList.add('visible');
-                // Show scroll hint on mobile
-                if (state.isMobile && state.showScrollHint) {
-                    state.showScrollHint();
+                // Mobile: scroll to top and show scroll hint
+                if (state.isMobile) {
+                    gallery.scrollTop = 0;
+                    if (state.showScrollHint) state.showScrollHint();
                 }
             }, 50);
 
