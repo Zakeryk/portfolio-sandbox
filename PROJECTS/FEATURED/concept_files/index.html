@@ -1128,6 +1128,11 @@
                 display: flex;
             }
 
+            /* hide esc hint on mobile */
+            .esc-hint {
+                display: none;
+            }
+
             /* hide top and right menus on mobile */
             #top-menu,
             #right-menu {
@@ -1433,7 +1438,7 @@
             <div class="file-list"></div>
         </div>
         <div class="filing-footer">
-            <a href="/">← back • esc to leave</a>
+            <a href="/">← back<span class="esc-hint"> • esc to leave</span></a>
         </div>
     </div>
 
@@ -1470,7 +1475,7 @@
     <!-- ui overlay -->
     <div id="ui-overlay">
         <div id="filter-hint">click to spill • double-click to open • drag anywhere</div>
-        <div id="back-link"><a href="/">← back • esc to leave</a></div>
+        <div id="back-link"><a href="/">← back<span class="esc-hint"> • esc to leave</span></a></div>
         <button id="cleanup-btn">clean up desk</button>
     </div>
 
@@ -2166,7 +2171,8 @@
                             clearTimeout(idleTimer);
                             idleTimer = setTimeout(() => {
                                 const docsOnDesk = document.querySelectorAll('.document').length;
-                                if (docsOnDesk === 0) {
+                                const menuOpen = document.getElementById('filing-area').classList.contains('visible');
+                                if (docsOnDesk === 0 && !menuOpen) {
                                     hint.classList.add('visible');
                                 }
                             }, 3000);
