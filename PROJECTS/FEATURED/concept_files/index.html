@@ -1817,35 +1817,34 @@
 
             const scrollHint = document.getElementById('scroll-hint');
             const lightboxGallery = document.getElementById('lightbox-gallery');
-            let hasScrolled = false;
-            let showTimeout = null;
+            let idleTimeout = null;
+
+            const resetIdleTimer = () => {
+                scrollHint.classList.remove('visible');
+                clearTimeout(idleTimeout);
+                if (state.galleryActive) {
+                    idleTimeout = setTimeout(() => {
+                        if (state.galleryActive) {
+                            scrollHint.classList.add('visible');
+                        }
+                    }, 3000);
+                }
+            };
 
             // store show/hide in state for lightbox to call
             state.showScrollHint = () => {
-                hasScrolled = false;
-                // only show hint if more than 2 images
-                const imageCount = lightboxGallery.querySelectorAll('.lightbox-image').length;
-                if (imageCount <= 2) return;
-
-                showTimeout = setTimeout(() => {
-                    if (!hasScrolled && state.galleryActive) {
-                        scrollHint.classList.add('visible');
-                    }
-                }, 2000);
+                resetIdleTimer();
             };
 
             state.hideScrollHint = () => {
-                if (showTimeout) clearTimeout(showTimeout);
+                clearTimeout(idleTimeout);
                 scrollHint.classList.remove('visible');
             };
 
-            // hide hint when user scrolls the lightbox
-            lightboxGallery.addEventListener('scroll', () => {
-                if (!hasScrolled) {
-                    hasScrolled = true;
-                    scrollHint.classList.remove('visible');
-                }
-            }, { passive: true });
+            // hide hint on any interaction and restart timer
+            ['touchstart', 'scroll'].forEach(evt => {
+                lightboxGallery.addEventListener(evt, resetIdleTimer, { passive: true });
+            });
         }
 
         // desktop offcanvas menu - stays open when docs on desk
