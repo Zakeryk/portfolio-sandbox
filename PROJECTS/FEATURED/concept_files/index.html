@@ -1874,14 +1874,8 @@
                 filingArea.querySelectorAll('.folder-stack.expanded').forEach(f => f.classList.remove('expanded'));
             }
 
-            // update menu visibility - always visible on desktop (unless gallery)
+            // show menu permanently (called after welcome dismissed)
             function updateMenuVisibility() {
-                if (state.galleryActive) {
-                    filingArea.classList.remove('visible');
-                    collapseAccordions();
-                    return;
-                }
-                // always show left menu on desktop
                 filingArea.classList.add('visible');
                 menuArrow.classList.add('hidden');
             }
@@ -1903,13 +1897,9 @@
             `;
             document.body.appendChild(triggerZone);
 
-            // edge triggers menu open (for discovering when desk is empty)
+            // edge triggers menu open (disabled - menu now opens after welcome dismissed)
             triggerZone.addEventListener('mouseenter', () => {
-                if (state.galleryActive) return;
-                const docsOnDesk = document.querySelectorAll('.document').length;
-                if (docsOnDesk === 0) {
-                    filingArea.classList.add('visible');
-                }
+                // do nothing - edge trigger disabled
             });
 
             // menu stays open always on desktop - no close behavior
@@ -1917,10 +1907,7 @@
                 // do nothing - menu stays open
             });
 
-            // show menu on page load
-            setTimeout(() => {
-                updateMenuVisibility();
-            }, 100);
+            // menu starts closed, opens after welcome dismissed
         }
 
         // top menu - persistent with clock (desktop only)
@@ -1950,23 +1937,15 @@
             const menuArrowRight = document.getElementById('menu-arrow-right');
             if (!rightMenu) return;
 
-            // always visible on desktop (unless gallery)
+            // show menu permanently (called after welcome dismissed)
             function updateVisibility() {
-                if (state.galleryActive) {
-                    rightMenu.classList.remove('visible');
-                    return;
-                }
-                // always show right menu on desktop
                 rightMenu.classList.add('visible');
                 if (menuArrowRight) menuArrowRight.classList.add('hidden');
             }
 
             state.updateRightMenu = updateVisibility;
 
-            // show right menu on page load
-            setTimeout(() => {
-                updateVisibility();
-            }, 100);
+            // menu starts closed, opens after welcome dismissed
         }
 
         // mobile single-tap to open lightbox
@@ -2146,6 +2125,12 @@
                             document.addEventListener(evt, hideHint, { passive: true });
                         });
                     }
+                } else {
+                    // desktop: open both menus permanently after welcome dismissed
+                    setTimeout(() => {
+                        if (state.updateDesktopMenu) state.updateDesktopMenu();
+                        if (state.updateRightMenu) state.updateRightMenu();
+                    }, 300);
                 }
             });
         }
