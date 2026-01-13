@@ -1956,6 +1956,9 @@
                 filingArea.querySelectorAll('.folder-stack.expanded').forEach(f => f.classList.remove('expanded'));
             }
 
+            // expose globally so other functions can call it
+            state.collapseAccordions = collapseAccordions;
+
             // show menu permanently (called after welcome dismissed)
             function updateMenuVisibility() {
                 filingArea.classList.add('visible');
@@ -2621,6 +2624,9 @@
                 onPress: function () {
                     state.isDragging = true;
                     state.currentZIndex++;
+
+                    // collapse accordions when interacting with board items
+                    if (state.collapseAccordions) state.collapseAccordions();
 
                     // show wastebin when dragging
                     if (state.wastebin) {
@@ -3808,6 +3814,10 @@
 
                 onPress: function () {
                     state.currentZIndex++;
+
+                    // collapse accordions when interacting with board items
+                    if (state.collapseAccordions) state.collapseAccordions();
+
                     gsap.to(this.target, {
                         zIndex: state.currentZIndex,
                         scale: 1.05,
