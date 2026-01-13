@@ -2206,55 +2206,10 @@
         }
 
         // helper to manage filing area visibility based on all states
+        // NOTE: on desktop, menus never close after welcome dismissed
         function updateFilingAreaVisibility(mouseX = null) {
-            if (state.isMobile) return;
-
-            const filingArea = document.getElementById('filing-area');
-
-            // NEVER open during gallery
-            if (state.galleryActive) {
-                filingArea.classList.remove('visible');
-                return;
-            }
-
-            const distanceFromLeft = mouseX !== null ? mouseX : -1;
-
-            // check if currently dragging an unopened file (can be filed away)
-            const draggingUnopenedFile = state.isDragging && state.selectedDoc &&
-                !state.spilledFolders.has(state.selectedDoc.dataset.index);
-
-            // check if holding stack of unopened files
-            const holdingUnopenedStack = state.heldStack.length > 0 &&
-                state.heldStack.every(item => !state.spilledFolders.has(item.el.dataset.index));
-
-            // conditions to OPEN (only for filing actions):
-            // 1. mouse within 200px of left edge AND NOT dragging anything (empty cursor)
-            // 2. dragging an unopened file (can be returned to filing)
-            // 3. holding stack of unopened files (can be returned to filing)
-            const shouldOpen = (
-                (distanceFromLeft < 200 && !state.isDragging) ||
-                draggingUnopenedFile ||
-                holdingUnopenedStack
-            );
-
-            // conditions to CLOSE:
-            // mouse far from left AND not in any filing action AND no docs on desk
-            const docsOnDesk = document.querySelectorAll('.document').length;
-            const shouldClose = (
-                distanceFromLeft > 350 &&
-                !draggingUnopenedFile &&
-                !holdingUnopenedStack &&
-                docsOnDesk === 0
-            );
-
-            if (shouldOpen) {
-                filingArea.classList.add('visible');
-            } else if (shouldClose) {
-                if (filingArea.classList.contains('visible')) {
-                    filingArea.classList.remove('visible');
-                    resetFolderStates();
-                }
-            }
+            // disabled on desktop - menus stay open permanently
+            return;
         }
 
         // filing area mouse interactions
@@ -3883,10 +3838,6 @@
                 spillImagesForGallery(doc);
             }
 
-            // Hide filing area
-            const filingArea = document.getElementById('filing-area');
-            filingArea.classList.remove('visible');
-
             // Show overlay
             document.getElementById('lightbox-overlay').classList.add('visible');
 
@@ -4018,10 +3969,6 @@
 
         function enterLightbox(img) {
             if (state.galleryActive) return; // already active
-
-            // Hide filing area
-            const filingArea = document.getElementById('filing-area');
-            filingArea.classList.remove('visible');
 
             // Get all images from same parent
             const parentIndex = img.dataset.parent;
