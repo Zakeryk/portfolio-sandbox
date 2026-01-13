@@ -2214,26 +2214,52 @@
                         if (state.updateRightMenu) state.updateRightMenu();
                     }, 300);
 
-                    // desktop hint - show immediately with menus, hide forever on first doc
+                    // desktop hint - show with menus, hide on doc add, reshow on 2s idle if empty
                     const desktopHint = document.getElementById('desktop-hint');
                     if (desktopHint) {
-                        // show hint when menus appear
-                        setTimeout(() => {
-                            desktopHint.classList.add('visible');
-                        }, 400);
+                        let idleTimer = null;
+                        let hasShownInitial = false;
 
-                        // watch for first document added, then hide forever
-                        const observer = new MutationObserver(() => {
+                        const updateHintVisibility = () => {
                             const docsOnDesk = document.querySelectorAll('.document').length;
                             if (docsOnDesk > 0) {
                                 desktopHint.classList.remove('visible');
-                                observer.disconnect();
                             }
+                        };
+
+                        const resetIdleTimer = () => {
+                            clearTimeout(idleTimer);
+                            if (!hasShownInitial) return; // don't interfere with initial show
+                            desktopHint.classList.remove('visible');
+                            idleTimer = setTimeout(() => {
+                                const docsOnDesk = document.querySelectorAll('.document').length;
+                                if (docsOnDesk === 0) {
+                                    desktopHint.classList.add('visible');
+                                }
+                            }, 2000);
+                        };
+
+                        // show hint when menus appear
+                        setTimeout(() => {
+                            desktopHint.classList.add('visible');
+                            hasShownInitial = true;
+                        }, 400);
+
+                        // watch for document changes
+                        const observer = new MutationObserver(() => {
+                            updateHintVisibility();
+                            // restart idle timer when docs change
+                            resetIdleTimer();
                         });
 
                         observer.observe(document.getElementById('documents-area'), {
                             childList: true,
                             subtree: true
+                        });
+
+                        // idle detection
+                        ['mousemove', 'click', 'keydown'].forEach(evt => {
+                            document.addEventListener(evt, resetIdleTimer, { passive: true });
                         });
                     }
                 }
