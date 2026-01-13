@@ -2251,10 +2251,10 @@
             const dotSpacing = 25;
             const dotBaseRadius = 1;
             const glowRadius = 150;
-            const baseBrightness = 0.08; // faint visibility when files on board
+            const baseBrightness = 0.15; // faint visibility across whole board when files present
             let dots = [];
             let animationId = null;
-            let globalFade = 0; // fades in when files present
+            let globalFade = 0; // smooth fade in/out
 
             function resize() {
                 canvas.width = window.innerWidth;
@@ -2301,10 +2301,10 @@
 
                 // smooth global fade in/out
                 const targetFade = hasElements ? 1 : 0;
-                globalFade += (targetFade - globalFade) * 0.05;
+                globalFade += (targetFade - globalFade) * 0.03; // slower fade
 
                 // show/hide canvas
-                if (globalFade > 0.01) {
+                if (globalFade > 0.001) {
                     canvas.classList.add('visible');
                 } else {
                     canvas.classList.remove('visible');
@@ -2312,39 +2312,37 @@
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                dots.forEach(dot => {
-                    // calculate brightness based on proximity to elements
-                    let targetBrightness = hasElements ? baseBrightness : 0;
+                // only render if fading in/out or visible
+                if (globalFade > 0.001) {
+                    dots.forEach(dot => {
+                        // base brightness for all dots when files present, plus proximity boost
+                        let targetBrightness = hasElements ? baseBrightness : 0;
 
-                    elements.forEach(el => {
-                        const dx = dot.x - el.x;
-                        const dy = dot.y - el.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        const effectRadius = glowRadius + el.size * 0.3;
+                        elements.forEach(el => {
+                            const dx = dot.x - el.x;
+                            const dy = dot.y - el.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            const effectRadius = glowRadius + el.size * 0.3;
 
-                        if (distance < effectRadius) {
-                            const intensity = 1 - (distance / effectRadius);
-                            targetBrightness = Math.max(targetBrightness, intensity);
-                        }
-                    });
+                            if (distance < effectRadius) {
+                                const intensity = 1 - (distance / effectRadius);
+                                targetBrightness = Math.max(targetBrightness, intensity);
+                            }
+                        });
 
-                    // smooth transition
-                    dot.brightness += (targetBrightness - dot.brightness) * 0.1;
+                        // smooth transition for individual dot brightness
+                        dot.brightness += (targetBrightness - dot.brightness) * 0.1;
 
-                    // apply global fade
-                    const fadedBrightness = dot.brightness * globalFade;
+                        // apply global fade to everything
+                        const alpha = (0.06 + dot.brightness * 0.3) * globalFade;
+                        const radius = dotBaseRadius + dot.brightness * 1.5;
 
-                    // only draw if has some brightness
-                    if (fadedBrightness > 0.005) {
-                        const alpha = (0.05 + fadedBrightness * 0.35) * 0.9; // 10% fainter
-                        const radius = dotBaseRadius + fadedBrightness * 1.5;
-                        const glowSize = fadedBrightness * 6;
-
-                        // glow
-                        if (fadedBrightness > 0.1) {
+                        // glow effect for brighter dots
+                        if (dot.brightness > 0.2) {
+                            const glowSize = dot.brightness * 6;
                             ctx.beginPath();
                             ctx.arc(dot.x, dot.y, radius + glowSize, 0, Math.PI * 2);
-                            ctx.fillStyle = `rgba(50, 150, 100, ${alpha * 0.25})`;
+                            ctx.fillStyle = `rgba(50, 150, 100, ${alpha * 0.2})`;
                             ctx.fill();
                         }
 
@@ -2353,8 +2351,8 @@
                         ctx.arc(dot.x, dot.y, radius, 0, Math.PI * 2);
                         ctx.fillStyle = `rgba(50, 150, 100, ${alpha})`;
                         ctx.fill();
-                    }
-                });
+                    });
+                }
 
                 animationId = requestAnimationFrame(render);
             }
