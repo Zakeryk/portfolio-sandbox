@@ -1438,7 +1438,7 @@
             <div class="file-list"></div>
         </div>
         <div class="filing-footer">
-            <a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/">← back to dashboard<span class="esc-hint"> • esc to leave</span></a>
+            <a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/">← back to dashboard</a>
         </div>
     </div>
 
@@ -1475,7 +1475,7 @@
     <!-- ui overlay -->
     <div id="ui-overlay">
         <div id="filter-hint">click to spill • double-click to open • drag anywhere</div>
-        <div id="back-link"><a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/">← back to dashboard<span class="esc-hint"> • esc to leave</span></a></div>
+        <div id="back-link"><a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/">← back to dashboard</a></div>
         <button id="cleanup-btn">clean up desk</button>
     </div>
 
@@ -3336,11 +3336,21 @@
             const fileList = folder.querySelector('.file-list');
             const index = doc.dataset.index;
 
-            // remove peek images for this doc
+            // CRITICAL: mark document as being filed to prevent peek images from being created
+            doc.dataset.beingDeleted = 'true';
+
+            // remove ALL peek images immediately
+            const allPeeks = document.querySelectorAll('.peek-image');
+            allPeeks.forEach(img => {
+                gsap.killTweensOf(img);
+                img.remove();
+            });
+
+            // double check - remove any peek images specifically for this doc
             const peekImages = document.querySelectorAll(`.peek-image[data-parent="${index}"]`);
             peekImages.forEach(img => {
                 gsap.killTweensOf(img);
-                img.remove();
+                if (img.parentNode) img.remove();
             });
 
             // gather spilled images first
@@ -3381,6 +3391,13 @@
                 duration: 0.4,
                 ease: 'power3.in',
                 onComplete: () => {
+                    // CRITICAL: one more sweep to remove any peek images that snuck in during animation
+                    const finalPeekCheck = document.querySelectorAll(`.peek-image[data-parent="${index}"]`);
+                    finalPeekCheck.forEach(img => {
+                        gsap.killTweensOf(img);
+                        img.remove();
+                    });
+
                     doc.remove();
                     insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
