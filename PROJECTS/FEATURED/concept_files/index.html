@@ -496,6 +496,57 @@
             50% { transform: translateY(6px); }
         }
 
+        /* === DESKTOP MENU HINT === */
+        #desktop-hint {
+            position: fixed;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #desktop-hint.visible {
+            opacity: 1;
+        }
+
+        #desktop-hint-arrow {
+            width: 24px;
+            height: 24px;
+            animation: bounce-arrow-left 1s ease-in-out infinite;
+        }
+
+        #desktop-hint-arrow svg {
+            width: 100%;
+            height: 100%;
+            color: rgba(50, 150, 100, 0.9);
+        }
+
+        #desktop-hint-text {
+            color: rgba(50, 150, 100, 0.9);
+            font-size: 13px;
+            font-family: 'Courier Prime', monospace;
+            white-space: nowrap;
+        }
+
+        @keyframes bounce-arrow-left {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(-6px); }
+        }
+
+        /* hide desktop hint on mobile */
+        @media (max-width: 768px) {
+            #desktop-hint {
+                display: none;
+            }
+        }
+
         #menu-backdrop {
             display: none;
             position: fixed;
@@ -1399,6 +1450,14 @@
         </div>
     </div>
 
+    <!-- desktop menu hint -->
+    <div id="desktop-hint">
+        <div id="desktop-hint-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4m0 0l6-6m-6 6l6 6"/></svg>
+        </div>
+        <div id="desktop-hint-text">click to view projects</div>
+    </div>
+
     <!-- mobile menu backdrop -->
     <div id="menu-backdrop"></div>
 
@@ -2131,6 +2190,29 @@
                         if (state.updateDesktopMenu) state.updateDesktopMenu();
                         if (state.updateRightMenu) state.updateRightMenu();
                     }, 300);
+
+                    // desktop hint logic - same as mobile
+                    const desktopHint = document.getElementById('desktop-hint');
+                    if (desktopHint) {
+                        setTimeout(() => desktopHint.classList.add('visible'), 500);
+
+                        let idleTimer = null;
+
+                        const hideDesktopHint = () => {
+                            desktopHint.classList.remove('visible');
+                            clearTimeout(idleTimer);
+                            idleTimer = setTimeout(() => {
+                                const docsOnDesk = document.querySelectorAll('.document').length;
+                                if (docsOnDesk === 0) {
+                                    desktopHint.classList.add('visible');
+                                }
+                            }, 3000);
+                        };
+
+                        ['mousemove', 'click', 'keydown'].forEach(evt => {
+                            document.addEventListener(evt, hideDesktopHint, { passive: true });
+                        });
+                    }
                 }
             });
         }
