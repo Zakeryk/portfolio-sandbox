@@ -499,7 +499,7 @@
         /* === DESKTOP MENU HINT === */
         #desktop-hint {
             position: fixed;
-            left: 24px;
+            left: calc(var(--menu-width, 260px) + 24px);
             top: 50%;
             transform: translateY(-50%);
             z-index: 1999;
@@ -2191,14 +2191,12 @@
                         if (state.updateRightMenu) state.updateRightMenu();
                     }, 300);
 
-                    // desktop hint logic - same as mobile
+                    // desktop hint logic - shows after 3s idle
                     const desktopHint = document.getElementById('desktop-hint');
                     if (desktopHint) {
-                        setTimeout(() => desktopHint.classList.add('visible'), 500);
-
                         let idleTimer = null;
 
-                        const hideDesktopHint = () => {
+                        const resetIdleTimer = () => {
                             desktopHint.classList.remove('visible');
                             clearTimeout(idleTimer);
                             idleTimer = setTimeout(() => {
@@ -2209,8 +2207,11 @@
                             }, 3000);
                         };
 
+                        // start initial idle timer
+                        resetIdleTimer();
+
                         ['mousemove', 'click', 'keydown'].forEach(evt => {
-                            document.addEventListener(evt, hideDesktopHint, { passive: true });
+                            document.addEventListener(evt, resetIdleTimer, { passive: true });
                         });
                     }
                 }
