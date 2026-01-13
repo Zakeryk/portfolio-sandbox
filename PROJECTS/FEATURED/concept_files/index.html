@@ -2576,10 +2576,20 @@
                 }, { passive: true });
             }
 
+            // custom bounds to avoid menus
+            const menuWidth = state.isMobile ? 0 : 260;
+            const rightMenuWidth = state.isMobile ? 0 : 220;
+            const topMenuHeight = state.isMobile ? 0 : 50;
+
             const draggable = Draggable.create(doc, {
                 type: 'x,y',
                 cursor: 'pointer',
-                bounds: '#desk-container',
+                bounds: {
+                    left: menuWidth,
+                    top: topMenuHeight,
+                    width: window.innerWidth - menuWidth - rightMenuWidth,
+                    height: window.innerHeight - topMenuHeight
+                },
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
 
@@ -3754,10 +3764,20 @@
 
         // make spilled image draggable
         function makeImageDraggable(img) {
+            // custom bounds to avoid menus
+            const menuWidth = state.isMobile ? 0 : 260;
+            const rightMenuWidth = state.isMobile ? 0 : 220;
+            const topMenuHeight = state.isMobile ? 0 : 50;
+
             Draggable.create(img, {
                 type: 'x,y',
                 cursor: 'pointer',
-                bounds: '#desk-container',
+                bounds: {
+                    left: menuWidth,
+                    top: topMenuHeight,
+                    width: window.innerWidth - menuWidth - rightMenuWidth,
+                    height: window.innerHeight - topMenuHeight
+                },
                 inertia: state.isMobile ? false : true,
                 edgeResistance: 0.8,
 
