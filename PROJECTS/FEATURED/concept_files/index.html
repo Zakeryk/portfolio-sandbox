@@ -734,24 +734,6 @@
             cursor: grabbing !important;
         }
 
-        .document.folder-style {
-            background: #1a1a1a;
-        }
-
-        .document.photo-style {
-            background: #222;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        }
-
-        .document.photo-style .doc-content {
-            background: transparent;
-            width: 100%;
-            height: 100%;
-            padding: 15px;
-        }
-
         .doc-title {
             font-size: 14px;
             font-weight: 700;
@@ -1163,10 +1145,6 @@
                 width: 170px;
                 height: 123px;
                 padding: 11px;
-            }
-
-            .document.photo-style {
-                border: none;
             }
 
             .doc-title {
@@ -2271,14 +2249,13 @@
 
         // reactive dot matrix background
         function setupDotMatrix() {
-            if (state.isMobile) return; // skip on mobile for performance
-
             const canvas = document.getElementById('dot-matrix');
             const ctx = canvas.getContext('2d');
 
-            const dotSpacing = 25;
+            // slightly larger spacing on mobile for performance
+            const dotSpacing = state.isMobile ? 30 : 25;
             const dotBaseRadius = 1;
-            const glowRadius = 150;
+            const glowRadius = state.isMobile ? 120 : 150;
             const baseBrightness = 0.15; // faint visibility across whole board when files present
             let dots = [];
             let animationId = null;
@@ -2431,8 +2408,10 @@
                 setupDesktopMenu();
                 setupTopMenu();
                 setupRightMenu();
-                setupDotMatrix();
             }
+
+            // dot matrix (both mobile and desktop)
+            setupDotMatrix();
 
             // cleanup button
             document.getElementById('cleanup-btn').addEventListener('click', cleanupAllImages);
