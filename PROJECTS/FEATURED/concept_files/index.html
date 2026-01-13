@@ -700,7 +700,7 @@
             position: absolute;
             width: 220px;
             height: 160px;
-            background: rgba(15, 25, 20, 0.9);
+            background: rgb(15, 25, 20);
             border-radius: 2px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
@@ -2253,13 +2253,14 @@
             const ctx = canvas.getContext('2d');
 
             // slightly larger spacing on mobile for performance
-            const dotSpacing = state.isMobile ? 30 : 25;
+            const dotSpacing = state.isMobile ? 22 : 25;
             const dotBaseRadius = 1;
             const glowRadius = state.isMobile ? 120 : 150;
             const baseBrightness = 0.15; // faint visibility across whole board when files present
             let dots = [];
             let animationId = null;
             let globalFade = 0; // smooth fade in/out
+            let dragFade = 1; // fades down when dragging (files "lifted" from desk)
 
             function resize() {
                 canvas.width = window.innerWidth;
@@ -2308,6 +2309,10 @@
                 const targetFade = hasElements ? 1 : 0;
                 globalFade += (targetFade - globalFade) * 0.03; // slower fade
 
+                // fade dots when dragging (files "lifted" from desk)
+                const targetDragFade = state.isDragging ? 0.6 : 1;
+                dragFade += (targetDragFade - dragFade) * 0.15;
+
                 // show/hide canvas
                 if (globalFade > 0.001) {
                     canvas.classList.add('visible');
@@ -2338,8 +2343,8 @@
                         // smooth transition for individual dot brightness
                         dot.brightness += (targetBrightness - dot.brightness) * 0.1;
 
-                        // apply global fade to everything
-                        const alpha = (0.06 + dot.brightness * 0.3) * globalFade;
+                        // apply global fade and drag fade to everything
+                        const alpha = (0.06 + dot.brightness * 0.3) * globalFade * dragFade;
                         const radius = dotBaseRadius + dot.brightness * 1.5;
 
                         // glow effect for brighter dots
