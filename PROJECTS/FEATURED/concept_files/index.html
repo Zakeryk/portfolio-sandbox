@@ -2214,27 +2214,26 @@
                         if (state.updateRightMenu) state.updateRightMenu();
                     }, 300);
 
-                    // desktop hint logic - shows after 3s idle
+                    // desktop hint - show immediately with menus, hide forever on first doc
                     const desktopHint = document.getElementById('desktop-hint');
                     if (desktopHint) {
-                        let idleTimer = null;
+                        // show hint when menus appear
+                        setTimeout(() => {
+                            desktopHint.classList.add('visible');
+                        }, 400);
 
-                        const resetIdleTimer = () => {
-                            desktopHint.classList.remove('visible');
-                            clearTimeout(idleTimer);
-                            idleTimer = setTimeout(() => {
-                                const docsOnDesk = document.querySelectorAll('.document').length;
-                                if (docsOnDesk === 0) {
-                                    desktopHint.classList.add('visible');
-                                }
-                            }, 2000);
-                        };
+                        // watch for first document added, then hide forever
+                        const observer = new MutationObserver(() => {
+                            const docsOnDesk = document.querySelectorAll('.document').length;
+                            if (docsOnDesk > 0) {
+                                desktopHint.classList.remove('visible');
+                                observer.disconnect();
+                            }
+                        });
 
-                        // start initial idle timer
-                        resetIdleTimer();
-
-                        ['mousemove', 'click', 'keydown'].forEach(evt => {
-                            document.addEventListener(evt, resetIdleTimer, { passive: true });
+                        observer.observe(document.getElementById('documents-area'), {
+                            childList: true,
+                            subtree: true
                         });
                     }
                 }
