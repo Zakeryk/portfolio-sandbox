@@ -3173,6 +3173,10 @@
             const startAngle = (Math.random() - 0.5) * 8; // ±4 degrees
             const endAngle = (Math.random() - 0.5) * 6;   // slight final angle
 
+            // set offscreen position via inline style BEFORE adding to DOM
+            doc.style.transform = `translate(${x}px, -500px) rotate(${startAngle}deg)`;
+            doc.style.zIndex = state.currentZIndex++;
+
             doc.innerHTML = `
                 <div class="doc-content">
                     <h3 class="doc-title">${item.title}</h3>
@@ -3182,14 +3186,6 @@
             `;
 
             container.appendChild(doc);
-
-            // set position AFTER adding to DOM
-            gsap.set(doc, {
-                x: x,
-                y: -500,
-                rotation: startAngle,
-                zIndex: state.currentZIndex++
-            });
 
             // slide in from top
             gsap.to(doc, {
@@ -3301,6 +3297,14 @@
                 endAngle = (Math.random() - 0.5) * 6;   // slight final angle
             }
 
+            // set offscreen position via inline style BEFORE adding to DOM (for non-drag)
+            if (isDrag) {
+                doc.style.transform = `translate(${spawnX}px, ${spawnY}px) rotate(${startAngle}deg)`;
+            } else {
+                doc.style.transform = `translate(${spawnX}px, -500px) rotate(${startAngle}deg)`;
+            }
+            doc.style.zIndex = state.currentZIndex++;
+
             doc.innerHTML = `
                 <div class="doc-content">
                     <h3 class="doc-title">${listItem.dataset.title}</h3>
@@ -3310,14 +3314,6 @@
             `;
 
             container.appendChild(doc);
-
-            // set position AFTER adding to DOM
-            gsap.set(doc, {
-                x: spawnX,
-                y: isDrag ? spawnY : -500,
-                rotation: startAngle,
-                zIndex: state.currentZIndex++
-            });
 
             // reset menu closed flag so menu can auto-open for new doc
             state.menuUserClosed = false;
