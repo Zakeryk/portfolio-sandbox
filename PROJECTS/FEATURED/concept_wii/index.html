@@ -405,12 +405,12 @@
             opacity: 0.8;
         }
 
-        /* === MUSIC WIDGET (centered left) === */
+        /* === MUSIC WIDGET (bottom left) === */
         #music-widget {
             position: fixed;
             left: 30px;
-            top: 50%;
-            transform: translateY(-50%) translateX(-150%);
+            bottom: 30px;
+            transform: translateY(150px);
             z-index: 100;
             background: #f0f0f0;
             border: 2px solid #ffffff;
@@ -422,7 +422,7 @@
         }
 
         #music-widget.slide-in {
-            transform: translateY(-50%) translateX(0);
+            transform: translateY(0);
             opacity: 1;
         }
 
