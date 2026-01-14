@@ -3175,9 +3175,10 @@
 
             gsap.set(doc, {
                 x: x,
-                y: -400, // start off-screen top
+                y: -200,
                 rotation: startAngle,
-                scale: 1,
+                scale: 0.8,
+                opacity: 0,
                 zIndex: state.currentZIndex++
             });
 
@@ -3191,10 +3192,12 @@
 
             container.appendChild(doc);
 
-            // animate slide in from top
+            // fade + slide in from top
             gsap.to(doc, {
                 y: y,
                 rotation: endAngle,
+                scale: 1,
+                opacity: 1,
                 duration: 0.5,
                 ease: 'power2.out'
             });
@@ -3303,9 +3306,10 @@
 
             gsap.set(doc, {
                 x: spawnX,
-                y: isDrag ? spawnY : -400, // start off-screen top for click/tap
+                y: isDrag ? spawnY : -200,
                 rotation: startAngle,
-                scale: 1,
+                scale: isDrag ? 1 : 0.8,
+                opacity: isDrag ? 1 : 0,
                 zIndex: state.currentZIndex++
             });
 
@@ -3329,10 +3333,12 @@
                 // trigger drag immediately for drag interaction
                 draggable.startDrag(e);
             } else {
-                // shuffleboard slide-in from top
+                // fade + slide in from top
                 gsap.to(doc, {
                     y: spawnY,
                     rotation: endAngle,
+                    scale: 1,
+                    opacity: 1,
                     duration: 0.5,
                     ease: 'power2.out'
                 });
