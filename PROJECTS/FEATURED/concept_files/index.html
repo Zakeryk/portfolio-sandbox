@@ -990,14 +990,14 @@
             right: 0;
             transform: translateY(-50%);
             display: flex;
-            gap: 30px;
+            gap: clamp(15px, 2vw, 30px);
             align-items: center;
             justify-content: center;
             z-index: 1002;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease;
-            padding: 15vh 5vw;
+            padding: 10vh clamp(20px, 2vw, 40px);
             overflow-x: auto;
             overflow-y: visible;
             scroll-behavior: smooth;
@@ -1013,14 +1013,15 @@
         }
 
         .lightbox-image {
-            max-width: 350px;
-            max-height: 50vh;
+            max-width: clamp(280px, 28vw, 600px);
+            max-height: 70vh;
             cursor: pointer;
             transition: all 0.15s ease;
             object-fit: contain;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
             border: none;
             pointer-events: all;
+            flex-shrink: 0;
         }
 
         .lightbox-image:hover {
@@ -1029,7 +1030,7 @@
         }
 
         .lightbox-image.focused {
-            transform: scale(1.5);
+            transform: scale(1.4);
             z-index: 1003;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
         }
