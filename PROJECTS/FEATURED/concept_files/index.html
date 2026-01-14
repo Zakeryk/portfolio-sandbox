@@ -392,6 +392,8 @@
             transition: background 0.2s ease;
             font-size: 11px;
             color: #8ab;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(50, 150, 100, 0.3);
         }
 
         @media (min-width: 769px) {
@@ -1279,6 +1281,8 @@
             .folder-stack.expanded .file-list {
                 max-height: 200px;
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                touch-action: pan-y;
             }
 
             .file-count {
@@ -3162,9 +3166,13 @@
                 spawnY = cursorY - 80;  // cursor position minus half doc height (160/2)
             } else {
                 // shuffleboard spawn - random x, random y landing
-                const padding = 150; // keep away from edges
-                spawnX = padding + Math.random() * (containerRect.width - padding * 2 - 220);
-                spawnY = padding + Math.random() * (containerRect.height - padding * 2 - 160);
+                const docWidth = state.isMobile ? 170 : 220;
+                const docHeight = state.isMobile ? 123 : 160;
+                const padding = state.isMobile ? 20 : 150; // smaller padding on mobile
+                const availableWidth = Math.max(50, containerRect.width - padding * 2 - docWidth);
+                const availableHeight = Math.max(50, containerRect.height - padding * 2 - docHeight);
+                spawnX = padding + Math.random() * availableWidth;
+                spawnY = padding + Math.random() * availableHeight;
                 startAngle = (Math.random() - 0.5) * 8; // ±4 degrees starting angle
                 endAngle = (Math.random() - 0.5) * 6;   // slight final angle
             }
