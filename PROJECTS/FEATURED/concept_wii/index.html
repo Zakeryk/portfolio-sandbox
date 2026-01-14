@@ -724,6 +724,58 @@
         #tile-video-overlay.playing {
             opacity: 1;
         }
+
+        /* TILE TICKER OVERLAY */
+        #tile-ticker-overlay {
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+            overflow: hidden;
+        }
+
+        .ticker-band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 24px;
+            background: rgba(20, 20, 20, 0.85);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .ticker-band.top {
+            top: 10px;
+        }
+
+        .ticker-band.bottom {
+            bottom: 10px;
+        }
+
+        .ticker-content {
+            display: flex;
+            white-space: nowrap;
+            animation: ticker-scroll 8s linear infinite;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .ticker-band.bottom .ticker-content {
+            animation-direction: reverse;
+        }
+
+        .ticker-content span {
+            padding: 0 30px;
+        }
+
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
     </style>
 </head>
 
@@ -799,6 +851,18 @@
             <video muted playsinline preload="auto">
                 <source src="assets/anim_01.mp4" type="video/mp4">
             </video>
+        </div>
+        <div id="tile-ticker-overlay">
+            <div class="ticker-band top">
+                <div class="ticker-content">
+                    <span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span>
+                </div>
+            </div>
+            <div class="ticker-band bottom">
+                <div class="ticker-content">
+                    <span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span><span>MY WORK</span>
+                </div>
+            </div>
         </div>
 
         <div id="clock">12:00</div>
@@ -1274,6 +1338,7 @@
         // --- TILE 0 VIDEO ANIMATION SYSTEM ---
         const videoOverlay = document.getElementById('tile-video-overlay');
         const videoEl = videoOverlay.querySelector('video');
+        const tickerOverlay = document.getElementById('tile-ticker-overlay');
         let animInterval = null;
         let isAnimPlaying = false;
         let isTile0Hovered = false;
@@ -1318,6 +1383,14 @@
             } else {
                 videoEl.style.clipPath = 'none';
             }
+
+            // position ticker overlay to match tile exactly (not scaled video)
+            const tileRadiusPx = PARAMS.borderRadius * scaleFactor * tile.scale.x * (renderer.domElement.clientWidth / visibleWidth) * 150;
+            tickerOverlay.style.left = `${x - baseWidthPx / 2}px`;
+            tickerOverlay.style.top = `${y - baseHeightPx / 2}px`;
+            tickerOverlay.style.width = `${baseWidthPx}px`;
+            tickerOverlay.style.height = `${baseHeightPx}px`;
+            tickerOverlay.style.borderRadius = `${tileRadiusPx}px`;
         }
 
         function triggerTileAnimation() {
