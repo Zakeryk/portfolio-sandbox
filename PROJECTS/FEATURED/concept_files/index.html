@@ -360,8 +360,10 @@
             color: #7a9;
         }
 
-        .folder-stack:hover {
-            /* hover glow disabled */
+        @media (min-width: 769px) {
+            .folder-stack:hover {
+                box-shadow: 0 0 12px rgba(50, 150, 100, 0.25);
+            }
         }
 
         .file-list {
@@ -383,8 +385,11 @@
             color: #8ab;
         }
 
-        .file-list-item:hover {
-            /* hover glow disabled */
+        @media (min-width: 769px) {
+            .file-list-item:hover {
+                box-shadow: inset 0 0 8px rgba(50, 150, 100, 0.2);
+                background: rgba(50, 150, 100, 0.08);
+            }
         }
 
         .file-list-item:active {
@@ -444,6 +449,10 @@
 
         .filing-footer a:hover {
             opacity: 1;
+        }
+
+        .mobile-footer-bar {
+            display: none;
         }
 
         /* === MOBILE HAMBURGER MENU === */
@@ -1272,6 +1281,27 @@
                 margin-top: 10px;
             }
 
+            .mobile-footer-bar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0 8px 0;
+                margin-top: 10px;
+                font-size: 9px;
+                letter-spacing: 0.5px;
+                color: rgba(136, 170, 187, 0.5);
+                text-transform: lowercase;
+            }
+
+            .mobile-copyright {
+                opacity: 0.7;
+            }
+
+            .mobile-clock {
+                font-family: inherit;
+                opacity: 0.7;
+            }
+
             #filter-hint {
                 display: none;
             }
@@ -1522,6 +1552,10 @@
         </div>
         <div class="filing-footer">
             <a href="https://sandbox.zakknowlton.com/PROJECTS/FEATURED/concept_wii/">← back to dashboard</a>
+            <div class="mobile-footer-bar">
+                <span class="mobile-copyright">© zak knowlton 2026</span>
+                <span class="mobile-clock" id="mobile-clock"></span>
+            </div>
         </div>
     </div>
 
@@ -1913,6 +1947,19 @@
                 }
             }
             state.updateMobileMenu = updateMobileMenuVisibility;
+
+            // mobile footer clock (military time)
+            const mobileClockEl = document.getElementById('mobile-clock');
+            if (mobileClockEl) {
+                function updateMobileClock() {
+                    const now = new Date();
+                    const hours = now.getHours().toString().padStart(2, '0');
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    mobileClockEl.textContent = `${hours}:${minutes}`;
+                }
+                updateMobileClock();
+                setInterval(updateMobileClock, 1000);
+            }
         }
 
         // mobile scroll hint (lightbox only)
@@ -2390,7 +2437,7 @@
                         dot.brightness += (targetBrightness - dot.brightness) * 0.1;
 
                         // apply global fade and drag fade to everything
-                        const alpha = (0.06 + dot.brightness * 0.3) * globalFade * dragFade;
+                        const alpha = (0.054 + dot.brightness * 0.27) * globalFade * dragFade;
                         const radius = dotBaseRadius + dot.brightness * 1.5;
 
                         // glow effect for brighter dots
