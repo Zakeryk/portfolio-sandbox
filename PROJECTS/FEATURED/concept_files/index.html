@@ -409,6 +409,8 @@
 
         .file-list-item:active {
             cursor: pointer;
+            background: rgba(50, 150, 100, 0.15);
+            box-shadow: inset 0 0 15px rgba(50, 150, 100, 0.25), 0 0 10px rgba(50, 150, 100, 0.15);
         }
 
         .file-item-title {
@@ -3181,7 +3183,9 @@
                 const docHeight = state.isMobile ? 123 : 160;
                 const padding = state.isMobile ? 20 : 150; // smaller padding on mobile
                 const availableWidth = Math.max(50, containerRect.width - padding * 2 - docWidth);
-                const availableHeight = Math.max(50, containerRect.height - padding * 2 - docHeight);
+                // mobile: limit to top 60% of screen
+                const maxHeight = state.isMobile ? containerRect.height * 0.6 : containerRect.height;
+                const availableHeight = Math.max(50, maxHeight - padding * 2 - docHeight);
                 spawnX = padding + Math.random() * availableWidth;
                 spawnY = padding + Math.random() * availableHeight;
                 startAngle = (Math.random() - 0.5) * 8; // ±4 degrees starting angle
