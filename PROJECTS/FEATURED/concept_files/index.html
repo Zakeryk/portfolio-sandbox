@@ -361,8 +361,11 @@
             cursor: pointer;
         }
 
-        .folder-header * {
-            cursor: pointer;
+        .folder-header,
+        .folder-header *,
+        .folder-stack,
+        .folder-stack * {
+            cursor: pointer !important;
         }
 
         @media (min-width: 769px) {
@@ -388,10 +391,6 @@
             transition: background 0.2s ease;
             font-size: 11px;
             color: #8ab;
-        }
-
-        .file-list-item * {
-            cursor: pointer;
         }
 
         @media (min-width: 769px) {
