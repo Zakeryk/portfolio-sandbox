@@ -1781,6 +1781,7 @@
             isDragging: false, // tracks if currently dragging a document
             isDeleting: false, // tracks if delete animation in progress (prevents menu flicker)
             isDeletingStack: false, // tracks if stack deletion in progress
+            isClearingAll: false, // tracks if clearing all docs in progress
             heldImageStack: [], // items collected via shake for images
             imageShakeContext: {
                 lastX: 0,
@@ -1968,6 +1969,7 @@
 
             // update mobile menu visibility based on docs on desk
             function updateMobileMenuVisibility() {
+                if (state.isDeleting) return; // don't toggle during delete animation
                 const docsOnDesk = document.querySelectorAll('.document').length;
                 // keep open if docs on desk, close if none
                 if (docsOnDesk > 0) {
@@ -2223,24 +2225,39 @@
 
             // request permission on iOS 13+
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                // need user gesture to request permission
-                const requestBtn = document.createElement('div');
-                requestBtn.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(50,150,100,0.9);color:#fff;padding:8px 12px;border-radius:4px;font-size:10px;z-index:9999;cursor:pointer;';
-                requestBtn.textContent = 'enable shake';
-                requestBtn.addEventListener('click', () => {
-                    DeviceMotionEvent.requestPermission()
-                        .then(response => {
-                            if (response === 'granted') {
-                                enableMotion();
-                            }
-                        })
-                        .catch(console.error);
-                    requestBtn.remove();
-                });
-                document.body.appendChild(requestBtn);
+                // only show button when there are 3+ docs on board
+                const showShakeBtn = () => {
+                    const docs = document.querySelectorAll('.document');
+                    if (docs.length < 3) return;
 
-                // auto-hide after 5s
-                setTimeout(() => requestBtn.remove(), 5000);
+                    const requestBtn = document.createElement('div');
+                    requestBtn.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(50,150,100,0.9);color:#fff;padding:8px 12px;border-radius:4px;font-size:10px;z-index:9999;cursor:pointer;';
+                    requestBtn.textContent = 'enable shake';
+                    requestBtn.addEventListener('click', () => {
+                        DeviceMotionEvent.requestPermission()
+                            .then(response => {
+                                if (response === 'granted') {
+                                    enableMotion();
+                                }
+                            })
+                            .catch(console.error);
+                        requestBtn.remove();
+                    });
+                    document.body.appendChild(requestBtn);
+
+                    // auto-hide after 5s
+                    setTimeout(() => requestBtn.remove(), 5000);
+                };
+
+                // watch for docs being added
+                const observer = new MutationObserver(() => {
+                    const docs = document.querySelectorAll('.document');
+                    if (docs.length >= 3 && !document.querySelector('[style*="enable shake"]')) {
+                        showShakeBtn();
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.getElementById('documents-area'), { childList: true });
             } else {
                 enableMotion();
             }
@@ -2365,6 +2382,7 @@
 
             // prevent interaction during clear
             state.isDeleting = true;
+            state.isClearingAll = true;
 
             // instantly remove all peek images
             const peekImages = document.querySelectorAll('.peek-image');
@@ -2401,6 +2419,7 @@
             // reset state after all animations
             setTimeout(() => {
                 state.isDeleting = false;
+                state.isClearingAll = false;
                 updateFileCounts();
                 if (state.updateMobileMenu) state.updateMobileMenu();
             }, docs.length * 50 + 600);
@@ -3124,15 +3143,14 @@
                     insertSortedAlpha(fileList, listItem);
                     updateFileCounts();
 
-                    // update menu visibility (skip if deleting a stack - will update after last one)
-                    if (!state.isDeletingStack) {
+                    // update menu visibility (skip if deleting a stack or clearing all - will update after last one)
+                    if (!state.isDeletingStack && !state.isClearingAll) {
                         if (state.updateDesktopMenu) state.updateDesktopMenu();
                         if (state.updateMobileMenu) state.updateMobileMenu();
                         if (state.updateRightMenu) state.updateRightMenu();
+                        // allow menu changes again (only when not in bulk operation)
+                        state.isDeleting = false;
                     }
-
-                    // allow menu changes again
-                    state.isDeleting = false;
                 }
             });
         }
