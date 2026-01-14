@@ -1294,17 +1294,23 @@
             }
 
             .mobile-footer-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 12px 0 8px 0;
-                margin-top: 10px;
+                padding: 12px 0 16px 0;
                 font-size: 9px;
                 letter-spacing: 0.5px;
                 color: rgba(136, 170, 187, 0.5);
                 text-transform: lowercase;
                 gap: 4px;
+                background: linear-gradient(to top, rgba(8, 16, 12, 0.95) 0%, rgba(8, 16, 12, 0) 100%);
+                z-index: 100;
+                pointer-events: none;
             }
 
             .mobile-clock {
@@ -2453,7 +2459,11 @@
 
                         // apply global fade and drag fade to everything
                         const alpha = (0.054 + dot.brightness * 0.27) * globalFade * dragFade;
-                        const radius = dotBaseRadius + dot.brightness * 1.5;
+
+                        // subtle shimmer effect - scale oscillation based on position and time
+                        const shimmerPhase = (dot.x * 0.02 + dot.y * 0.02 + performance.now() * 0.001);
+                        const shimmerAmount = dot.brightness * 0.3 * Math.sin(shimmerPhase);
+                        const radius = dotBaseRadius + dot.brightness * 1.5 + shimmerAmount;
 
                         // glow effect for brighter dots
                         if (dot.brightness > 0.2) {
