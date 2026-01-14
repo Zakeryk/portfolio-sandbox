@@ -422,21 +422,116 @@
             opacity: 0.8;
         }
 
-        #instructions {
+        /* === LEFT WIDGET STACK (music + settings) === */
+        #left-widget-stack {
             position: fixed;
-            bottom: 20px;
-            left: 20px;
-            color: #888;
-            font-size: 12px;
+            bottom: 30px;
+            left: 30px;
             z-index: 100;
-            pointer-events: auto;
-            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            transform: translateY(150px);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+        }
+
+        #left-widget-stack.slide-in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #music-widget {
+            background: #f0f0f0;
+            border: 2px solid #ffffff;
+            padding: 8px;
+            border-radius: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        #music-widget iframe {
+            display: block;
+            border-radius: 0;
+        }
+
+        #settings-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #888;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-decoration: none;
             cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        #settings-link:hover {
+            color: #7ec1d9;
+        }
+
+        #settings-link svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+        }
+
+        /* === MAIL WIDGET === */
+        #mail-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 180px;
+            z-index: 100;
+            transform: translateY(150px);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+        }
+
+        #mail-widget.slide-in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #mail-widget a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 2px solid #ffffff;
+            color: #888;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             transition: color 0.2s ease;
         }
 
-        #instructions:hover {
+        #mail-widget a:hover {
             color: #7ec1d9;
+        }
+
+        #mail-widget svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+        }
+
+        /* hide left stack and mail on mobile */
+        @media (max-width: 768px) {
+            #left-widget-stack,
+            #mail-widget {
+                display: none !important;
+            }
         }
 
         /* --- CUSTOM CURSOR --- */
@@ -867,7 +962,30 @@
 
         <div id="clock">12:00</div>
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
-        <div id="instructions" onclick="window.location.href='https://sandbox.zakknowlton.com/'">[~] <span style="font-size: 1.3em; vertical-align: middle;">⚙</span> settings</div>
+    </div>
+
+    <!-- left widget stack: music + settings -->
+    <div id="left-widget-stack">
+        <div id="music-widget">
+            <iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" width="250" height="80" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+        </div>
+        <a id="settings-link" href="https://sandbox.zakknowlton.com/">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+            </svg>
+            SETTINGS
+        </a>
+    </div>
+
+    <!-- mail widget -->
+    <div id="mail-widget">
+        <a href="mailto:zak@zakknowlton.com">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M22 6l-10 7L2 6"/>
+            </svg>
+            CONTACT
+        </a>
     </div>
 
     <div id="gui-container"></div>
@@ -1147,6 +1265,8 @@
 
             setTimeout(() => {
                 document.getElementById('radio-player').classList.add('slide-in');
+                document.getElementById('left-widget-stack')?.classList.add('slide-in');
+                document.getElementById('mail-widget')?.classList.add('slide-in');
                 // only autoplay on desktop
                 if (!isMobile) {
                     audio.play().catch(e => console.log("Audio autoplay blocked:", e));
