@@ -405,37 +405,67 @@
             opacity: 0.8;
         }
 
-        /* === LEFT WIDGET STACK (music + settings) === */
-        #left-widget-stack {
-            position: fixed;
-            bottom: 30px;
-            left: 30px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-            transform: translateY(150px);
-            opacity: 0;
-            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
-        }
-
-        #left-widget-stack.slide-in {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
+        /* === MUSIC WIDGET (centered left) === */
         #music-widget {
+            position: fixed;
+            left: 30px;
+            top: 50%;
+            transform: translateY(-50%) translateX(-150%);
+            z-index: 100;
             background: #f0f0f0;
             border: 2px solid #ffffff;
             padding: 8px;
             border-radius: 0;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+        }
+
+        #music-widget.slide-in {
+            transform: translateY(-50%) translateX(0);
+            opacity: 1;
         }
 
         #music-widget iframe {
             display: block;
             border-radius: 0;
+        }
+
+        /* === RIGHT WIDGET STACK (contact + settings) === */
+        #right-widget-stack {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            transform: translateY(150px);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
+        }
+
+        #right-widget-stack.slide-in {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        #mail-widget a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border: 2px solid #ffffff;
+            color: #888;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: color 0.2s ease;
         }
 
         #settings-link {
@@ -460,39 +490,6 @@
             fill: currentColor;
         }
 
-        /* === MAIL WIDGET === */
-        #mail-widget {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 100;
-            transform: translateY(150px);
-            opacity: 0;
-            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.8s ease;
-        }
-
-        #mail-widget.slide-in {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        #mail-widget a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: #f0f0f0;
-            border: 2px solid #ffffff;
-            color: #888;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 10px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            text-decoration: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transition: color 0.2s ease;
-        }
-
         #mail-widget a:hover {
             color: #7ec1d9;
         }
@@ -504,10 +501,10 @@
             fill: none;
         }
 
-        /* hide left stack and mail on mobile */
+        /* hide widgets on mobile */
         @media (max-width: 768px) {
-            #left-widget-stack,
-            #mail-widget {
+            #music-widget,
+            #right-widget-stack {
                 display: none !important;
             }
         }
@@ -942,25 +939,25 @@
         <div id="footer-text">ZAK KNOWLTON &copy; 2026</div>
     </div>
 
-    <!-- left widget stack: music + settings -->
-    <div id="left-widget-stack">
-        <div id="music-widget">
-            <iframe src="https://open.spotify.com/embed/playlist/3yRE6S9e2bB3oAo3dSSgMD?utm_source=generator&theme=0" width="300" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <!-- music widget (centered left) -->
+    <div id="music-widget">
+        <iframe src="https://open.spotify.com/embed/playlist/3yRE6S9e2bB3oAo3dSSgMD?utm_source=generator&theme=0" width="300" height="152" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    </div>
+
+    <!-- right widget stack: contact + settings -->
+    <div id="right-widget-stack">
+        <div id="mail-widget">
+            <a href="mailto:zakeryk@gmail.com">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                    <path d="M22 6l-10 7L2 6"/>
+                </svg>
+                CONTACT
+            </a>
         </div>
         <a id="settings-link" href="https://sandbox.zakknowlton.com/">
             <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             settings
-        </a>
-    </div>
-
-    <!-- mail widget -->
-    <div id="mail-widget">
-        <a href="mailto:zakeryk@gmail.com">
-            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="M22 6l-10 7L2 6"/>
-            </svg>
-            CONTACT
         </a>
     </div>
 
@@ -1240,8 +1237,8 @@
             }
 
             setTimeout(() => {
-                document.getElementById('left-widget-stack')?.classList.add('slide-in');
-                document.getElementById('mail-widget')?.classList.add('slide-in');
+                document.getElementById('music-widget')?.classList.add('slide-in');
+                document.getElementById('right-widget-stack')?.classList.add('slide-in');
             }, 1200);
         });
 
