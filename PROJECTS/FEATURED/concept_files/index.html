@@ -1781,6 +1781,7 @@
             isDragging: false, // tracks if currently dragging a document
             isDeleting: false, // tracks if delete animation in progress (prevents menu flicker)
             isDeletingStack: false, // tracks if stack deletion in progress
+            menuUserClosed: false, // tracks if user explicitly closed mobile menu
             isClearingAll: false, // tracks if clearing all docs in progress
             heldImageStack: [], // items collected via shake for images
             imageShakeContext: {
@@ -1951,6 +1952,7 @@
             // backdrop click to close
             menuBackdrop.addEventListener('click', () => {
                 if (state.isDeleting) return; // don't close during delete animation
+                state.menuUserClosed = true; // user explicitly closed menu
                 toggleMenu(false);
             });
 
@@ -1971,11 +1973,13 @@
             function updateMobileMenuVisibility() {
                 if (state.isDeleting) return; // don't toggle during delete animation
                 const docsOnDesk = document.querySelectorAll('.document').length;
-                // keep open if docs on desk, close if none
-                if (docsOnDesk > 0) {
-                    toggleMenu(true);
-                } else {
+                // close if no docs on desk, otherwise respect user's choice
+                if (docsOnDesk === 0) {
+                    state.menuUserClosed = false; // reset flag when desk is cleared
                     toggleMenu(false);
+                } else if (!state.menuUserClosed) {
+                    // only auto-open if user hasn't explicitly closed
+                    toggleMenu(true);
                 }
             }
             state.updateMobileMenu = updateMobileMenuVisibility;
@@ -3314,6 +3318,9 @@
             `;
 
             container.appendChild(doc);
+
+            // reset menu closed flag so menu can auto-open for new doc
+            state.menuUserClosed = false;
 
             // setup draggable
             const draggable = setupDocumentDraggable(doc);
