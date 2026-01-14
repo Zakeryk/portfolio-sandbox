@@ -3085,11 +3085,6 @@
             if (state.isMobile) {
                 e.preventDefault(); // prevent any drag behavior
                 createDocumentFromListItem(listItem, e, false); // always spawn at center for mobile tap
-
-                // Close the mobile menu after creating document
-                if (state.toggleMobileMenu) {
-                    state.toggleMobileMenu(false);
-                }
                 return;
             }
 
