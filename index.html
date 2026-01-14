@@ -612,6 +612,78 @@
             margin-top: auto;
         }
 
+        /* SHUFFLE SCATTER MODE */
+        .grid.scatter-mode {
+            display: block;
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            min-height: 500px;
+        }
+
+        .grid.scatter-mode .card {
+            position: absolute;
+            width: 180px;
+            height: 210px;
+            flex-direction: column;
+            background: transparent;
+            border: 1px solid #151515;
+            opacity: 0;
+            transform: translate(0, 0);
+        }
+
+        .grid.scatter-mode .card.shuffling {
+            opacity: 1;
+        }
+
+        .grid.scatter-mode .card-img {
+            width: 100%;
+            height: 140px;
+            border-bottom: 1px solid #151515;
+        }
+
+        .grid.scatter-mode .card-img-inner {
+            background-size: contain;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+            transform: scale(0.85);
+        }
+
+        .grid.scatter-mode .card:hover .card-img-inner {
+            opacity: 1;
+        }
+
+        .grid.scatter-mode .card-info {
+            flex: 1;
+            padding: 12px 12px 6px 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 2px;
+        }
+
+        .grid.scatter-mode .card-meta {
+            justify-content: space-between;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        @media (max-width: 767px) {
+            .grid.scatter-mode {
+                height: 50vh;
+                min-height: 300px;
+            }
+
+            .grid.scatter-mode .card {
+                width: 140px;
+                height: 170px;
+            }
+
+            .grid.scatter-mode .card-img {
+                height: 100px;
+            }
+        }
+
         @keyframes blink {
 
             0%,
@@ -1144,6 +1216,76 @@
         // CONFIG
         const GITHUB_USERNAME = 'Zakeryk'; // <--- PUT YOUR USERNAME HERE
         const CACHE_VERSION = Date.now(); // cache buster for thumbnails (safari fix)
+        const isMobile = window.innerWidth <= 767;
+
+        // SHUFFLEBOARD EASING - 90% of movement in first 0.2s (20% of duration), then slowly settles
+        function shuffleboardEase(t) {
+            // t is 0-1 normalized time
+            if (t < 0.2) {
+                // first 20% of time = 90% of distance
+                // use aggressive ease-out for this portion
+                const localT = t / 0.2; // normalize to 0-1 for this segment
+                return 0.9 * (1 - Math.pow(1 - localT, 3)); // cubic ease-out, scaled to 0.9
+            } else {
+                // remaining 80% of time = last 10% of distance
+                const localT = (t - 0.2) / 0.8; // normalize remaining time to 0-1
+                return 0.9 + 0.1 * (1 - Math.pow(1 - localT, 2)); // quadratic ease-out for settling
+            }
+        }
+
+        // animate a card to target position with shuffleboard easing
+        function animateCardShuffle(card, targetX, targetY, duration = 1000) {
+            const startX = 0;
+            const startY = 0;
+            const startTime = performance.now();
+
+            card.classList.add('shuffling');
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easedProgress = shuffleboardEase(progress);
+
+                const currentX = startX + (targetX - startX) * easedProgress;
+                const currentY = startY + (targetY - startY) * easedProgress;
+
+                card.style.transform = `translate(${currentX}px, ${currentY}px)`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // shuffle all cards to random positions
+        function shuffleCards() {
+            const grid = document.getElementById('project-grid');
+            const cards = grid.querySelectorAll('.card');
+            const gridRect = grid.getBoundingClientRect();
+
+            // card dimensions
+            const cardWidth = isMobile ? 140 : 180;
+            const cardHeight = isMobile ? 170 : 210;
+
+            // available space - on mobile, only top 50% of container
+            const maxX = gridRect.width - cardWidth - 20;
+            const maxY = isMobile
+                ? (gridRect.height * 0.5) - cardHeight
+                : gridRect.height - cardHeight - 20;
+
+            cards.forEach((card, index) => {
+                // random position within bounds
+                const randomX = Math.random() * Math.max(0, maxX);
+                const randomY = Math.random() * Math.max(0, maxY);
+
+                // stagger the start slightly for a more organic feel
+                setTimeout(() => {
+                    animateCardShuffle(card, randomX, randomY, 1000);
+                }, index * 30);
+            });
+        }
 
         // Helper function to create project card
         function createProjectCard(p, forceNoThumbnail = false) {
@@ -1209,6 +1351,13 @@
                 archivedProjects.forEach(p => {
                     archivedGrid.appendChild(createProjectCard(p, true));
                 });
+
+                // enable scatter mode and shuffle cards after a short delay
+                setTimeout(() => {
+                    grid.classList.remove('tile-mode', 'list-mode');
+                    grid.classList.add('scatter-mode');
+                    shuffleCards();
+                }, 100);
             })
             .catch(err => {
                 document.getElementById('status').innerText = 'ERR_CONNECTION';
@@ -1220,29 +1369,48 @@
         const toggleBtn = document.getElementById('view-toggle');
         const gridContainer = document.getElementById('project-grid');
 
-        // Logic: Default to TILES (desktop & mobile)
-        let isList = false;
+        // View modes: scatter (default) -> tiles -> list -> scatter
+        let viewMode = 'scatter'; // starts in scatter after load
 
         function updateView() {
             const btnIcon = document.getElementById('btn-icon');
-            if (isList) {
-                gridContainer.classList.remove('tile-mode');
-                gridContainer.classList.add('list-mode');
+            gridContainer.classList.remove('tile-mode', 'list-mode', 'scatter-mode');
+
+            if (viewMode === 'scatter') {
+                gridContainer.classList.add('scatter-mode');
                 btnIcon.innerText = "TILES";
                 btnIcon.setAttribute('data-icon', '▦');
-            } else {
-                gridContainer.classList.remove('list-mode');
+                // re-shuffle when switching back to scatter
+                shuffleCards();
+            } else if (viewMode === 'tiles') {
                 gridContainer.classList.add('tile-mode');
                 btnIcon.innerText = "LIST";
                 btnIcon.setAttribute('data-icon', '≡');
+                // reset card transforms
+                gridContainer.querySelectorAll('.card').forEach(card => {
+                    card.style.transform = '';
+                    card.classList.remove('shuffling');
+                });
+            } else {
+                gridContainer.classList.add('list-mode');
+                btnIcon.innerText = "SCATTER";
+                btnIcon.setAttribute('data-icon', '◎');
+                // reset card transforms
+                gridContainer.querySelectorAll('.card').forEach(card => {
+                    card.style.transform = '';
+                    card.classList.remove('shuffling');
+                });
             }
         }
 
-        // Initialize
-        updateView();
-
         toggleBtn.addEventListener('click', () => {
-            isList = !isList;
+            if (viewMode === 'scatter') {
+                viewMode = 'tiles';
+            } else if (viewMode === 'tiles') {
+                viewMode = 'list';
+            } else {
+                viewMode = 'scatter';
+            }
             updateView();
         });
 
@@ -1298,8 +1466,16 @@
         // 4. Accordion Logic (Handles multiple)
         const accordions = document.querySelectorAll('.accordion-header');
 
+        // prevent clicks inside accordion content from bubbling up
+        document.querySelectorAll('.accordion-content').forEach(content => {
+            content.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        });
+
         accordions.forEach(accHeader => {
-            accHeader.addEventListener('click', () => {
+            accHeader.addEventListener('click', (e) => {
+                e.stopPropagation();
                 // Close all other accordions
                 accordions.forEach(otherHeader => {
                     if (otherHeader !== accHeader && otherHeader.classList.contains('active')) {
