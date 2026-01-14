@@ -2163,28 +2163,39 @@
             if (!state.isMobile) return;
 
             let lastX = 0, lastY = 0, lastZ = 0;
+            let lastUpdate = 0;
             let shakeCount = 0;
             let lastShakeTime = 0;
-            const shakeThreshold = 25;
-            const shakeResetTime = 500;
-            const shakesRequired = 3;
+            const shakeThreshold = 15; // lowered for sensitivity
+            const shakeResetTime = 800;
+            const shakesRequired = 2;
 
             function handleMotion(e) {
-                const acc = e.accelerationIncludingGravity;
-                if (!acc || acc.x === null) return;
+                const acc = e.accelerationIncludingGravity || e.acceleration;
+                if (!acc) return;
 
                 const now = Date.now();
-                const deltaX = Math.abs(acc.x - lastX);
-                const deltaY = Math.abs(acc.y - lastY);
-                const deltaZ = Math.abs(acc.z - lastZ);
 
-                lastX = acc.x;
-                lastY = acc.y;
-                lastZ = acc.z;
+                // throttle to ~60fps
+                if (now - lastUpdate < 16) return;
+                lastUpdate = now;
 
-                // detect shake
-                if (deltaX > shakeThreshold || deltaY > shakeThreshold || deltaZ > shakeThreshold) {
-                    if (now - lastShakeTime > 100) { // debounce
+                const x = acc.x || 0;
+                const y = acc.y || 0;
+                const z = acc.z || 0;
+
+                const deltaX = Math.abs(x - lastX);
+                const deltaY = Math.abs(y - lastY);
+                const deltaZ = Math.abs(z - lastZ);
+                const totalDelta = deltaX + deltaY + deltaZ;
+
+                lastX = x;
+                lastY = y;
+                lastZ = z;
+
+                // detect shake - use combined delta
+                if (totalDelta > shakeThreshold) {
+                    if (now - lastShakeTime > 150) { // debounce
                         shakeCount++;
                         lastShakeTime = now;
 
@@ -2201,21 +2212,32 @@
                 }
             }
 
+            function enableMotion() {
+                window.addEventListener('devicemotion', handleMotion);
+            }
+
             // request permission on iOS 13+
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                // need user gesture to request permission - do it on first touch
-                document.addEventListener('touchstart', function requestMotion() {
+                // need user gesture to request permission
+                const requestBtn = document.createElement('div');
+                requestBtn.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(50,150,100,0.9);color:#fff;padding:8px 12px;border-radius:4px;font-size:10px;z-index:9999;cursor:pointer;';
+                requestBtn.textContent = 'enable shake';
+                requestBtn.addEventListener('click', () => {
                     DeviceMotionEvent.requestPermission()
                         .then(response => {
                             if (response === 'granted') {
-                                window.addEventListener('devicemotion', handleMotion);
+                                enableMotion();
                             }
                         })
                         .catch(console.error);
-                    document.removeEventListener('touchstart', requestMotion);
-                }, { once: true });
+                    requestBtn.remove();
+                });
+                document.body.appendChild(requestBtn);
+
+                // auto-hide after 5s
+                setTimeout(() => requestBtn.remove(), 5000);
             } else {
-                window.addEventListener('devicemotion', handleMotion);
+                enableMotion();
             }
         }
 
