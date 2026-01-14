@@ -2231,7 +2231,7 @@
                     if (docs.length < 3) return;
 
                     const requestBtn = document.createElement('div');
-                    requestBtn.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(50,150,100,0.9);color:#fff;padding:8px 12px;border-radius:4px;font-size:10px;z-index:9999;cursor:pointer;';
+                    requestBtn.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(50,150,100,0.9);color:#fff;padding:8px 12px;border-radius:4px;font-size:10px;z-index:9999;cursor:pointer;opacity:0;transition:opacity 0.3s ease;';
                     requestBtn.textContent = 'enable shake';
                     requestBtn.addEventListener('click', () => {
                         DeviceMotionEvent.requestPermission()
@@ -2244,9 +2244,8 @@
                         requestBtn.remove();
                     });
                     document.body.appendChild(requestBtn);
-
-                    // auto-hide after 5s
-                    setTimeout(() => requestBtn.remove(), 5000);
+                    // fade in
+                    requestAnimationFrame(() => requestBtn.style.opacity = '1');
                 };
 
                 // watch for docs being added
