@@ -1541,8 +1541,16 @@
             videoOverlay.style.borderRadius = `${borderRadiusPx}px`;
 
             // apply edge inset to pull video content away from edges uniformly
-            if (PARAMS.animEdgeInset > 0) {
-                videoEl.style.clipPath = `inset(${PARAMS.animEdgeInset}px round ${borderRadiusPx}px)`;
+            // scale based on screen width (70 at 1440px, 120 at 1920px)
+            const screenW = window.innerWidth;
+            const minW = 1440, maxW = 1920;
+            const minInset = 70, maxInset = 120;
+            const scaledInset = Math.max(minInset, Math.min(maxInset,
+                minInset + (screenW - minW) * (maxInset - minInset) / (maxW - minW)
+            ));
+
+            if (scaledInset > 0) {
+                videoEl.style.clipPath = `inset(${scaledInset}px round ${borderRadiusPx}px)`;
             } else {
                 videoEl.style.clipPath = 'none';
             }
