@@ -173,7 +173,7 @@
         #radio-player {
             position: fixed;
             bottom: 30px;
-            left: 30px;
+            right: 30px;
             background-color: #f0f0f0;
             border: 2px solid #ffffff;
             padding: 8px 12px;
@@ -409,10 +409,10 @@
             opacity: 0.8;
         }
 
-        /* === MUSIC WIDGET (bottom left) === */
+        /* === MUSIC WIDGET (bottom right on mobile) === */
         #music-widget {
             position: fixed;
-            left: 30px;
+            right: 30px;
             bottom: 30px;
             transform: translateY(150px);
             z-index: 100;
@@ -442,15 +442,15 @@
             }
         }
 
-        /* === RIGHT WIDGET STACK (contact + settings) === */
+        /* === LEFT WIDGET STACK (contact + settings) === */
         #right-widget-stack {
             position: fixed;
             bottom: 30px;
-            right: 30px;
+            left: 30px;
             z-index: 100;
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: flex-start;
             gap: 8px;
             transform: translateY(150px);
             opacity: 0;
