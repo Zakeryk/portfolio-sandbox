@@ -2195,52 +2195,35 @@
                         if (state.updateRightMenu) state.updateRightMenu();
                     }, 300);
 
-                    // desktop hint - show with menus, hide on doc add, reshow on 2s idle if empty
+                    // desktop hint - show with menus, hide only when accordion item clicked (doc added)
                     const desktopHint = document.getElementById('desktop-hint');
                     if (desktopHint) {
-                        let idleTimer = null;
-                        let hasShownInitial = false;
+                        let hasInteracted = false;
 
                         const updateHintVisibility = () => {
                             const docsOnDesk = document.querySelectorAll('.document').length;
                             if (docsOnDesk > 0) {
+                                hasInteracted = true;
                                 desktopHint.classList.remove('visible');
+                            } else if (hasInteracted) {
+                                // only reshow after user has interacted once
+                                desktopHint.classList.add('visible');
                             }
-                        };
-
-                        const resetIdleTimer = () => {
-                            clearTimeout(idleTimer);
-                            if (!hasShownInitial) return; // don't interfere with initial show
-                            desktopHint.classList.remove('visible');
-                            idleTimer = setTimeout(() => {
-                                const docsOnDesk = document.querySelectorAll('.document').length;
-                                if (docsOnDesk === 0) {
-                                    desktopHint.classList.add('visible');
-                                }
-                            }, 2000);
                         };
 
                         // show hint when menus appear
                         setTimeout(() => {
                             desktopHint.classList.add('visible');
-                            hasShownInitial = true;
                         }, 400);
 
-                        // watch for document changes
+                        // watch for document changes (accordion clicks add/remove docs)
                         const observer = new MutationObserver(() => {
                             updateHintVisibility();
-                            // restart idle timer when docs change
-                            resetIdleTimer();
                         });
 
                         observer.observe(document.getElementById('documents-area'), {
                             childList: true,
                             subtree: true
-                        });
-
-                        // idle detection
-                        ['mousemove', 'click', 'keydown'].forEach(evt => {
-                            document.addEventListener(evt, resetIdleTimer, { passive: true });
                         });
                     }
                 }
