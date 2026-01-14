@@ -3299,12 +3299,6 @@
                 endAngle = (Math.random() - 0.5) * 6;   // slight final angle
             }
 
-            // set offscreen position via inline style BEFORE adding to DOM (for non-drag)
-            if (isDrag) {
-                doc.style.transform = `translate(${spawnX}px, ${spawnY}px) rotate(${startAngle}deg)`;
-            } else {
-                doc.style.transform = `translate(${spawnX}px, -500px) rotate(${startAngle}deg)`;
-            }
             doc.style.zIndex = state.currentZIndex++;
 
             doc.innerHTML = `
@@ -3316,6 +3310,15 @@
             `;
 
             container.appendChild(doc);
+
+            // set initial position via gsap so it properly tracks transforms
+            if (isDrag) {
+                gsap.set(doc, { x: spawnX, y: spawnY, rotation: startAngle });
+            } else {
+                // start way off screen top - use container height to guarantee offscreen
+                const offscreenY = -(containerRect.height + 200);
+                gsap.set(doc, { x: spawnX, y: offscreenY, rotation: startAngle });
+            }
 
             // reset menu closed flag so menu can auto-open for new doc
             state.menuUserClosed = false;
