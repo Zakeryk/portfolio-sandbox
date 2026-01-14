@@ -2223,43 +2223,9 @@
                 window.addEventListener('devicemotion', handleMotion);
             }
 
-            // request permission on iOS 13+
+            // request permission on iOS 13+ (disabled for now)
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                // only show button when there are 3+ docs on board
-                const showShakeBtn = () => {
-                    const docs = document.querySelectorAll('.document');
-                    if (docs.length < 3) return;
-
-                    const mobileFooter = document.querySelector('.mobile-footer-bar');
-                    if (!mobileFooter) return;
-
-                    const requestBtn = document.createElement('span');
-                    requestBtn.style.cssText = 'background:rgba(50,150,100,0.9);color:#fff;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;opacity:0;transition:opacity 0.3s ease;margin-left:8px;';
-                    requestBtn.textContent = 'enable shake';
-                    requestBtn.addEventListener('click', () => {
-                        DeviceMotionEvent.requestPermission()
-                            .then(response => {
-                                if (response === 'granted') {
-                                    enableMotion();
-                                }
-                            })
-                            .catch(console.error);
-                        requestBtn.remove();
-                    });
-                    mobileFooter.insertBefore(requestBtn, mobileFooter.firstChild);
-                    // fade in
-                    requestAnimationFrame(() => requestBtn.style.opacity = '1');
-                };
-
-                // watch for docs being added
-                const observer = new MutationObserver(() => {
-                    const docs = document.querySelectorAll('.document');
-                    if (docs.length >= 3 && !document.querySelector('[style*="enable shake"]')) {
-                        showShakeBtn();
-                        observer.disconnect();
-                    }
-                });
-                observer.observe(document.getElementById('documents-area'), { childList: true });
+                // TODO: re-enable shake permission button later
             } else {
                 enableMotion();
             }
