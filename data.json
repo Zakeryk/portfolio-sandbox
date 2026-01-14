@@ -1,6 +1,18 @@
 {
   "active": [
     {
+      "id": "concept_wii",
+      "path": "./PROJECTS/FEATURED/concept_wii/",
+      "title": "CONCEPT_WII",
+      "tags": [
+        "Dashboard"
+      ],
+      "active": true,
+      "image": "./PROJECTS/FEATURED/concept_wii/thumb.png",
+      "date": "2026-01-14T17:19:57.173Z",
+      "displayName": "DASHBOARD"
+    },
+    {
       "id": "concept_files",
       "path": "./PROJECTS/FEATURED/concept_files/",
       "title": "CONCEPT_RESIDENT",
@@ -11,18 +23,6 @@
       "image": "./PROJECTS/FEATURED/concept_files/thumb.png",
       "date": "2026-01-14T16:36:17.968Z",
       "displayName": "MY WORK"
-    },
-    {
-      "id": "concept_wii",
-      "path": "./PROJECTS/FEATURED/concept_wii/",
-      "title": "CONCEPT_WII",
-      "tags": [
-        "Dashboard"
-      ],
-      "active": true,
-      "image": "./PROJECTS/FEATURED/concept_wii/thumb.png",
-      "date": "2026-01-14T06:01:46.837Z",
-      "displayName": "DASHBOARD"
     }
   ],
   "archived": [
