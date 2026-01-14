@@ -3148,9 +3148,11 @@
                 removeDocumentToMenu(leaderDoc);
             }, stackCopy.length * 50);
 
-            // reset flag after all animations complete (stagger + animation duration)
+            // reset flags after all animations complete (stagger + animation duration)
             setTimeout(() => {
                 state.isDeletingStack = false;
+                state.isDeleting = false;
+                if (state.updateMobileMenu) state.updateMobileMenu();
             }, (stackCopy.length * 50) + 150);
         }
 
