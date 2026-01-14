@@ -737,9 +737,45 @@
             transform: translateX(-50%) scale(0.95);
         }
 
+        /* === MOBILE CLEAR ALL BUTTON === */
+        #mobile-clear-all-btn {
+            display: none;
+            position: fixed;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            background: rgba(201, 85, 77, 0.9);
+            border: 1px solid rgba(201, 85, 77, 0.6);
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(201, 85, 77, 0.3);
+            cursor: pointer;
+            z-index: 960;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mobile-clear-all-btn svg {
+            width: 22px;
+            height: 22px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        #mobile-clear-all-btn.visible {
+            bottom: 24px;
+        }
+
+        #mobile-clear-all-btn:active {
+            transform: translateX(-50%) scale(0.9);
+            background: rgba(201, 85, 77, 1);
+        }
+
         /* hide wastebin and clear all when lightbox is active */
         body:has(#lightbox-overlay.visible) #wastebin,
-        body:has(#lightbox-overlay.visible) #clear-all-btn {
+        body:has(#lightbox-overlay.visible) #clear-all-btn,
+        body:has(#lightbox-overlay.visible) #mobile-clear-all-btn {
             display: none !important;
         }
 
@@ -1236,6 +1272,10 @@
                 display: flex;
             }
 
+            #mobile-clear-all-btn {
+                display: flex;
+            }
+
             /* hide esc hint on mobile */
             .esc-hint {
                 display: none;
@@ -1559,6 +1599,14 @@
 
     <!-- clear all button -->
     <button id="clear-all-btn">clear all</button>
+
+    <!-- mobile clear all button -->
+    <button id="mobile-clear-all-btn" aria-label="Clear all documents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+    </button>
 
     <!-- filing system (drop zones) - outside desk-container for proper z-index stacking -->
     <div id="filing-area">
@@ -2245,11 +2293,15 @@
             // show wastebin when dragging starts
             function showWastebin() {
                 wastebin.classList.add('visible');
+                // hide mobile clear all when wastebin shows
+                if (state.updateMobileClearAll) state.updateMobileClearAll();
             }
 
             // hide wastebin when dragging ends
             function hideWastebin() {
                 wastebin.classList.remove('visible', 'active');
+                // update mobile clear all when wastebin hides
+                if (state.updateMobileClearAll) state.updateMobileClearAll();
             }
 
             // check if drag position is near bottom edge
@@ -2348,6 +2400,45 @@
 
             // initial check
             updateTrashVisibility();
+        }
+
+        // mobile clear all button setup
+        function setupMobileClearAllButton() {
+            const mobileClearBtn = document.getElementById('mobile-clear-all-btn');
+            const wastebin = document.getElementById('wastebin');
+
+            // update visibility based on docs count and drag state
+            function updateMobileClearVisibility() {
+                const docs = document.querySelectorAll('.document');
+                const wastebinVisible = wastebin.classList.contains('visible');
+
+                // show if: more than 1 doc on board AND not dragging AND wastebin not visible
+                if (docs.length > 1 && !state.isDragging && !wastebinVisible && !state.isDeleting) {
+                    mobileClearBtn.classList.add('visible');
+                } else {
+                    mobileClearBtn.classList.remove('visible');
+                }
+            }
+
+            // expose function globally for drag lifecycle hooks
+            state.updateMobileClearAll = updateMobileClearVisibility;
+
+            // watch for document changes
+            const observer = new MutationObserver(updateMobileClearVisibility);
+            observer.observe(document.getElementById('documents-area'), {
+                childList: true,
+                subtree: true
+            });
+
+            // handle click
+            mobileClearBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileClearBtn.classList.remove('visible');
+                clearAllDocuments();
+            });
+
+            // initial check
+            updateMobileClearVisibility();
         }
 
         // clear all documents from desk with shuffleboard animation
@@ -2650,6 +2741,7 @@
                 setupMobileLightboxTap();
                 setupShakeToClear();
                 setupScrollHint();
+                setupMobileClearAllButton();
             } else {
                 setupDesktopMenu();
                 setupTopMenu();
