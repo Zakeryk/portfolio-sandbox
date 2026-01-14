@@ -2158,6 +2158,161 @@
             });
         }
 
+        // shake to clear all documents (mobile only)
+        function setupShakeToClear() {
+            if (!state.isMobile) return;
+
+            let lastX = 0, lastY = 0, lastZ = 0;
+            let shakeCount = 0;
+            let lastShakeTime = 0;
+            const shakeThreshold = 25;
+            const shakeResetTime = 500;
+            const shakesRequired = 3;
+
+            function handleMotion(e) {
+                const acc = e.accelerationIncludingGravity;
+                if (!acc || acc.x === null) return;
+
+                const now = Date.now();
+                const deltaX = Math.abs(acc.x - lastX);
+                const deltaY = Math.abs(acc.y - lastY);
+                const deltaZ = Math.abs(acc.z - lastZ);
+
+                lastX = acc.x;
+                lastY = acc.y;
+                lastZ = acc.z;
+
+                // detect shake
+                if (deltaX > shakeThreshold || deltaY > shakeThreshold || deltaZ > shakeThreshold) {
+                    if (now - lastShakeTime > 100) { // debounce
+                        shakeCount++;
+                        lastShakeTime = now;
+
+                        if (shakeCount >= shakesRequired) {
+                            shakeCount = 0;
+                            clearAllDocuments();
+                        }
+                    }
+                }
+
+                // reset shake count if no shake for a while
+                if (now - lastShakeTime > shakeResetTime) {
+                    shakeCount = 0;
+                }
+            }
+
+            // request permission on iOS 13+
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                // need user gesture to request permission - do it on first touch
+                document.addEventListener('touchstart', function requestMotion() {
+                    DeviceMotionEvent.requestPermission()
+                        .then(response => {
+                            if (response === 'granted') {
+                                window.addEventListener('devicemotion', handleMotion);
+                            }
+                        })
+                        .catch(console.error);
+                    document.removeEventListener('touchstart', requestMotion);
+                }, { once: true });
+            } else {
+                window.addEventListener('devicemotion', handleMotion);
+            }
+        }
+
+        // clear all documents with shuffleboard animation
+        function clearAllDocuments() {
+            const docs = document.querySelectorAll('.document');
+            if (docs.length === 0) return;
+
+            // prevent interaction during clear
+            state.isDeleting = true;
+
+            docs.forEach((doc, i) => {
+                // random direction - mostly horizontal with some vertical
+                const angle = (Math.random() - 0.5) * Math.PI * 0.6; // ±54 degrees from horizontal
+                const goLeft = Math.random() > 0.5;
+                const speed = 800 + Math.random() * 400;
+
+                const targetX = goLeft ? -speed : speed;
+                const targetY = Math.sin(angle) * speed * 0.5;
+                const rotation = (goLeft ? -1 : 1) * (15 + Math.random() * 20);
+
+                // stagger the animations slightly
+                gsap.to(doc, {
+                    x: `+=${targetX}`,
+                    y: `+=${targetY}`,
+                    rotation: rotation,
+                    opacity: 0,
+                    duration: 0.4,
+                    delay: i * 0.03,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        returnDocToMenuQuiet(doc);
+                    }
+                });
+            });
+
+            // reset state after all animations
+            setTimeout(() => {
+                state.isDeleting = false;
+                updateFileCounts();
+                if (state.updateMobileMenu) state.updateMobileMenu();
+            }, docs.length * 30 + 500);
+        }
+
+        // return doc to menu without animation (used by shake clear)
+        function returnDocToMenuQuiet(doc) {
+            const index = doc.dataset.index;
+            const item = WORK_ITEMS[index];
+
+            // clean up spilled images
+            if (state.spilledFolders.has(index)) {
+                const spilledImgs = state.spilledImages[index];
+                if (spilledImgs) {
+                    spilledImgs.forEach(img => {
+                        gsap.killTweensOf(img);
+                        img.remove();
+                    });
+                    delete state.spilledImages[index];
+                    state.spilledFolders.delete(index);
+                }
+            }
+
+            // clean up peek images
+            document.querySelectorAll(`.peek-image[data-parent="${index}"]`).forEach(img => {
+                gsap.killTweensOf(img);
+                img.remove();
+            });
+
+            // remove doc
+            gsap.killTweensOf(doc);
+            doc.remove();
+
+            // add back to menu
+            const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
+            const fileList = folder.querySelector('.file-list');
+
+            const listItem = document.createElement('div');
+            listItem.className = 'file-list-item';
+            listItem.dataset.category = item.category;
+            listItem.dataset.title = item.title;
+            listItem.dataset.url = item.url;
+            listItem.dataset.year = item.year;
+            listItem.dataset.index = index;
+            listItem.dataset.images = JSON.stringify(item.images);
+
+            listItem.innerHTML = `
+                <div class="file-item-title">${item.title}</div>
+                <div class="file-item-year">${item.year}</div>
+            `;
+
+            // add click handler
+            listItem.addEventListener('mousedown', (e) => handleListItemInteraction(listItem, e));
+            listItem.addEventListener('touchstart', (e) => handleListItemInteraction(listItem, e), { passive: false });
+
+            insertListItemSorted(fileList, listItem);
+        }
+
         // wastebin drag detection (works for both mobile and desktop)
         function setupWastebin() {
             const wastebin = document.getElementById('wastebin');
@@ -2536,6 +2691,7 @@
             if (state.isMobile) {
                 setupMobileMenu();
                 setupMobileLightboxTap();
+                setupShakeToClear();
                 setupScrollHint();
             } else {
                 setupDesktopMenu();
@@ -3183,8 +3339,8 @@
                 const docHeight = state.isMobile ? 123 : 160;
                 const padding = state.isMobile ? 20 : 150; // smaller padding on mobile
                 const availableWidth = Math.max(50, containerRect.width - padding * 2 - docWidth);
-                // mobile: limit to top 60% of screen
-                const maxHeight = state.isMobile ? containerRect.height * 0.6 : containerRect.height;
+                // mobile: limit to top 80% of screen
+                const maxHeight = state.isMobile ? containerRect.height * 0.8 : containerRect.height;
                 const availableHeight = Math.max(50, maxHeight - padding * 2 - docHeight);
                 spawnX = padding + Math.random() * availableWidth;
                 spawnY = padding + Math.random() * availableHeight;
