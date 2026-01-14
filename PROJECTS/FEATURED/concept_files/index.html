@@ -3173,15 +3173,6 @@
             const startAngle = (Math.random() - 0.5) * 8; // ±4 degrees
             const endAngle = (Math.random() - 0.5) * 6;   // slight final angle
 
-            gsap.set(doc, {
-                x: x,
-                y: -200,
-                rotation: startAngle,
-                scale: 0.8,
-                opacity: 0,
-                zIndex: state.currentZIndex++
-            });
-
             doc.innerHTML = `
                 <div class="doc-content">
                     <h3 class="doc-title">${item.title}</h3>
@@ -3192,12 +3183,18 @@
 
             container.appendChild(doc);
 
-            // fade + slide in from top
+            // set position AFTER adding to DOM
+            gsap.set(doc, {
+                x: x,
+                y: -500,
+                rotation: startAngle,
+                zIndex: state.currentZIndex++
+            });
+
+            // slide in from top
             gsap.to(doc, {
                 y: y,
                 rotation: endAngle,
-                scale: 1,
-                opacity: 1,
                 duration: 0.5,
                 ease: 'power2.out'
             });
@@ -3304,15 +3301,6 @@
                 endAngle = (Math.random() - 0.5) * 6;   // slight final angle
             }
 
-            gsap.set(doc, {
-                x: spawnX,
-                y: isDrag ? spawnY : -200,
-                rotation: startAngle,
-                scale: isDrag ? 1 : 0.8,
-                opacity: isDrag ? 1 : 0,
-                zIndex: state.currentZIndex++
-            });
-
             doc.innerHTML = `
                 <div class="doc-content">
                     <h3 class="doc-title">${listItem.dataset.title}</h3>
@@ -3322,6 +3310,14 @@
             `;
 
             container.appendChild(doc);
+
+            // set position AFTER adding to DOM
+            gsap.set(doc, {
+                x: spawnX,
+                y: isDrag ? spawnY : -500,
+                rotation: startAngle,
+                zIndex: state.currentZIndex++
+            });
 
             // reset menu closed flag so menu can auto-open for new doc
             state.menuUserClosed = false;
@@ -3333,12 +3329,10 @@
                 // trigger drag immediately for drag interaction
                 draggable.startDrag(e);
             } else {
-                // fade + slide in from top
+                // slide in from top
                 gsap.to(doc, {
                     y: spawnY,
                     rotation: endAngle,
-                    scale: 1,
-                    opacity: 1,
                     duration: 0.5,
                     ease: 'power2.out'
                 });
