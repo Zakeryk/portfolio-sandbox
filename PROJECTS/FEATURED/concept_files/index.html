@@ -3300,6 +3300,8 @@
             }
 
             doc.style.zIndex = state.currentZIndex++;
+            // hide until positioned to prevent flash
+            doc.style.visibility = 'hidden';
 
             doc.innerHTML = `
                 <div class="doc-content">
@@ -3315,10 +3317,12 @@
             if (isDrag) {
                 gsap.set(doc, { x: spawnX, y: spawnY, rotation: startAngle });
             } else {
-                // start way off screen top - use container height to guarantee offscreen
-                const offscreenY = -(containerRect.height + 200);
+                // start way off screen top - use viewport height to guarantee offscreen
+                const offscreenY = -window.innerHeight;
                 gsap.set(doc, { x: spawnX, y: offscreenY, rotation: startAngle });
             }
+            // now show it
+            doc.style.visibility = 'visible';
 
             // reset menu closed flag so menu can auto-open for new doc
             state.menuUserClosed = false;
