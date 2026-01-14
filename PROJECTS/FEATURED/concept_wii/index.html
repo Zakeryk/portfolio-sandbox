@@ -629,6 +629,52 @@
             object-fit: cover;
         }
 
+        /* mobile tile ticker */
+        .mobile-tile-ticker {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 18px;
+            background: rgba(20, 20, 20, 0.85);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .mobile-tile-ticker.top {
+            top: 8px;
+        }
+
+        .mobile-tile-ticker.bottom {
+            bottom: 8px;
+        }
+
+        .mobile-tile-ticker-content {
+            display: flex;
+            white-space: nowrap;
+            animation: mobile-ticker-scroll 6s linear infinite;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+
+        .mobile-tile-ticker.bottom .mobile-tile-ticker-content {
+            animation-direction: reverse;
+        }
+
+        .mobile-tile-ticker-content span {
+            padding: 0 20px;
+        }
+
+        @keyframes mobile-ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
         #mobile-sound-toggle {
             display: none;
             position: fixed;
@@ -1106,6 +1152,19 @@
                 if (i === 1) {
                     mobileTile1Img = img;
                 }
+            }
+
+            // add ticker to tile 0 (MY WORK)
+            if (i === 0) {
+                const tickerText = '<span>MY WORK</span>'.repeat(10);
+                tile.insertAdjacentHTML('beforeend', `
+                    <div class="mobile-tile-ticker top">
+                        <div class="mobile-tile-ticker-content">${tickerText}</div>
+                    </div>
+                    <div class="mobile-tile-ticker bottom">
+                        <div class="mobile-tile-ticker-content">${tickerText}</div>
+                    </div>
+                `);
             }
 
             if (LINKS[i]) {
