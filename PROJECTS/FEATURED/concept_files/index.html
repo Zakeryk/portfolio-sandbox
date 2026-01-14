@@ -2201,7 +2201,12 @@
 
                         if (shakeCount >= shakesRequired) {
                             shakeCount = 0;
-                            clearAllDocuments();
+                            // only clear if not in gallery, menu closed, and not already deleting
+                            const menuOpen = document.getElementById('filing-area').classList.contains('visible');
+                            const galleryOpen = state.galleryActive;
+                            if (!menuOpen && !galleryOpen && !state.isDeleting) {
+                                clearAllDocuments();
+                            }
                         }
                     }
                 }
@@ -2239,100 +2244,6 @@
             } else {
                 enableMotion();
             }
-        }
-
-        // clear all documents with shuffleboard animation
-        function clearAllDocuments() {
-            const docs = document.querySelectorAll('.document');
-            if (docs.length === 0) return;
-
-            // prevent interaction during clear
-            state.isDeleting = true;
-
-            docs.forEach((doc, i) => {
-                // random direction - mostly horizontal with some vertical
-                const angle = (Math.random() - 0.5) * Math.PI * 0.6; // ±54 degrees from horizontal
-                const goLeft = Math.random() > 0.5;
-                const speed = 800 + Math.random() * 400;
-
-                const targetX = goLeft ? -speed : speed;
-                const targetY = Math.sin(angle) * speed * 0.5;
-                const rotation = (goLeft ? -1 : 1) * (15 + Math.random() * 20);
-
-                // stagger the animations slightly
-                gsap.to(doc, {
-                    x: `+=${targetX}`,
-                    y: `+=${targetY}`,
-                    rotation: rotation,
-                    opacity: 0,
-                    duration: 0.4,
-                    delay: i * 0.03,
-                    ease: 'power2.in',
-                    onComplete: () => {
-                        returnDocToMenuQuiet(doc);
-                    }
-                });
-            });
-
-            // reset state after all animations
-            setTimeout(() => {
-                state.isDeleting = false;
-                updateFileCounts();
-                if (state.updateMobileMenu) state.updateMobileMenu();
-            }, docs.length * 30 + 500);
-        }
-
-        // return doc to menu without animation (used by shake clear)
-        function returnDocToMenuQuiet(doc) {
-            const index = doc.dataset.index;
-            const item = WORK_ITEMS[index];
-
-            // clean up spilled images
-            if (state.spilledFolders.has(index)) {
-                const spilledImgs = state.spilledImages[index];
-                if (spilledImgs) {
-                    spilledImgs.forEach(img => {
-                        gsap.killTweensOf(img);
-                        img.remove();
-                    });
-                    delete state.spilledImages[index];
-                    state.spilledFolders.delete(index);
-                }
-            }
-
-            // clean up peek images
-            document.querySelectorAll(`.peek-image[data-parent="${index}"]`).forEach(img => {
-                gsap.killTweensOf(img);
-                img.remove();
-            });
-
-            // remove doc
-            gsap.killTweensOf(doc);
-            doc.remove();
-
-            // add back to menu
-            const folder = document.querySelector(`.folder-stack[data-category="${item.category}"]`);
-            const fileList = folder.querySelector('.file-list');
-
-            const listItem = document.createElement('div');
-            listItem.className = 'file-list-item';
-            listItem.dataset.category = item.category;
-            listItem.dataset.title = item.title;
-            listItem.dataset.url = item.url;
-            listItem.dataset.year = item.year;
-            listItem.dataset.index = index;
-            listItem.dataset.images = JSON.stringify(item.images);
-
-            listItem.innerHTML = `
-                <div class="file-item-title">${item.title}</div>
-                <div class="file-item-year">${item.year}</div>
-            `;
-
-            // add click handler
-            listItem.addEventListener('mousedown', (e) => handleListItemInteraction(listItem, e));
-            listItem.addEventListener('touchstart', (e) => handleListItemInteraction(listItem, e), { passive: false });
-
-            insertListItemSorted(fileList, listItem);
         }
 
         // wastebin drag detection (works for both mobile and desktop)
@@ -2447,9 +2358,13 @@
             updateTrashVisibility();
         }
 
-        // clear all documents from desk and return to menu
+        // clear all documents from desk with shuffleboard animation
         function clearAllDocuments() {
             const docs = Array.from(document.querySelectorAll('.document'));
+            if (docs.length === 0) return;
+
+            // prevent interaction during clear
+            state.isDeleting = true;
 
             // instantly remove all peek images
             const peekImages = document.querySelectorAll('.peek-image');
@@ -2458,11 +2373,37 @@
                 img.remove();
             });
 
-            docs.forEach((doc, index) => {
-                setTimeout(() => {
-                    removeDocumentToMenu(doc);
-                }, index * 50); // stagger by 50ms each
+            docs.forEach((doc, i) => {
+                // random direction - mostly horizontal with some vertical
+                const angle = (Math.random() - 0.5) * Math.PI * 0.6;
+                const goLeft = Math.random() > 0.5;
+                const speed = 800 + Math.random() * 400;
+
+                const targetX = goLeft ? -speed : speed;
+                const targetY = Math.sin(angle) * speed * 0.5;
+                const rotation = (goLeft ? -1 : 1) * (15 + Math.random() * 20);
+
+                // stagger the animations
+                gsap.to(doc, {
+                    x: `+=${targetX}`,
+                    y: `+=${targetY}`,
+                    rotation: rotation,
+                    opacity: 0,
+                    duration: 0.5,
+                    delay: i * 0.05,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        removeDocumentToMenu(doc);
+                    }
+                });
             });
+
+            // reset state after all animations
+            setTimeout(() => {
+                state.isDeleting = false;
+                updateFileCounts();
+                if (state.updateMobileMenu) state.updateMobileMenu();
+            }, docs.length * 50 + 600);
         }
 
         // welcome overlay dismiss
