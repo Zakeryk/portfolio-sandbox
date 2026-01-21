@@ -1353,11 +1353,10 @@
                     archivedGrid.appendChild(createProjectCard(p, true));
                 });
 
-                // enable scatter mode and shuffle cards after a short delay
+                // enable tile mode after a short delay
                 setTimeout(() => {
-                    grid.classList.remove('tile-mode', 'list-mode');
-                    grid.classList.add('scatter-mode');
-                    shuffleCards();
+                    grid.classList.remove('list-mode');
+                    grid.classList.add('tile-mode');
                 }, 100);
             })
             .catch(err => {
@@ -1370,48 +1369,26 @@
         const toggleBtn = document.getElementById('view-toggle');
         const gridContainer = document.getElementById('project-grid');
 
-        // View modes: scatter (default) -> tiles -> list -> scatter
-        let viewMode = 'scatter'; // starts in scatter after load
+        // View modes: tiles (default) -> list -> tiles
+        let viewMode = 'tiles';
 
         function updateView() {
             const btnIcon = document.getElementById('btn-icon');
-            gridContainer.classList.remove('tile-mode', 'list-mode', 'scatter-mode');
+            gridContainer.classList.remove('tile-mode', 'list-mode');
 
-            if (viewMode === 'scatter') {
-                gridContainer.classList.add('scatter-mode');
-                btnIcon.innerText = "TILES";
-                btnIcon.setAttribute('data-icon', '▦');
-                // re-shuffle when switching back to scatter
-                shuffleCards();
-            } else if (viewMode === 'tiles') {
+            if (viewMode === 'tiles') {
                 gridContainer.classList.add('tile-mode');
                 btnIcon.innerText = "LIST";
                 btnIcon.setAttribute('data-icon', '≡');
-                // reset card transforms
-                gridContainer.querySelectorAll('.card').forEach(card => {
-                    card.style.transform = '';
-                    card.classList.remove('shuffling');
-                });
             } else {
                 gridContainer.classList.add('list-mode');
-                btnIcon.innerText = "SCATTER";
-                btnIcon.setAttribute('data-icon', '◎');
-                // reset card transforms
-                gridContainer.querySelectorAll('.card').forEach(card => {
-                    card.style.transform = '';
-                    card.classList.remove('shuffling');
-                });
+                btnIcon.innerText = "TILES";
+                btnIcon.setAttribute('data-icon', '▦');
             }
         }
 
         toggleBtn.addEventListener('click', () => {
-            if (viewMode === 'scatter') {
-                viewMode = 'tiles';
-            } else if (viewMode === 'tiles') {
-                viewMode = 'list';
-            } else {
-                viewMode = 'scatter';
-            }
+            viewMode = viewMode === 'tiles' ? 'list' : 'tiles';
             updateView();
         });
 
