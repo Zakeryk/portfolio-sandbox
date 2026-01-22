@@ -326,9 +326,7 @@ export class GameEngine {
       this.tooltip.y = screenY - 30 * this.zoomLevel
       this.tooltip.scale.set(this.zoomLevel)
     } else {
-      // fade out animation
-      const targetY = this.tooltipAnim.baseY + 5
-      this.tooltip.y += (targetY - this.tooltip.y) * ease
+      // fade out in place - no y movement
     }
 
     if (this.tooltip.alpha < 0.01 && this.tooltipAnim.targetAlpha === 0) {
