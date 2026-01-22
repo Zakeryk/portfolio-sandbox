@@ -207,13 +207,13 @@ export class GameEngine {
       if (e.key === '0') this.centerOnTownHall()
       if (e.key === '=' || e.key === '+') this.zoomBy(1.35)
       if (e.key === '-' || e.key === '_') this.zoomBy(0.65)
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        this.keysPressed.add(e.key)
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 'a', 'A', 's', 'S', 'd', 'D'].includes(e.key)) {
+        this.keysPressed.add(e.key.toLowerCase())
       }
     })
 
     window.addEventListener('keyup', (e) => {
-      this.keysPressed.delete(e.key)
+      this.keysPressed.delete(e.key.toLowerCase())
     })
 
     view.addEventListener('wheel', (e) => {
@@ -987,10 +987,10 @@ export class GameEngine {
 
     // smooth keyboard panning
     const panSpeed = 8
-    if (this.keysPressed.has('ArrowUp')) this.worldContainer.y += panSpeed
-    if (this.keysPressed.has('ArrowDown')) this.worldContainer.y -= panSpeed
-    if (this.keysPressed.has('ArrowLeft')) this.worldContainer.x += panSpeed
-    if (this.keysPressed.has('ArrowRight')) this.worldContainer.x -= panSpeed
+    if (this.keysPressed.has('ArrowUp') || this.keysPressed.has('w')) this.worldContainer.y += panSpeed
+    if (this.keysPressed.has('ArrowDown') || this.keysPressed.has('s')) this.worldContainer.y -= panSpeed
+    if (this.keysPressed.has('ArrowLeft') || this.keysPressed.has('a')) this.worldContainer.x += panSpeed
+    if (this.keysPressed.has('ArrowRight') || this.keysPressed.has('d')) this.worldContainer.x -= panSpeed
 
     // tooltip animation
     this.updateTooltipAnim()
