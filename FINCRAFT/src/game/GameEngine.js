@@ -688,6 +688,8 @@ export class GameEngine {
 
     if (isDebt) {
       this.drawDebtBuilding(container)
+    } else if (category === 'depository') {
+      this.drawStorehouse(container)
     } else {
       this.drawGoodBuilding(container, category)
     }
@@ -798,6 +800,23 @@ export class GameEngine {
       inner.drawEllipse(0, -5, 8, 12)
       inner.endFill()
       container.addChild(inner)
+    }
+  }
+
+  async drawStorehouse(container) {
+    const spriteConfig = SPRITES.buildings.storehouse
+
+    try {
+      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const sprite = new PIXI.Sprite(texture)
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth || spriteConfig.width
+      sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      sprite.y = 20
+      container.addChild(sprite)
+    } catch (e) {
+      // fallback to procedural
+      this.drawGoodBuilding(container, 'depository')
     }
   }
 

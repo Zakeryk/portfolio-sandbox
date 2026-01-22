@@ -87,6 +87,16 @@ export const SPRITES = {
       displayHeight: 75,
       anchorX: 0.5,
       anchorY: 0.7
+    },
+    storehouse: {
+      path: '/assets/buildings/building-storagehouse.png',
+      useFallback: true,
+      width: 400,
+      height: 300,
+      displayWidth: 100,
+      displayHeight: 75,
+      anchorX: 0.5,
+      anchorY: 0.7
     }
   },
 
