@@ -124,10 +124,10 @@ export class GameEngine {
       // handle building drag in build mode
       if (this.draggingBuilding) {
         const rect = view.getBoundingClientRect()
-        const worldX = (e.clientX - rect.left - this.worldContainer.x) / this.zoomLevel
-        const worldY = (e.clientY - rect.top - this.worldContainer.y) / this.zoomLevel
-        this.draggingBuilding.x = worldX + this.dragOffset.x * this.zoomLevel
-        this.draggingBuilding.y = worldY + this.dragOffset.y * this.zoomLevel
+        const worldMouseX = (e.clientX - rect.left - this.worldContainer.x) / this.zoomLevel
+        const worldMouseY = (e.clientY - rect.top - this.worldContainer.y) / this.zoomLevel
+        this.draggingBuilding.x = worldMouseX + this.dragOffset.x
+        this.draggingBuilding.y = worldMouseY + this.dragOffset.y
         return
       }
 
@@ -280,9 +280,12 @@ export class GameEngine {
         this.draggingBuilding = entity
         this.dragStartPos = { x: entity.x, y: entity.y }
         this.dragStartGrid = { x: entity.gridX, y: entity.gridY }
+        // calculate offset in world space
+        const worldMouseX = (e.global.x - this.worldContainer.x) / this.zoomLevel
+        const worldMouseY = (e.global.y - this.worldContainer.y) / this.zoomLevel
         this.dragOffset = {
-          x: entity.x - e.global.x / this.zoomLevel,
-          y: entity.y - e.global.y / this.zoomLevel
+          x: entity.x - worldMouseX,
+          y: entity.y - worldMouseY
         }
         this.hideTooltip()
         return
@@ -466,16 +469,13 @@ export class GameEngine {
   }
 
   isTownHallZone(gridX, gridY) {
-    // town hall protected area (3x3 zone offset by -3, -3 from center)
+    // town hall protected area - 5 tile buffer around center
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
-    const zoneStartX = centerX - 3
-    const zoneStartY = centerY - 3
-    const zoneEndX = zoneStartX + 3
-    const zoneEndY = zoneStartY + 3
+    const buffer = 5
 
-    return gridX >= zoneStartX && gridX < zoneEndX &&
-           gridY >= zoneStartY && gridY < zoneEndY
+    return gridX >= centerX - buffer && gridX <= centerX + buffer &&
+           gridY >= centerY - buffer && gridY <= centerY + buffer
   }
 
   getTimeMultiplier() {

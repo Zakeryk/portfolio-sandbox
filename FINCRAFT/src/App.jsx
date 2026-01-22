@@ -426,7 +426,7 @@ function App() {
                   : 'bg-[#1a1a2e] text-gray-400 hover:bg-[#2a2a4e] border border-[#3a3a5e]'
               }`}
             >
-              {buildMode ? 'EXIT BUILD' : 'BUILD'}
+              {buildMode ? 'EXIT EDIT' : 'EDIT'}
             </button>
           </div>
         </div>
