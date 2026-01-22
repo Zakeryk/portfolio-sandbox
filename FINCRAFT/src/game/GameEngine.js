@@ -29,6 +29,7 @@ export class GameEngine {
     this.timeView = '1M'
     this.playbackSpeed = 1
     this.buildMode = false
+    this.netWorth = 0
     this.draggingBuilding = null
 
     this.tileWidth = 64
@@ -570,6 +571,21 @@ export class GameEngine {
     townHall.gridY = centerY
     townHall.isTownHall = true
 
+    // level label
+    const levelLabel = new PIXI.Text('LEVEL 0', {
+      fontFamily: 'monospace',
+      fontSize: 12,
+      fontWeight: 'bold',
+      fill: 0xffffff,
+      stroke: 0x000000,
+      strokeThickness: 3,
+      align: 'center'
+    })
+    levelLabel.anchor.set(0.5, 1)
+    levelLabel.y = -85
+    townHall.addChild(levelLabel)
+    townHall.levelLabel = levelLabel
+
     this.buildingLayer.addChild(townHall)
     this.entities.townHall = townHall
 
@@ -577,6 +593,14 @@ export class GameEngine {
       title: 'TOWN HALL',
       lines: ['Center of your financial kingdom']
     }))
+  }
+
+  setNetWorth(value) {
+    this.netWorth = value
+    if (this.entities.townHall?.levelLabel) {
+      const level = Math.floor(value / 1000)
+      this.entities.townHall.levelLabel.text = `LEVEL ${level}`
+    }
   }
 
   // === Account-based building system ===

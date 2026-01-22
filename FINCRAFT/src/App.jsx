@@ -177,6 +177,13 @@ function App() {
       gameRef.current.setTimeView(timeView)
       gameRef.current.setPlaybackSpeed(playbackSpeed)
       gameRef.current.setBuildMode(buildMode)
+      // net worth = assets - debt
+      const assets = accounts.depository.reduce((s, a) => s + a.balance, 0) +
+                     accounts.investments.reduce((s, a) => s + a.balance, 0) +
+                     accounts.others.reduce((s, a) => s + a.balance, 0)
+      const debt = accounts.creditCards.reduce((s, a) => s + a.balance, 0) +
+                   accounts.loans.reduce((s, a) => s + a.balance, 0)
+      gameRef.current.setNetWorth(assets - debt)
     }
   }, [accounts, timeView, playbackSpeed, buildMode])
 
