@@ -571,36 +571,20 @@ export class GameEngine {
     townHall.gridY = centerY
     townHall.isTownHall = true
 
-    // level label
-    const levelLabel = new PIXI.Text('LEVEL 0', {
-      fontFamily: 'monospace',
-      fontSize: 12,
-      fontWeight: 'bold',
-      fill: 0xffffff,
-      stroke: 0x000000,
-      strokeThickness: 3,
-      align: 'center'
-    })
-    levelLabel.anchor.set(0.5, 1)
-    levelLabel.y = -85
-    townHall.addChild(levelLabel)
-    townHall.levelLabel = levelLabel
-
     this.buildingLayer.addChild(townHall)
     this.entities.townHall = townHall
 
-    this.makeInteractive(townHall, () => ({
-      title: 'TOWN HALL',
-      lines: ['Center of your financial kingdom']
-    }))
+    this.makeInteractive(townHall, () => {
+      const level = Math.floor(this.netWorth / 1000)
+      return {
+        title: 'TOWN HALL',
+        lines: [`Level ${level}`]
+      }
+    })
   }
 
   setNetWorth(value) {
     this.netWorth = value
-    if (this.entities.townHall?.levelLabel) {
-      const level = Math.floor(value / 1000)
-      this.entities.townHall.levelLabel.text = `LEVEL ${level}`
-    }
   }
 
   // === Account-based building system ===

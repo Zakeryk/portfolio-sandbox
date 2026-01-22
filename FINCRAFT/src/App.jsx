@@ -190,12 +190,19 @@ function App() {
   useEffect(() => {
     if (gameContainerRef.current && !gameRef.current) {
       const game = new GameEngine(gameContainerRef.current)
-      game.init()
-      game.setAccounts(accounts)
-      game.setTimeView(timeView)
-      game.setPlaybackSpeed(playbackSpeed)
-      game.setBuildMode(buildMode)
       gameRef.current = game
+      game.init().then(() => {
+        game.setAccounts(accounts)
+        game.setTimeView(timeView)
+        game.setPlaybackSpeed(playbackSpeed)
+        game.setBuildMode(buildMode)
+        const assets = accounts.depository.reduce((s, a) => s + a.balance, 0) +
+                       accounts.investments.reduce((s, a) => s + a.balance, 0) +
+                       accounts.others.reduce((s, a) => s + a.balance, 0)
+        const debt = accounts.creditCards.reduce((s, a) => s + a.balance, 0) +
+                     accounts.loans.reduce((s, a) => s + a.balance, 0)
+        game.setNetWorth(assets - debt)
+      })
     }
 
     return () => {
