@@ -284,19 +284,18 @@ export class GameEngine {
     this.tooltip.bg.clear()
     this.tooltip.bg.beginFill(0x1a1a2e, 0.95)
     this.tooltip.bg.lineStyle(1, 0x4a4a6e)
-    this.tooltip.bg.drawRoundedRect(-width / 2, 0, width, height, 8)
+    this.tooltip.bg.drawRoundedRect(-width / 2, -height, width, height, 8)
     this.tooltip.bg.endFill()
 
     this.tooltip.titleText.x = 0
-    this.tooltip.titleText.y = 8
+    this.tooltip.titleText.y = -height + 8
     this.tooltip.contentText.x = 0
-    this.tooltip.contentText.y = 26
+    this.tooltip.contentText.y = -height + 26
 
-    // center on screen
-    this.tooltip.x = this.width / 2
-    this.tooltipAnim.baseY = this.height - height - 40
-    this.tooltipAnim.targetY = this.tooltipAnim.baseY
-    this.tooltip.y = this.tooltipAnim.baseY + 20 // start slightly below
+    // center above building
+    this.tooltip.x = x
+    this.tooltipAnim.baseY = y - 60
+    this.tooltip.y = this.tooltipAnim.baseY + 15 // start slightly below
     this.tooltipAnim.targetAlpha = 1
     this.tooltip.visible = true
   }
