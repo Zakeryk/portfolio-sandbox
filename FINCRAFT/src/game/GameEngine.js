@@ -555,7 +555,7 @@ export class GameEngine {
     this.entities.townHall = townHall
 
     this.makeInteractive(townHall, () => ({
-      title: '🏰 TOWN HALL',
+      title: 'TOWN HALL',
       lines: ['Center of your financial kingdom']
     }))
   }
@@ -705,7 +705,7 @@ export class GameEngine {
     }
 
     this.makeInteractive(container, () => ({
-      title: isDebt ? `🔥 ${account.name}` : `🏦 ${account.name}`,
+      title: account.name,
       lines: [
         `Balance: $${building.balance.toLocaleString()}`,
         ...(building.apr ? [`APR: ${building.apr}%`] : []),
