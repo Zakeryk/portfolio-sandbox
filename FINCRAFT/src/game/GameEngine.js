@@ -312,6 +312,15 @@ export class GameEngine {
     const ease = 0.2
     // alpha
     this.tooltip.alpha += (this.tooltipAnim.targetAlpha - this.tooltip.alpha) * ease
+
+    // track active entity position
+    if (this.activeTooltipEntity && this.tooltipAnim.targetAlpha > 0) {
+      const screenX = this.activeTooltipEntity.x * this.zoomLevel + this.worldContainer.x
+      const screenY = this.activeTooltipEntity.y * this.zoomLevel + this.worldContainer.y
+      this.tooltip.x = screenX
+      this.tooltipAnim.baseY = screenY - 30
+    }
+
     // y position
     const targetY = this.tooltipAnim.targetAlpha > 0 ? this.tooltipAnim.baseY : this.tooltipAnim.baseY + 20
     this.tooltip.y += (targetY - this.tooltip.y) * ease
