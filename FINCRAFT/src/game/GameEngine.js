@@ -735,9 +735,9 @@ export class GameEngine {
       const texture = await PIXI.Assets.load(spriteConfig.path)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
-      sprite.width = spriteConfig.displayWidth || spriteConfig.width
-      sprite.height = spriteConfig.displayHeight || spriteConfig.height
-      sprite.y = 30  // offset down to align with tile
+      sprite.width = (spriteConfig.displayWidth || spriteConfig.width) * 1.4
+      sprite.height = (spriteConfig.displayHeight || spriteConfig.height) * 1.4
+      sprite.y = 22  // offset to align with tile
       container.addChild(sprite)
     } catch (e) {
       // fallback procedural portal
