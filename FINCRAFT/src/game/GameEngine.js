@@ -106,11 +106,13 @@ export class GameEngine {
     this.lastPanPos = { x: 0, y: 0 }
     this.zoomLevel = 1
     this.clickedBuilding = false
+    this.hoveringBuilding = false
     this.minZoom = 0.4
     this.maxZoom = 2
 
     view.addEventListener('mousedown', (e) => {
-      // small delay to check if a building was clicked
+      // don't pan if hovering a building
+      if (this.hoveringBuilding) return
       this.clickedBuilding = false
       setTimeout(() => {
         if (this.clickedBuilding) return
@@ -272,6 +274,14 @@ export class GameEngine {
     entity.cursor = 'pointer'
     entity.tooltipData = getTooltipData
 
+    entity.on('pointerover', () => {
+      this.hoveringBuilding = true
+    })
+
+    entity.on('pointerout', () => {
+      this.hoveringBuilding = false
+    })
+
     entity.on('pointerdown', (e) => {
       this.clickedBuilding = true
 
@@ -314,10 +324,11 @@ export class GameEngine {
         // highlight tile under building
         if (entity.gridX !== undefined && entity.gridY !== undefined) {
           if (entity.isTownHall) {
-            // 3x3 highlight, offset up-left 2, up-right 1
+            // 3x3 highlight for town hall
             this.highlightTile = this.createHighlightTile(entity.gridX, entity.gridY, 3, -3, -3)
           } else {
-            this.highlightTile = this.createHighlightTile(entity.gridX, entity.gridY)
+            // 2x2 highlight positioned above the building tile
+            this.highlightTile = this.createHighlightTile(entity.gridX, entity.gridY, 2, -1, -1)
           }
           this.groundLayer.addChild(this.highlightTile)
         }
