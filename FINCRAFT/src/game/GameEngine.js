@@ -820,7 +820,8 @@ export class GameEngine {
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
       sprite.height = spriteConfig.displayHeight || spriteConfig.height
-      sprite.y = 22  // moved down 10%
+      sprite.scale.y = 0.9  // scale down y-axis 10%
+      sprite.y = 23  // moved down another 5%
       container.addChild(sprite)
     } catch (e) {
       // fallback to procedural
