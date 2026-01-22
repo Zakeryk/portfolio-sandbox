@@ -313,12 +313,13 @@ export class GameEngine {
     // alpha
     this.tooltip.alpha += (this.tooltipAnim.targetAlpha - this.tooltip.alpha) * ease
 
-    // track active entity position
+    // track active entity position and scale with zoom
     if (this.activeTooltipEntity && this.tooltipAnim.targetAlpha > 0) {
       const screenX = this.activeTooltipEntity.x * this.zoomLevel + this.worldContainer.x
       const screenY = this.activeTooltipEntity.y * this.zoomLevel + this.worldContainer.y
       this.tooltip.x = screenX
-      this.tooltipAnim.baseY = screenY - 30
+      this.tooltipAnim.baseY = screenY - 30 * this.zoomLevel
+      this.tooltip.scale.set(this.zoomLevel)
     }
 
     // y position
