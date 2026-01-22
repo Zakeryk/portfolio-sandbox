@@ -773,7 +773,7 @@ export class GameEngine {
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = (spriteConfig.displayWidth || spriteConfig.width) * 1.08
-      sprite.height = (spriteConfig.displayHeight || spriteConfig.height) * 1.08
+      sprite.height = (spriteConfig.displayHeight || spriteConfig.height) * 0.86
       sprite.y = 22  // offset to align with tile
       container.addChild(sprite)
     } catch (e) {
