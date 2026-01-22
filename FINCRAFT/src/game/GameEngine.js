@@ -200,7 +200,7 @@ export class GameEngine {
         this.hideDragPreview()
       }
       this.isPanning = false
-      view.style.cursor = 'default'
+      view.style.cursor = this.hoveringBuilding ? 'pointer' : 'default'
     })
 
     view.addEventListener('mouseleave', () => {
@@ -314,7 +314,7 @@ export class GameEngine {
   }
 
   updateTooltipAnim() {
-    const ease = 0.2
+    const ease = 0.35
     // alpha
     this.tooltip.alpha += (this.tooltipAnim.targetAlpha - this.tooltip.alpha) * ease
 
@@ -327,7 +327,7 @@ export class GameEngine {
       this.tooltip.scale.set(this.zoomLevel)
     } else {
       // fade out animation
-      const targetY = this.tooltipAnim.baseY + 2
+      const targetY = this.tooltipAnim.baseY + 5
       this.tooltip.y += (targetY - this.tooltip.y) * ease
     }
 
