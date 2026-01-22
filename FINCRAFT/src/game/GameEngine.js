@@ -223,14 +223,19 @@ export class GameEngine {
 
     view.addEventListener('wheel', (e) => {
       e.preventDefault()
-      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
-      const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel * zoomFactor))
-      if (newZoom !== this.zoomLevel) {
+
+      // linear zoom for better trackpad stability
+      const zoomSpeed = 0.001
+      const delta = -e.deltaY * zoomSpeed
+      const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel + delta))
+
+      if (Math.abs(newZoom - this.zoomLevel) > 0.001) {
         const rect = view.getBoundingClientRect()
         const mouseX = e.clientX - rect.left
         const mouseY = e.clientY - rect.top
         const worldX = (mouseX - this.worldContainer.x) / this.zoomLevel
         const worldY = (mouseY - this.worldContainer.y) / this.zoomLevel
+
         this.zoomLevel = newZoom
         this.worldContainer.scale.set(this.zoomLevel)
         this.worldContainer.x = mouseX - worldX * this.zoomLevel
@@ -240,11 +245,12 @@ export class GameEngine {
   }
 
   zoomBy(factor) {
-    this.targetZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.targetZoom * factor))
+    this.targetZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel * factor))
   }
 
   centerOnTownHall() {
     this.zoomLevel = 1
+    this.targetZoom = 1
     this.worldContainer.scale.set(1)
     const centerTile = this.toIso(this.mapWidth / 2, this.mapHeight / 2)
     this.worldContainer.x = (this.width / 2) - centerTile.x
@@ -1069,9 +1075,9 @@ export class GameEngine {
     // tooltip animation
     this.updateTooltipAnim()
 
-    // smooth zoom (eased, no overshoot)
+    // smooth zoom for keyboard only (eased, no overshoot)
     const zoomDiff = this.targetZoom - this.zoomLevel
-    if (Math.abs(zoomDiff) > 0.001) {
+    if (Math.abs(zoomDiff) > 0.001 && this.targetZoom !== 1) {
       const ease = 0.15
       const centerX = this.width / 2
       const centerY = this.height / 2
@@ -1083,6 +1089,8 @@ export class GameEngine {
       this.worldContainer.scale.set(this.zoomLevel)
       this.worldContainer.x = centerX - worldX * this.zoomLevel
       this.worldContainer.y = centerY - worldY * this.zoomLevel
+    } else if (Math.abs(zoomDiff) <= 0.001) {
+      this.targetZoom = this.zoomLevel
     }
 
     // process event queue
