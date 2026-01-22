@@ -694,7 +694,8 @@ export class GameEngine {
       this.drawGoodBuilding(container, category)
     }
 
-    // label
+    // label (ensure it renders above sprite)
+    container.sortableChildren = true
     const label = new PIXI.Text(account.name, {
       fontSize: 8,
       fill: isDebt ? 0xff6666 : 0xaaffaa,
@@ -702,6 +703,7 @@ export class GameEngine {
     })
     label.anchor.set(0.5)
     label.y = isDebt ? 50 : 35
+    label.zIndex = 100
     container.addChild(label)
 
     this.buildingLayer.addChild(container)
