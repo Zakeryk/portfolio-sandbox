@@ -144,6 +144,11 @@ function App() {
     return parseFloat(localStorage.getItem('fincraft-speed')) || 1
   })
   const [buildMode, setBuildMode] = useState(false)
+  const [showSimPanel, setShowSimPanel] = useState(() => {
+    return localStorage.getItem('fincraft-sim-panel') === 'true'
+  })
+  const [simPanelCollapsed, setSimPanelCollapsed] = useState(false)
+  const [customAmount, setCustomAmount] = useState('')
   const [openAccordions, setOpenAccordions] = useState({
     depository: true,
     investments: false,
@@ -245,6 +250,21 @@ function App() {
 
   const timeViews = ['1W', '1M', '3M', 'YTD', '1Y']
   const speeds = [1, 1.5, 2]
+
+  const pushEvent = (type, amount, targetId = null) => {
+    if (gameRef.current) {
+      gameRef.current.pushEvent({ type, amount, targetId })
+    }
+  }
+
+  const toggleSimPanel = () => {
+    const newVal = !showSimPanel
+    setShowSimPanel(newVal)
+    localStorage.setItem('fincraft-sim-panel', newVal.toString())
+  }
+
+  // get first debt account for quick test buttons
+  const firstDebtAccount = accounts.creditCards[0] || accounts.loans[0]
 
   return (
     <div className="h-screen bg-[#0f0f1a] text-white py-4 flex flex-col overflow-hidden">
@@ -439,6 +459,100 @@ function App() {
             >
               {buildMode ? 'EXIT EDIT' : 'EDIT'}
             </button>
+
+            {/* Sim Panel Toggle */}
+            <button
+              onClick={toggleSimPanel}
+              className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
+            >
+              SIM
+            </button>
+
+            {/* Sim Panel */}
+            {showSimPanel && (
+              <div className="absolute bottom-2 left-2 bg-[#1a1a2e]/95 border border-[#3a3a5e] rounded-lg p-2 text-xs">
+                <div
+                  className="flex items-center justify-between cursor-pointer mb-2"
+                  onClick={() => setSimPanelCollapsed(!simPanelCollapsed)}
+                >
+                  <span className="font-bold text-gray-400">SIM PANEL</span>
+                  <span className="text-gray-500">{simPanelCollapsed ? '▶' : '▼'}</span>
+                </div>
+
+                {!simPanelCollapsed && (
+                  <div className="space-y-2">
+                    {/* Expenses */}
+                    <div>
+                      <div className="text-gray-500 mb-1">Expenses</div>
+                      <div className="flex gap-1 flex-wrap">
+                        <button
+                          onClick={() => pushEvent('expense', 25)}
+                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
+                        >
+                          Gas $25
+                        </button>
+                        <button
+                          onClick={() => pushEvent('expense', 50)}
+                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
+                        >
+                          Food $50
+                        </button>
+                        <button
+                          onClick={() => pushEvent('expense', 1500)}
+                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
+                        >
+                          Rent $1500
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Debt Payments */}
+                    {firstDebtAccount && (
+                      <div>
+                        <div className="text-gray-500 mb-1">Debt Payments</div>
+                        <div className="flex gap-1 flex-wrap">
+                          <button
+                            onClick={() => pushEvent('debt-payment', 100, firstDebtAccount.id)}
+                            className="px-2 py-1 bg-green-900/50 hover:bg-green-800/50 rounded text-green-300"
+                          >
+                            $100
+                          </button>
+                          <button
+                            onClick={() => pushEvent('debt-payment', 500, firstDebtAccount.id)}
+                            className="px-2 py-1 bg-green-900/50 hover:bg-green-800/50 rounded text-green-300"
+                          >
+                            $500
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Custom */}
+                    <div className="flex gap-1">
+                      <input
+                        type="number"
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        placeholder="$"
+                        className="w-16 px-2 py-1 bg-[#0f0f1a] rounded border border-[#3a3a5e] text-white"
+                      />
+                      <button
+                        onClick={() => {
+                          const amt = parseFloat(customAmount)
+                          if (amt > 0) {
+                            pushEvent('expense', amt)
+                            setCustomAmount('')
+                          }
+                        }}
+                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+                      >
+                        Send
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

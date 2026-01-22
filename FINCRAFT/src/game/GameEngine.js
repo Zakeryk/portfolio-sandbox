@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js'
 import { SPRITES } from './sprites.js'
+import { EventQueue } from './EventQueue.js'
 
 export class GameEngine {
   constructor(container) {
@@ -11,7 +12,11 @@ export class GameEngine {
       buildings: [],  // account-based buildings
       peons: [],      // gold carriers
       demons: [],     // debt enemies
+      creeps: [],     // expense attackers
+      infantry: [],   // debt payment attackers
     }
+
+    this.eventQueue = new EventQueue()
 
     this.accounts = {
       depository: [],
@@ -847,6 +852,116 @@ export class GameEngine {
     this.entities.demons.push(demon)
   }
 
+  spawnCreep(amount) {
+    // spawn from random map edge
+    const edge = Math.floor(Math.random() * 4) // 0=top, 1=right, 2=bottom, 3=left
+    let gridX, gridY
+
+    switch (edge) {
+      case 0: gridX = Math.floor(Math.random() * this.mapWidth); gridY = 0; break
+      case 1: gridX = this.mapWidth - 1; gridY = Math.floor(Math.random() * this.mapHeight); break
+      case 2: gridX = Math.floor(Math.random() * this.mapWidth); gridY = this.mapHeight - 1; break
+      case 3: gridX = 0; gridY = Math.floor(Math.random() * this.mapHeight); break
+    }
+
+    const pos = this.toIso(gridX, gridY)
+    const creep = new PIXI.Container()
+    creep.x = pos.x
+    creep.y = pos.y
+
+    // size based on amount ($20 = small, $1500 = big)
+    const size = Math.min(20, 6 + Math.log10(amount + 1) * 4)
+
+    // shadow
+    const shadow = new PIXI.Graphics()
+    shadow.beginFill(0x000000, 0.3)
+    shadow.drawEllipse(0, size / 2, size, size / 3)
+    shadow.endFill()
+    creep.addChild(shadow)
+
+    // body - sickly green
+    const body = new PIXI.Graphics()
+    body.beginFill(0x44aa44)
+    body.drawCircle(0, 0, size)
+    body.endFill()
+    creep.addChild(body)
+
+    // angry eyes
+    const eyes = new PIXI.Graphics()
+    eyes.beginFill(0xff0000)
+    eyes.drawCircle(-size / 3, -size / 4, size / 5)
+    eyes.drawCircle(size / 3, -size / 4, size / 5)
+    eyes.endFill()
+    creep.addChild(eyes)
+
+    creep.targetX = this.entities.townHall.x
+    creep.targetY = this.entities.townHall.y
+    creep.speed = 0.8 + Math.random() * 0.4
+    creep.amount = amount
+    creep.wanderOffset = { x: 0, y: 0 }
+    creep.wanderTimer = 0
+
+    this.unitLayer.addChild(creep)
+    this.entities.creeps.push(creep)
+  }
+
+  spawnInfantry(amount, targetBuilding) {
+    if (!targetBuilding) return
+
+    // spawn from town hall
+    const pos = {
+      x: this.entities.townHall.x,
+      y: this.entities.townHall.y
+    }
+
+    const infantry = new PIXI.Container()
+    infantry.x = pos.x
+    infantry.y = pos.y
+
+    // size based on payment amount
+    const size = Math.min(16, 5 + Math.log10(amount + 1) * 3)
+
+    // shadow
+    const shadow = new PIXI.Graphics()
+    shadow.beginFill(0x000000, 0.3)
+    shadow.drawEllipse(0, size / 2, size * 0.8, size / 3)
+    shadow.endFill()
+    infantry.addChild(shadow)
+
+    // body - blue warrior
+    const body = new PIXI.Graphics()
+    body.beginFill(0x4488ff)
+    body.drawEllipse(0, 0, size * 0.7, size)
+    body.endFill()
+    infantry.addChild(body)
+
+    // shield
+    const shield = new PIXI.Graphics()
+    shield.beginFill(0xcccccc)
+    shield.drawEllipse(-size * 0.6, 0, size * 0.3, size * 0.5)
+    shield.endFill()
+    infantry.addChild(shield)
+
+    // sword
+    const sword = new PIXI.Graphics()
+    sword.beginFill(0xffdd44)
+    sword.drawRect(size * 0.4, -size * 0.8, 3, size * 1.2)
+    sword.endFill()
+    infantry.addChild(sword)
+
+    const targetPos = this.toIso(targetBuilding.gridX, targetBuilding.gridY)
+    infantry.targetX = targetPos.x
+    infantry.targetY = targetPos.y - 20
+    infantry.speed = 1.2 + Math.random() * 0.3
+    infantry.amount = amount
+    infantry.targetBuilding = targetBuilding
+    infantry.wanderOffset = { x: 0, y: 0 }
+    infantry.wanderTimer = 0
+
+    this.unitLayer.addChild(infantry)
+    this.entities.infantry.push(infantry)
+  }
+
   // === Game loop ===
 
   gameLoop() {
@@ -858,6 +973,19 @@ export class GameEngine {
     if (this.keysPressed.has('ArrowDown')) this.worldContainer.y -= panSpeed
     if (this.keysPressed.has('ArrowLeft')) this.worldContainer.x += panSpeed
     if (this.keysPressed.has('ArrowRight')) this.worldContainer.x -= panSpeed
+
+    // process event queue
+    const event = this.eventQueue.popIfReady(Date.now())
+    if (event) {
+      if (event.type === 'expense') {
+        this.spawnCreep(event.amount)
+      } else if (event.type === 'debt-payment') {
+        const targetBuilding = this.entities.buildings.find(b => b.accountId === event.targetId)
+        if (targetBuilding) {
+          this.spawnInfantry(event.amount, targetBuilding)
+        }
+      }
+    }
 
     // spawn demons from debt buildings only (credit cards + loans)
     // depository/investments/others are static holdings - no spawning
@@ -933,6 +1061,60 @@ export class GameEngine {
       return true
     })
 
+    // move creeps toward town hall
+    this.entities.creeps = this.entities.creeps.filter(creep => {
+      creep.wanderTimer++
+      if (creep.wanderTimer > 35) {
+        creep.wanderOffset.x = (Math.random() - 0.5) * 25
+        creep.wanderOffset.y = (Math.random() - 0.5) * 12
+        creep.wanderTimer = 0
+      }
+
+      const targetX = townHallX + creep.wanderOffset.x
+      const targetY = townHallY + creep.wanderOffset.y
+      const dx = targetX - creep.x
+      const dy = targetY - creep.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < 35) {
+        this.unitLayer.removeChild(creep)
+        this.spawnExpenseParticle(creep.x, creep.y, creep.amount)
+        return false
+      }
+
+      creep.x += (dx / dist) * creep.speed * this.playbackSpeed
+      creep.y += (dy / dist) * creep.speed * this.playbackSpeed
+      creep.zIndex = creep.y
+      return true
+    })
+
+    // move infantry toward target debt building
+    this.entities.infantry = this.entities.infantry.filter(infantry => {
+      infantry.wanderTimer++
+      if (infantry.wanderTimer > 25) {
+        infantry.wanderOffset.x = (Math.random() - 0.5) * 15
+        infantry.wanderOffset.y = (Math.random() - 0.5) * 8
+        infantry.wanderTimer = 0
+      }
+
+      const targetX = infantry.targetX + infantry.wanderOffset.x
+      const targetY = infantry.targetY + infantry.wanderOffset.y
+      const dx = targetX - infantry.x
+      const dy = targetY - infantry.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < 30) {
+        this.unitLayer.removeChild(infantry)
+        this.spawnPaymentParticle(infantry.x, infantry.y, infantry.amount)
+        return false
+      }
+
+      infantry.x += (dx / dist) * infantry.speed * this.playbackSpeed
+      infantry.y += (dy / dist) * infantry.speed * this.playbackSpeed
+      infantry.zIndex = infantry.y
+      return true
+    })
+
     // sort by depth
     this.buildingLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
     this.unitLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
@@ -991,6 +1173,60 @@ export class GameEngine {
       }
     }
     this.app.ticker.add(animate)
+  }
+
+  spawnExpenseParticle(x, y, amount) {
+    const particle = new PIXI.Text(`-$${amount}`, {
+      fontSize: 12,
+      fill: 0xff6644,
+      fontWeight: 'bold'
+    })
+    particle.anchor.set(0.5)
+    particle.x = x
+    particle.y = y
+    this.effectLayer.addChild(particle)
+
+    let frames = 0
+    const animate = () => {
+      frames++
+      particle.y -= 1
+      particle.alpha -= 0.02
+      if (particle.alpha <= 0 || frames > 50) {
+        this.effectLayer.removeChild(particle)
+        this.app.ticker.remove(animate)
+      }
+    }
+    this.app.ticker.add(animate)
+  }
+
+  spawnPaymentParticle(x, y, amount) {
+    const particle = new PIXI.Text(`+$${amount}`, {
+      fontSize: 12,
+      fill: 0x44ff88,
+      fontWeight: 'bold'
+    })
+    particle.anchor.set(0.5)
+    particle.x = x
+    particle.y = y
+    this.effectLayer.addChild(particle)
+
+    let frames = 0
+    const animate = () => {
+      frames++
+      particle.y -= 1
+      particle.scale.set(1 + frames * 0.01)
+      particle.alpha -= 0.02
+      if (particle.alpha <= 0 || frames > 50) {
+        this.effectLayer.removeChild(particle)
+        this.app.ticker.remove(animate)
+      }
+    }
+    this.app.ticker.add(animate)
+  }
+
+  // public method to push events from UI
+  pushEvent(event) {
+    this.eventQueue.push(event)
   }
 
   destroy() {
