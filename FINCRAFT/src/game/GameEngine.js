@@ -34,11 +34,11 @@ export class GameEngine {
 
     // building zones (grid positions relative to center)
     this.zones = {
-      depository: { x: -4, y: -2 },
-      investments: { x: -2, y: -4 },
-      creditCards: { x: 4, y: -2 },
-      loans: { x: 2, y: 4 },
-      others: { x: -4, y: 4 }
+      depository: { x: -8, y: -4 },
+      investments: { x: -4, y: -8 },
+      creditCards: { x: 8, y: -4 },
+      loans: { x: 4, y: 8 },
+      others: { x: -8, y: 8 }
     }
   }
 
@@ -130,6 +130,12 @@ export class GameEngine {
         const worldMouseY = (e.clientY - rect.top - this.worldContainer.y) / this.zoomLevel
         this.draggingBuilding.x = worldMouseX + this.dragOffset.x
         this.draggingBuilding.y = worldMouseY + this.dragOffset.y
+
+        // show drag preview tile
+        const gridX = Math.round(this.draggingBuilding.x / (this.tileWidth / 2) / 2 + (this.draggingBuilding.y + 20) / (this.tileHeight / 2) / 2)
+        const gridY = Math.round((this.draggingBuilding.y + 20) / (this.tileHeight / 2) / 2 - this.draggingBuilding.x / (this.tileWidth / 2) / 2)
+        const isBlocked = this.isTownHallZone(gridX, gridY)
+        this.showDragPreview(gridX, gridY, isBlocked)
         return
       }
 
@@ -177,6 +183,7 @@ export class GameEngine {
         }
 
         this.draggingBuilding = null
+        this.hideDragPreview()
       }
       this.isPanning = false
       view.style.cursor = 'default'
@@ -366,6 +373,53 @@ export class GameEngine {
     }
 
     return container
+  }
+
+  showDragPreview(gridX, gridY, isBlocked) {
+    // remove existing preview
+    if (this.dragPreviewTile) {
+      this.groundLayer.removeChild(this.dragPreviewTile)
+    }
+
+    const container = new PIXI.Container()
+    const color = isBlocked ? 0xff4444 : 0x44ff44
+    const size = 2
+
+    for (let dy = 0; dy < size; dy++) {
+      for (let dx = 0; dx < size; dx++) {
+        const pos = this.toIso(gridX - 1 + dx, gridY - 1 + dy)
+        const tile = new PIXI.Graphics()
+
+        tile.beginFill(color, 0.3)
+        tile.moveTo(0, 0)
+        tile.lineTo(this.tileWidth / 2, this.tileHeight / 2)
+        tile.lineTo(0, this.tileHeight)
+        tile.lineTo(-this.tileWidth / 2, this.tileHeight / 2)
+        tile.closePath()
+        tile.endFill()
+
+        tile.lineStyle(2, color, 0.8)
+        tile.moveTo(0, 0)
+        tile.lineTo(this.tileWidth / 2, this.tileHeight / 2)
+        tile.lineTo(0, this.tileHeight)
+        tile.lineTo(-this.tileWidth / 2, this.tileHeight / 2)
+        tile.closePath()
+
+        tile.x = pos.x
+        tile.y = pos.y
+        container.addChild(tile)
+      }
+    }
+
+    this.dragPreviewTile = container
+    this.groundLayer.addChild(container)
+  }
+
+  hideDragPreview() {
+    if (this.dragPreviewTile) {
+      this.groundLayer.removeChild(this.dragPreviewTile)
+      this.dragPreviewTile = null
+    }
   }
 
   drawIsometricGrid() {
