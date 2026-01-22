@@ -124,6 +124,11 @@ export class GameEngine {
       this.clickedBuilding = false
       setTimeout(() => {
         if (this.clickedBuilding) return
+        // dismiss tooltip when clicking ground
+        if (this.activeTooltipEntity) {
+          this.hideTooltip()
+          this.activeTooltipEntity = null
+        }
         this.isPanning = true
         this.lastPanPos = { x: e.clientX, y: e.clientY }
         view.style.cursor = 'grabbing'
