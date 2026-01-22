@@ -540,7 +540,7 @@ export class GameEngine {
     container.gridY = gridY
 
     if (isDebt) {
-      this.drawHellPortal(container, account.apr || 0)
+      this.drawDebtBuilding(container)
     } else {
       this.drawGoodBuilding(container, category)
     }
@@ -621,47 +621,35 @@ export class GameEngine {
     container.addChild(body)
   }
 
-  drawHellPortal(container, apr) {
-    // corrupted ground
-    const ground = new PIXI.Graphics()
-    ground.beginFill(0x330033, 0.5)
-    ground.drawEllipse(0, 20, 25, 12)
-    ground.endFill()
-    container.addChild(ground)
+  async drawDebtBuilding(container) {
+    const spriteConfig = SPRITES.buildings.debt
 
-    // portal base
-    const portalBase = new PIXI.Graphics()
-    portalBase.beginFill(0x220022)
-    portalBase.drawEllipse(0, 5, 18, 10)
-    portalBase.endFill()
-    container.addChild(portalBase)
+    try {
+      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const sprite = new PIXI.Sprite(texture)
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth || spriteConfig.width
+      sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      container.addChild(sprite)
+    } catch (e) {
+      // fallback procedural portal
+      const ground = new PIXI.Graphics()
+      ground.beginFill(0x330033, 0.5)
+      ground.drawEllipse(0, 20, 25, 12)
+      ground.endFill()
+      container.addChild(ground)
 
-    // portal glow (intensity based on APR)
-    const glowIntensity = Math.min(1, (apr || 10) / 30)
-    const portal = new PIXI.Graphics()
-    portal.beginFill(0xff0000, 0.3 + glowIntensity * 0.4)
-    portal.drawEllipse(0, -5, 15, 20)
-    portal.endFill()
-    container.addChild(portal)
+      const portal = new PIXI.Graphics()
+      portal.beginFill(0x800080, 0.6)
+      portal.drawEllipse(0, -5, 15, 20)
+      portal.endFill()
+      container.addChild(portal)
 
-    // inner void
-    const inner = new PIXI.Graphics()
-    inner.beginFill(0x000000)
-    inner.drawEllipse(0, -5, 8, 12)
-    inner.endFill()
-    container.addChild(inner)
-
-    // flames
-    for (let i = 0; i < 3; i++) {
-      const flame = new PIXI.Graphics()
-      flame.beginFill(0xff4400, 0.6)
-      const fx = (i - 1) * 8
-      flame.moveTo(fx, -10)
-      flame.lineTo(fx - 3, -25 - Math.random() * 10)
-      flame.lineTo(fx + 3, -25 - Math.random() * 10)
-      flame.closePath()
-      flame.endFill()
-      container.addChild(flame)
+      const inner = new PIXI.Graphics()
+      inner.beginFill(0x000000)
+      inner.drawEllipse(0, -5, 8, 12)
+      inner.endFill()
+      container.addChild(inner)
     }
   }
 

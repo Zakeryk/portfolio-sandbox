@@ -77,6 +77,16 @@ export const SPRITES = {
       height: 100,
       anchorX: 0.5,
       anchorY: 0.7
+    },
+    debt: {
+      path: '/assets/buildings/building-debt.png',
+      useFallback: true,
+      width: 400,
+      height: 300,
+      displayWidth: 100,
+      displayHeight: 75,
+      anchorX: 0.5,
+      anchorY: 0.7
     }
   },
 
