@@ -97,6 +97,26 @@ export const SPRITES = {
       displayHeight: 75,
       anchorX: 0.5,
       anchorY: 0.7
+    },
+    tower: {
+      path: '/assets/buildings/building-tower.png',
+      useFallback: true,
+      width: 988,
+      height: 1240,
+      displayWidth: 100,
+      displayHeight: 125,
+      anchorX: 0.5,
+      anchorY: 0.7
+    },
+    statue: {
+      path: '/assets/buildings/building-statue.png',
+      useFallback: true,
+      width: 1002,
+      height: 1227,
+      displayWidth: 100,
+      displayHeight: 122,
+      anchorX: 0.5,
+      anchorY: 0.7
     }
   },
 

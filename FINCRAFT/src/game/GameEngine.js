@@ -690,6 +690,10 @@ export class GameEngine {
       this.drawDebtBuilding(container)
     } else if (category === 'depository') {
       this.drawStorehouse(container)
+    } else if (category === 'investments') {
+      this.drawTower(container)
+    } else if (category === 'others') {
+      this.drawStatue(container)
     } else {
       this.drawGoodBuilding(container, category)
     }
@@ -819,6 +823,40 @@ export class GameEngine {
     } catch (e) {
       // fallback to procedural
       this.drawGoodBuilding(container, 'depository')
+    }
+  }
+
+  async drawTower(container) {
+    const spriteConfig = SPRITES.buildings.tower
+
+    try {
+      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const sprite = new PIXI.Sprite(texture)
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth || spriteConfig.width
+      sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      sprite.y = 20
+      container.addChild(sprite)
+    } catch (e) {
+      // fallback to procedural
+      this.drawGoodBuilding(container, 'investments')
+    }
+  }
+
+  async drawStatue(container) {
+    const spriteConfig = SPRITES.buildings.statue
+
+    try {
+      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const sprite = new PIXI.Sprite(texture)
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth || spriteConfig.width
+      sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      sprite.y = 20
+      container.addChild(sprite)
+    } catch (e) {
+      // fallback to procedural
+      this.drawGoodBuilding(container, 'others')
     }
   }
 
