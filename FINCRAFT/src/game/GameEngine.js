@@ -596,13 +596,15 @@ export class GameEngine {
   }
 
   isTownHallZone(gridX, gridY) {
-    // town hall protected area - 5 tile buffer around center
+    // town hall protected area - only where 3x3 hover tiles show
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
-    const buffer = 5
 
-    return gridX >= centerX - buffer && gridX <= centerX + buffer &&
-           gridY >= centerY - buffer && gridY <= centerY + buffer
+    // building at gridX, gridY occupies 2x2 area: [gridX-1 to gridX, gridY-1 to gridY]
+    // town hall 3x3 highlight occupies: [centerX-3 to centerX-1, centerY-3 to centerY-1]
+    // check if they overlap
+    return gridX >= centerX - 3 && gridX <= centerX &&
+           gridY >= centerY - 3 && gridY <= centerY
   }
 
   getTimeMultiplier() {
