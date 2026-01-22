@@ -696,7 +696,7 @@ export class GameEngine {
       fontWeight: 'bold'
     })
     label.anchor.set(0.5)
-    label.y = isDebt ? -45 : 35
+    label.y = isDebt ? 50 : 35
     container.addChild(label)
 
     this.buildingLayer.addChild(container)
