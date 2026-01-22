@@ -371,7 +371,10 @@ export class GameEngine {
         this.activeTooltipEntity = null
       } else {
         const data = getTooltipData()
-        this.showTooltip(e.global.x, e.global.y, data.title, data.lines)
+        // get entity center in screen coords
+        const screenX = entity.x * this.zoomLevel + this.worldContainer.x
+        const screenY = entity.y * this.zoomLevel + this.worldContainer.y
+        this.showTooltip(screenX, screenY, data.title, data.lines)
         this.activeTooltipEntity = entity
 
         // highlight tile under building
