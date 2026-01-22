@@ -179,6 +179,7 @@ export class GameEngine {
           if (building) {
             building.gridX = gridX
             building.gridY = gridY
+            this.saveBuildingPosition(building.accountId, gridX, gridY)
           }
         }
 
@@ -584,17 +585,37 @@ export class GameEngine {
     })
   }
 
+  saveBuildingPosition(accountId, gridX, gridY) {
+    const positions = JSON.parse(localStorage.getItem('fincraft-building-positions') || '{}')
+    positions[accountId] = { gridX, gridY }
+    localStorage.setItem('fincraft-building-positions', JSON.stringify(positions))
+  }
+
+  loadBuildingPosition(accountId) {
+    const positions = JSON.parse(localStorage.getItem('fincraft-building-positions') || '{}')
+    return positions[accountId] || null
+  }
+
   createAccountBuilding(account, category, index) {
     const isDebt = category === 'creditCards' || category === 'loans'
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
 
-    const zone = this.zones[category]
-    const offsetX = zone.x + (index % 3) * 2
-    const offsetY = zone.y + Math.floor(index / 3) * 2
+    // check for saved position first
+    const savedPos = this.loadBuildingPosition(account.id)
+    let gridX, gridY
 
-    const gridX = centerX + offsetX
-    const gridY = centerY + offsetY
+    if (savedPos) {
+      gridX = savedPos.gridX
+      gridY = savedPos.gridY
+    } else {
+      const zone = this.zones[category]
+      const offsetX = zone.x + (index % 3) * 2
+      const offsetY = zone.y + Math.floor(index / 3) * 2
+      gridX = centerX + offsetX
+      gridY = centerY + offsetY
+    }
+
     const pos = this.toIso(gridX, gridY)
 
     const container = new PIXI.Container()
