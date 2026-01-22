@@ -199,6 +199,11 @@ export class GameEngine {
       if (e.key === '0') this.centerOnTownHall()
       if (e.key === '=' || e.key === '+') this.zoomBy(1.15)
       if (e.key === '-' || e.key === '_') this.zoomBy(0.85)
+      const panSpeed = 40
+      if (e.key === 'ArrowUp') this.worldContainer.y += panSpeed
+      if (e.key === 'ArrowDown') this.worldContainer.y -= panSpeed
+      if (e.key === 'ArrowLeft') this.worldContainer.x += panSpeed
+      if (e.key === 'ArrowRight') this.worldContainer.x -= panSpeed
     })
 
     view.addEventListener('wheel', (e) => {
