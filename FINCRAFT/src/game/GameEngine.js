@@ -259,18 +259,6 @@ export class GameEngine {
     bg.drawRoundedRect(0, 0, 140, 80, 6)
     bg.endFill()
 
-    const caret = new PIXI.Graphics()
-    caret.beginFill(0x1a1a2e, 0.95)
-    caret.moveTo(-8, 0)
-    caret.lineTo(0, 10)
-    caret.lineTo(8, 0)
-    caret.closePath()
-    caret.endFill()
-    caret.lineStyle(1, 0x4a4a6e)
-    caret.moveTo(-8, 0)
-    caret.lineTo(0, 10)
-    caret.lineTo(8, 0)
-
     const title = new PIXI.Text('', { fontSize: 11, fill: 0xffffff, fontWeight: 'bold', align: 'center' })
     title.anchor.set(0.5, 0)
 
@@ -278,11 +266,9 @@ export class GameEngine {
     content.anchor.set(0.5, 0)
 
     this.tooltip.addChild(bg)
-    this.tooltip.addChild(caret)
     this.tooltip.titleText = title
     this.tooltip.contentText = content
     this.tooltip.bg = bg
-    this.tooltip.caret = caret
     this.tooltip.addChild(title)
     this.tooltip.addChild(content)
 
@@ -305,10 +291,6 @@ export class GameEngine {
     this.tooltip.titleText.y = -height + 8
     this.tooltip.contentText.x = 0
     this.tooltip.contentText.y = -height + 26
-
-    // position caret at bottom center
-    this.tooltip.caret.x = 0
-    this.tooltip.caret.y = 0
 
     // center above building
     this.tooltip.x = x
