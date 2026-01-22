@@ -194,6 +194,17 @@ function App() {
     }
   }, [])
 
+  // esc to exit edit mode
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && buildMode) {
+        setBuildMode(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [buildMode])
+
   const toggleAccordion = (key) => {
     setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }))
   }
