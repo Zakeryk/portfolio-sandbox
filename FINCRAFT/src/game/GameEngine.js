@@ -294,7 +294,7 @@ export class GameEngine {
 
     // center above building
     this.tooltip.x = x
-    this.tooltipAnim.baseY = y - 60
+    this.tooltipAnim.baseY = y - 30
     this.tooltip.y = this.tooltipAnim.baseY + 15 // start slightly below
     this.tooltipAnim.targetAlpha = 1
     this.tooltip.visible = true
