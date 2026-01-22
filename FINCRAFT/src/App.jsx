@@ -205,6 +205,9 @@ function App() {
       if (e.key === 'Escape' && buildMode) {
         setBuildMode(false)
       }
+      if (e.key === 'e' || e.key === 'E') {
+        setBuildMode(prev => !prev)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
