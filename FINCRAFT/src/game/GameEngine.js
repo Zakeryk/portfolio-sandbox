@@ -109,6 +109,7 @@ export class GameEngine {
     this.hoveringBuilding = false
     this.minZoom = 0.4
     this.maxZoom = 2
+    this.keysPressed = new Set()
 
     view.addEventListener('mousedown', (e) => {
       // don't pan if hovering a building
@@ -199,11 +200,13 @@ export class GameEngine {
       if (e.key === '0') this.centerOnTownHall()
       if (e.key === '=' || e.key === '+') this.zoomBy(1.15)
       if (e.key === '-' || e.key === '_') this.zoomBy(0.85)
-      const panSpeed = 40
-      if (e.key === 'ArrowUp') this.worldContainer.y += panSpeed
-      if (e.key === 'ArrowDown') this.worldContainer.y -= panSpeed
-      if (e.key === 'ArrowLeft') this.worldContainer.x += panSpeed
-      if (e.key === 'ArrowRight') this.worldContainer.x -= panSpeed
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        this.keysPressed.add(e.key)
+      }
+    })
+
+    window.addEventListener('keyup', (e) => {
+      this.keysPressed.delete(e.key)
     })
 
     view.addEventListener('wheel', (e) => {
@@ -848,6 +851,13 @@ export class GameEngine {
 
   gameLoop() {
     this.tickCount++
+
+    // smooth keyboard panning
+    const panSpeed = 8
+    if (this.keysPressed.has('ArrowUp')) this.worldContainer.y += panSpeed
+    if (this.keysPressed.has('ArrowDown')) this.worldContainer.y -= panSpeed
+    if (this.keysPressed.has('ArrowLeft')) this.worldContainer.x += panSpeed
+    if (this.keysPressed.has('ArrowRight')) this.worldContainer.x -= panSpeed
 
     // spawn demons from debt buildings only (credit cards + loans)
     // depository/investments/others are static holdings - no spawning
