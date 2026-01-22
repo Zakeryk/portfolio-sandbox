@@ -696,7 +696,7 @@ export class GameEngine {
       fontWeight: 'bold'
     })
     label.anchor.set(0.5)
-    label.y = 35
+    label.y = isDebt ? -45 : 35
     container.addChild(label)
 
     this.buildingLayer.addChild(container)
@@ -773,8 +773,8 @@ export class GameEngine {
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = (spriteConfig.displayWidth || spriteConfig.width) * 1.08
-      sprite.height = (spriteConfig.displayHeight || spriteConfig.height) * 0.86
-      sprite.y = 22  // offset to align with tile
+      sprite.height = (spriteConfig.displayHeight || spriteConfig.height) * 0.95
+      sprite.y = 26  // offset to align with tile
       container.addChild(sprite)
     } catch (e) {
       // fallback procedural portal
