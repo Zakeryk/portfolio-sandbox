@@ -818,10 +818,11 @@ export class GameEngine {
       const texture = await PIXI.Assets.load(spriteConfig.path)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
-      sprite.width = spriteConfig.displayWidth || spriteConfig.width
-      sprite.height = spriteConfig.displayHeight || spriteConfig.height
-      sprite.scale.y = 0.9  // scale down y-axis 10%
-      sprite.y = 23  // moved down another 5%
+      // calculate scale based on original dimensions
+      const scaleX = (spriteConfig.displayWidth || spriteConfig.width) / spriteConfig.width
+      const scaleY = (spriteConfig.displayHeight || spriteConfig.height) / spriteConfig.height * 0.9  // 10% shorter
+      sprite.scale.set(scaleX, scaleY)
+      sprite.y = 23  // moved down 5%
       container.addChild(sprite)
     } catch (e) {
       // fallback to procedural
