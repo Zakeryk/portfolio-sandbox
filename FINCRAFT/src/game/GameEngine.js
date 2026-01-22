@@ -197,6 +197,8 @@ export class GameEngine {
 
     window.addEventListener('keydown', (e) => {
       if (e.key === '0') this.centerOnTownHall()
+      if (e.key === '=' || e.key === '+') this.zoomBy(1.15)
+      if (e.key === '-' || e.key === '_') this.zoomBy(0.85)
     })
 
     view.addEventListener('wheel', (e) => {
@@ -215,6 +217,21 @@ export class GameEngine {
         this.worldContainer.y = mouseY - worldY * this.zoomLevel
       }
     }, { passive: false })
+  }
+
+  zoomBy(factor) {
+    const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel * factor))
+    if (newZoom !== this.zoomLevel) {
+      // zoom toward center of screen
+      const centerX = this.width / 2
+      const centerY = this.height / 2
+      const worldX = (centerX - this.worldContainer.x) / this.zoomLevel
+      const worldY = (centerY - this.worldContainer.y) / this.zoomLevel
+      this.zoomLevel = newZoom
+      this.worldContainer.scale.set(this.zoomLevel)
+      this.worldContainer.x = centerX - worldX * this.zoomLevel
+      this.worldContainer.y = centerY - worldY * this.zoomLevel
+    }
   }
 
   centerOnTownHall() {
@@ -716,6 +733,7 @@ export class GameEngine {
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
       sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      sprite.y = 30  // offset down to align with tile
       container.addChild(sprite)
     } catch (e) {
       // fallback procedural portal
