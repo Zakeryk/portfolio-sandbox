@@ -225,22 +225,35 @@ export class GameEngine {
     view.addEventListener('wheel', (e) => {
       e.preventDefault()
 
-      // linear zoom for better trackpad stability
-      const zoomSpeed = 0.001
-      const delta = -e.deltaY * zoomSpeed
-      const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel + delta))
+      // ctrlKey is true for pinch-to-zoom on trackpads
+      if (e.ctrlKey) {
+        // zoom - pinch gesture
+        const zoomSpeed = 0.01
+        const delta = -e.deltaY * zoomSpeed
+        const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel + delta))
 
-      if (Math.abs(newZoom - this.zoomLevel) > 0.001) {
-        const rect = view.getBoundingClientRect()
-        const mouseX = e.clientX - rect.left
-        const mouseY = e.clientY - rect.top
-        const worldX = (mouseX - this.worldContainer.x) / this.zoomLevel
-        const worldY = (mouseY - this.worldContainer.y) / this.zoomLevel
+        if (Math.abs(newZoom - this.zoomLevel) > 0.001) {
+          const rect = view.getBoundingClientRect()
+          const mouseX = e.clientX - rect.left
+          const mouseY = e.clientY - rect.top
+          const worldX = (mouseX - this.worldContainer.x) / this.zoomLevel
+          const worldY = (mouseY - this.worldContainer.y) / this.zoomLevel
 
-        this.zoomLevel = newZoom
-        this.worldContainer.scale.set(this.zoomLevel)
-        this.worldContainer.x = mouseX - worldX * this.zoomLevel
-        this.worldContainer.y = mouseY - worldY * this.zoomLevel
+          this.zoomLevel = newZoom
+          this.worldContainer.scale.set(this.zoomLevel)
+          this.worldContainer.x = mouseX - worldX * this.zoomLevel
+          this.worldContainer.y = mouseY - worldY * this.zoomLevel
+        }
+      } else {
+        // pan - two finger scroll
+        this.worldContainer.x -= e.deltaX
+        this.worldContainer.y -= e.deltaY
+
+        // close tooltip when panning
+        if (Math.abs(e.deltaX) > 2 || Math.abs(e.deltaY) > 2) {
+          this.hideTooltip()
+          this.activeTooltipEntity = null
+        }
       }
     }, { passive: false })
   }
