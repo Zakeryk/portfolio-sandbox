@@ -318,13 +318,13 @@ export class GameEngine {
       const screenX = this.activeTooltipEntity.x * this.zoomLevel + this.worldContainer.x
       const screenY = this.activeTooltipEntity.y * this.zoomLevel + this.worldContainer.y
       this.tooltip.x = screenX
-      this.tooltipAnim.baseY = screenY - 30 * this.zoomLevel
+      this.tooltip.y = screenY - 30 * this.zoomLevel
       this.tooltip.scale.set(this.zoomLevel)
+    } else {
+      // fade out animation
+      const targetY = this.tooltipAnim.baseY + 20
+      this.tooltip.y += (targetY - this.tooltip.y) * ease
     }
-
-    // y position
-    const targetY = this.tooltipAnim.targetAlpha > 0 ? this.tooltipAnim.baseY : this.tooltipAnim.baseY + 20
-    this.tooltip.y += (targetY - this.tooltip.y) * ease
 
     if (this.tooltip.alpha < 0.01 && this.tooltipAnim.targetAlpha === 0) {
       this.tooltip.visible = false
