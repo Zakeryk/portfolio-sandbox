@@ -115,6 +115,8 @@ export class GameEngine {
     this.minZoom = 0.4
     this.maxZoom = 2
     this.keysPressed = new Set()
+    this.targetZoom = 1
+    this.zoomVelocity = 0
 
     view.addEventListener('mousedown', (e) => {
       // don't pan if hovering a building
@@ -233,18 +235,7 @@ export class GameEngine {
   }
 
   zoomBy(factor) {
-    const newZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel * factor))
-    if (newZoom !== this.zoomLevel) {
-      // zoom toward center of screen
-      const centerX = this.width / 2
-      const centerY = this.height / 2
-      const worldX = (centerX - this.worldContainer.x) / this.zoomLevel
-      const worldY = (centerY - this.worldContainer.y) / this.zoomLevel
-      this.zoomLevel = newZoom
-      this.worldContainer.scale.set(this.zoomLevel)
-      this.worldContainer.x = centerX - worldX * this.zoomLevel
-      this.worldContainer.y = centerY - worldY * this.zoomLevel
-    }
+    this.targetZoom = Math.min(this.maxZoom, Math.max(this.minZoom, this.targetZoom * factor))
   }
 
   centerOnTownHall() {
@@ -973,6 +964,26 @@ export class GameEngine {
     if (this.keysPressed.has('ArrowDown')) this.worldContainer.y -= panSpeed
     if (this.keysPressed.has('ArrowLeft')) this.worldContainer.x += panSpeed
     if (this.keysPressed.has('ArrowRight')) this.worldContainer.x -= panSpeed
+
+    // smooth zoom with overshoot (spring physics)
+    const zoomDiff = this.targetZoom - this.zoomLevel
+    if (Math.abs(zoomDiff) > 0.001 || Math.abs(this.zoomVelocity) > 0.001) {
+      const stiffness = 0.15
+      const damping = 0.7
+      this.zoomVelocity += zoomDiff * stiffness
+      this.zoomVelocity *= damping
+
+      const centerX = this.width / 2
+      const centerY = this.height / 2
+      const worldX = (centerX - this.worldContainer.x) / this.zoomLevel
+      const worldY = (centerY - this.worldContainer.y) / this.zoomLevel
+
+      this.zoomLevel += this.zoomVelocity
+      this.zoomLevel = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel))
+      this.worldContainer.scale.set(this.zoomLevel)
+      this.worldContainer.x = centerX - worldX * this.zoomLevel
+      this.worldContainer.y = centerY - worldY * this.zoomLevel
+    }
 
     // process event queue
     const event = this.eventQueue.popIfReady(Date.now())
