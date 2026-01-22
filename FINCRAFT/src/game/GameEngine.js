@@ -205,8 +205,8 @@ export class GameEngine {
 
     window.addEventListener('keydown', (e) => {
       if (e.key === '0') this.centerOnTownHall()
-      if (e.key === '=' || e.key === '+') this.zoomBy(1.15)
-      if (e.key === '-' || e.key === '_') this.zoomBy(0.85)
+      if (e.key === '=' || e.key === '+') this.zoomBy(1.35)
+      if (e.key === '-' || e.key === '_') this.zoomBy(0.65)
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         this.keysPressed.add(e.key)
       }
@@ -995,20 +995,16 @@ export class GameEngine {
     // tooltip animation
     this.updateTooltipAnim()
 
-    // smooth zoom with overshoot (spring physics)
+    // smooth zoom (eased, no overshoot)
     const zoomDiff = this.targetZoom - this.zoomLevel
-    if (Math.abs(zoomDiff) > 0.001 || Math.abs(this.zoomVelocity) > 0.001) {
-      const stiffness = 0.15
-      const damping = 0.7
-      this.zoomVelocity += zoomDiff * stiffness
-      this.zoomVelocity *= damping
-
+    if (Math.abs(zoomDiff) > 0.001) {
+      const ease = 0.15
       const centerX = this.width / 2
       const centerY = this.height / 2
       const worldX = (centerX - this.worldContainer.x) / this.zoomLevel
       const worldY = (centerY - this.worldContainer.y) / this.zoomLevel
 
-      this.zoomLevel += this.zoomVelocity
+      this.zoomLevel += zoomDiff * ease
       this.zoomLevel = Math.min(this.maxZoom, Math.max(this.minZoom, this.zoomLevel))
       this.worldContainer.scale.set(this.zoomLevel)
       this.worldContainer.x = centerX - worldX * this.zoomLevel
