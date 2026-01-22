@@ -249,7 +249,9 @@ export class GameEngine {
   createTooltip() {
     this.tooltip = new PIXI.Container()
     this.tooltip.visible = false
+    this.tooltip.alpha = 0
     this.activeTooltipEntity = null
+    this.tooltipAnim = { targetAlpha: 0, targetY: 0, baseY: 0 }
 
     const bg = new PIXI.Graphics()
     bg.beginFill(0x1a1a2e, 0.95)
@@ -257,13 +259,11 @@ export class GameEngine {
     bg.drawRoundedRect(0, 0, 140, 80, 6)
     bg.endFill()
 
-    const title = new PIXI.Text('', { fontSize: 11, fill: 0xffffff, fontWeight: 'bold' })
-    title.x = 8
-    title.y = 6
+    const title = new PIXI.Text('', { fontSize: 11, fill: 0xffffff, fontWeight: 'bold', align: 'center' })
+    title.anchor.set(0.5, 0)
 
-    const content = new PIXI.Text('', { fontSize: 10, fill: 0xcccccc, lineHeight: 14 })
-    content.x = 8
-    content.y = 24
+    const content = new PIXI.Text('', { fontSize: 10, fill: 0xcccccc, lineHeight: 14, align: 'center' })
+    content.anchor.set(0.5, 0)
 
     this.tooltip.addChild(bg)
     this.tooltip.titleText = title
@@ -278,23 +278,48 @@ export class GameEngine {
   showTooltip(x, y, title, lines) {
     this.tooltip.titleText.text = title
     this.tooltip.contentText.text = lines.join('\n')
-    const width = Math.max(120, this.tooltip.contentText.width + 16, this.tooltip.titleText.width + 16)
-    const height = 28 + lines.length * 14
+    const width = Math.max(140, this.tooltip.contentText.width + 32, this.tooltip.titleText.width + 32)
+    const height = 32 + lines.length * 14
+
     this.tooltip.bg.clear()
     this.tooltip.bg.beginFill(0x1a1a2e, 0.95)
     this.tooltip.bg.lineStyle(1, 0x4a4a6e)
-    this.tooltip.bg.drawRoundedRect(0, 0, width, height, 6)
+    this.tooltip.bg.drawRoundedRect(-width / 2, 0, width, height, 8)
     this.tooltip.bg.endFill()
-    this.tooltip.x = x + 15
-    this.tooltip.y = y - 10
+
+    this.tooltip.titleText.x = 0
+    this.tooltip.titleText.y = 8
+    this.tooltip.contentText.x = 0
+    this.tooltip.contentText.y = 26
+
+    // center on screen
+    this.tooltip.x = this.width / 2
+    this.tooltipAnim.baseY = this.height - height - 40
+    this.tooltipAnim.targetY = this.tooltipAnim.baseY
+    this.tooltip.y = this.tooltipAnim.baseY + 20 // start slightly below
+    this.tooltipAnim.targetAlpha = 1
     this.tooltip.visible = true
   }
 
   hideTooltip() {
-    this.tooltip.visible = false
+    this.tooltipAnim.targetAlpha = 0
     if (this.highlightTile) {
       this.groundLayer.removeChild(this.highlightTile)
       this.highlightTile = null
+    }
+  }
+
+  updateTooltipAnim() {
+    const ease = 0.2
+    // alpha
+    this.tooltip.alpha += (this.tooltipAnim.targetAlpha - this.tooltip.alpha) * ease
+    // y position
+    const targetY = this.tooltipAnim.targetAlpha > 0 ? this.tooltipAnim.baseY : this.tooltipAnim.baseY + 20
+    this.tooltip.y += (targetY - this.tooltip.y) * ease
+
+    if (this.tooltip.alpha < 0.01 && this.tooltipAnim.targetAlpha === 0) {
+      this.tooltip.visible = false
+      this.tooltip.alpha = 0
     }
   }
 
@@ -964,6 +989,9 @@ export class GameEngine {
     if (this.keysPressed.has('ArrowDown')) this.worldContainer.y -= panSpeed
     if (this.keysPressed.has('ArrowLeft')) this.worldContainer.x += panSpeed
     if (this.keysPressed.has('ArrowRight')) this.worldContainer.x -= panSpeed
+
+    // tooltip animation
+    this.updateTooltipAnim()
 
     // smooth zoom with overshoot (spring physics)
     const zoomDiff = this.targetZoom - this.zoomLevel
