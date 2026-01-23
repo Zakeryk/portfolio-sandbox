@@ -1349,7 +1349,7 @@ export class GameEngine {
     const townHall = new PIXI.Container()
     townHall.x = pos.x
     townHall.y = pos.y - 40
-    townHall.zIndex = pos.y - 60 // offset so units below midpoint show in front
+    townHall.zIndex = pos.y - 50 // offset so units below midpoint show in front
     townHall.sortableChildren = true
 
     await this.drawTownHallSprite(townHall, 0)
