@@ -20,6 +20,8 @@ export class GameEngine {
 
     // transaction npc system
     this.transactionPool = []
+    this.transactionIndex = 0 // current position in sorted pool
+    this.currentSimDay = null // track current day for imp spawning
     this.lastTransactionSpawn = 0
     this.transactionSpawnInterval = 1000 // ms, recalculated on load
 
@@ -239,11 +241,21 @@ export class GameEngine {
       const transactions = JSON.parse(saved)
       const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
 
-      // filter to last 30 days
-      this.transactionPool = transactions.filter(t => {
-        const date = new Date(t.date || t.Date)
-        return date.getTime() >= thirtyDaysAgo
-      })
+      // filter to last 30 days and sort by date
+      this.transactionPool = transactions
+        .filter(t => {
+          const date = new Date(t.date || t.Date)
+          return date.getTime() >= thirtyDaysAgo
+        })
+        .sort((a, b) => {
+          const dateA = new Date(a.date || a.Date)
+          const dateB = new Date(b.date || b.Date)
+          return dateA - dateB
+        })
+
+      // reset playback position
+      this.transactionIndex = 0
+      this.currentSimDay = null
 
       // calculate spawn interval based on pool size
       // baseline: 30 transactions = 1 spawn every 2 seconds (slower, more ambient)
@@ -252,7 +264,7 @@ export class GameEngine {
         this.transactionSpawnInterval = 1000 / Math.max(0.3, Math.min(2, spawnsPerSecond))
       }
 
-      console.log(`Transaction pool loaded: ${this.transactionPool.length} transactions, spawn interval: ${this.transactionSpawnInterval}ms`)
+      console.log(`Transaction pool loaded: ${this.transactionPool.length} transactions (sorted by date), spawn interval: ${this.transactionSpawnInterval}ms`)
     } catch (e) {
       console.warn('Failed to load transaction pool:', e)
     }
@@ -350,8 +362,25 @@ export class GameEngine {
   spawnTransactionNpc() {
     if (this.transactionPool.length === 0) return
 
-    // pick random transaction
-    const transaction = this.transactionPool[Math.floor(Math.random() * this.transactionPool.length)]
+    // get next transaction in chronological order
+    const transaction = this.transactionPool[this.transactionIndex]
+
+    // check for day change - spawn imps from debt buildings
+    const txDate = new Date(transaction.date || transaction.Date)
+    const txDay = txDate.toDateString()
+    if (this.currentSimDay && txDay !== this.currentSimDay) {
+      // new day - spawn imps from all debt buildings
+      this.entities.buildings.forEach(building => {
+        if (building.isDebt && building.balance > 0) {
+          this.spawnDemon(building)
+        }
+      })
+    }
+    this.currentSimDay = txDay
+
+    // advance index, loop back to start
+    this.transactionIndex = (this.transactionIndex + 1) % this.transactionPool.length
+
     let type = this.getTransactionType(transaction)
     const amountStr = transaction.amount || transaction.Amount || '0'
     const amount = Math.abs(parseFloat(amountStr.replace(/[,$]/g, '')))
@@ -2158,22 +2187,6 @@ export class GameEngine {
       }
     }
 
-    // spawn demons from debt buildings only (credit cards + loans)
-    // depository/investments/others are static holdings - no spawning
-    this.entities.buildings.forEach(building => {
-      if (!building.isDebt) return  // only debt spawns
-
-      building.lastSpawn++
-
-      const spawnRate = this.calculateSpawnRate(building.balance)
-      const effectiveRate = spawnRate / (this.playbackSpeed * this.getTimeMultiplier())
-
-      if (building.lastSpawn >= effectiveRate && building.balance > 0) {
-        this.spawnDemon(building)
-        building.lastSpawn = 0
-      }
-    })
-
     // move peons toward town hall with wandering
     const townHallX = this.entities.townHall?.x || 0
     const townHallY = this.entities.townHall?.y || 0
@@ -2434,13 +2447,6 @@ export class GameEngine {
 
     // sort by depth
     this.gameObjectLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
-  }
-
-  calculateSpawnRate(balance) {
-    // higher balance = faster spawns (lower tick count)
-    // base: $1000 = spawn every 120 ticks
-    if (balance <= 0) return 99999
-    return Math.max(30, 120000 / balance)
   }
 
   spawnGoldParticle(x, y) {
