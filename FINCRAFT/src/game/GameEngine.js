@@ -834,7 +834,7 @@ export class GameEngine {
           this.draggingBuilding.y = pos.y - 20
           this.draggingBuilding.gridX = gridX
           this.draggingBuilding.gridY = gridY
-          this.draggingBuilding.zIndex = pos.y
+          this.draggingBuilding.zIndex = pos.y - 30
 
           // update building in entities array
           const building = this.entities.buildings.find(b => b.container === this.draggingBuilding)
@@ -1206,7 +1206,7 @@ export class GameEngine {
     const townHall = new PIXI.Container()
     townHall.x = pos.x
     townHall.y = pos.y - 40
-    townHall.zIndex = pos.y
+    townHall.zIndex = pos.y - 30 // offset so units below midpoint show in front
     townHall.sortableChildren = true
 
     await this.drawTownHallSprite(townHall, 0)
@@ -1270,7 +1270,7 @@ export class GameEngine {
     const mine = new PIXI.Container()
     mine.x = pos.x
     mine.y = pos.y - 20
-    mine.zIndex = pos.y
+    mine.zIndex = pos.y - 30
 
     try {
       const texture = await PIXI.Assets.load(spriteConfig.path)
@@ -1463,7 +1463,7 @@ export class GameEngine {
     const container = new PIXI.Container()
     container.x = pos.x
     container.y = pos.y - 20
-    container.zIndex = pos.y
+    container.zIndex = pos.y - 30
     container.gridX = gridX
     container.gridY = gridY
 
