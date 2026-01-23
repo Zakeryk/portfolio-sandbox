@@ -17,7 +17,7 @@ function Accordion({ title, isOpen, onToggle, children, total, isDebt }) {
     <div className="bg-[#1a1a2e] rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-3 hover:bg-[#252542] transition"
+        className="w-full flex items-center justify-between p-3 hover:bg-[#252542] cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-xs">{isOpen ? '▼' : '▶'}</span>
@@ -149,8 +149,22 @@ function App() {
   })
   const [simPanelCollapsed, setSimPanelCollapsed] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
+  const [isDraggingCsv, setIsDraggingCsv] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [panelView, setPanelView] = useState('portfolio') // 'portfolio' | 'transactions'
+  const [dateFilter, setDateFilter] = useState('all') // 'all' | '7d' | '30d' | '90d'
+  const [transactions, setTransactions] = useState(() => {
+    const saved = localStorage.getItem('fincraft-transactions')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch { return [] }
+    }
+    return []
+  })
+  const transactionCount = transactions.length
   const [openAccordions, setOpenAccordions] = useState({
-    depository: true,
+    depository: false,
     investments: false,
     creditCards: false,
     loans: false,
@@ -216,6 +230,8 @@ function App() {
   // esc to exit edit mode
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // ignore when typing in inputs
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return
       if (e.key === 'Escape' && buildMode) {
         setBuildMode(false)
       }
@@ -226,6 +242,76 @@ function App() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [buildMode])
+
+  // csv drag and drop
+  useEffect(() => {
+    let dragCounter = 0
+
+    const handleDragEnter = (e) => {
+      e.preventDefault()
+      dragCounter++
+      if (e.dataTransfer.types.includes('Files')) {
+        setIsDraggingCsv(true)
+      }
+    }
+
+    const handleDragLeave = (e) => {
+      e.preventDefault()
+      dragCounter--
+      if (dragCounter === 0) {
+        setIsDraggingCsv(false)
+      }
+    }
+
+    const handleDragOver = (e) => {
+      e.preventDefault()
+    }
+
+    const handleDrop = (e) => {
+      e.preventDefault()
+      dragCounter = 0
+      setIsDraggingCsv(false)
+
+      const file = e.dataTransfer.files[0]
+      if (file && file.name.endsWith('.csv')) {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const csvText = event.target.result
+          // parse csv - simple parser for now
+          const lines = csvText.split('\n').filter(l => l.trim())
+          const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
+          const transactions = lines.slice(1).map(line => {
+            const values = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || []
+            const obj = {}
+            headers.forEach((h, i) => {
+              obj[h] = values[i]?.replace(/"/g, '').trim() || ''
+            })
+            return obj
+          }).filter(t => Object.keys(t).length > 0)
+
+          localStorage.setItem('fincraft-transactions', JSON.stringify(transactions))
+          setTransactions(transactions)
+          // reload transaction pool in game engine
+          if (gameRef.current) {
+            gameRef.current.reloadTransactions()
+          }
+        }
+        reader.readAsText(file)
+      }
+    }
+
+    window.addEventListener('dragenter', handleDragEnter)
+    window.addEventListener('dragleave', handleDragLeave)
+    window.addEventListener('dragover', handleDragOver)
+    window.addEventListener('drop', handleDrop)
+
+    return () => {
+      window.removeEventListener('dragenter', handleDragEnter)
+      window.removeEventListener('dragleave', handleDragLeave)
+      window.removeEventListener('dragover', handleDragOver)
+      window.removeEventListener('drop', handleDrop)
+    }
+  }, [])
 
   const toggleAccordion = (key) => {
     setOpenAccordions(prev => ({ ...prev, [key]: !prev[key] }))
@@ -284,48 +370,83 @@ function App() {
   const firstDebtAccount = accounts.creditCards[0] || accounts.loans[0]
 
   return (
-    <div className="h-screen bg-[#0f0f1a] text-white py-4 flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#0f0f1a] text-white p-4 flex flex-col overflow-hidden relative">
+      {/* CSV Drop Overlay */}
+      {isDraggingCsv && (
+        <div className="absolute inset-0 z-50 bg-[#0f0f1a]/90 flex items-center justify-center pointer-events-none">
+          <div className="border-2 border-dashed border-blue-500 rounded-2xl p-12 text-center">
+            <svg className="w-16 h-16 mx-auto mb-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div className="text-xl font-bold text-blue-400">Drop CSV to import transactions</div>
+            <div className="text-sm text-gray-500 mt-2">File will be stored for simulation playback</div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col flex-1 min-h-0 w-full">
 
         <div className="flex gap-4 flex-1 min-h-0">
           {/* Control Panel */}
-          <div className="w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden">
-            {/* Time View & Speed */}
-            <div className="bg-[#1a1a2e] rounded-lg p-3">
-              <div className="flex gap-1 mb-2">
-                {timeViews.map(tv => (
-                  <button
-                    key={tv}
-                    onClick={() => setTimeView(tv)}
-                    className={`flex-1 text-xs py-1.5 rounded font-bold transition ${
-                      timeView === tv
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-[#252542] text-gray-400 hover:bg-[#2a2a4e]'
-                    }`}
-                  >
-                    {tv}
-                  </button>
-                ))}
+          <div className="w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden relative">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="text-gray-400 hover:text-white p-1 cursor-pointer"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                <img
+                  src="/assets/ui/fincraft.png"
+                  alt="Fincraft"
+                  className="h-6"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => window.location.reload()}
+                />
               </div>
-              <div className="flex gap-1">
-                {speeds.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setPlaybackSpeed(s)}
-                    className={`flex-1 text-xs py-1 rounded transition ${
-                      playbackSpeed === s
-                        ? 'bg-green-600 text-white font-bold'
-                        : 'bg-[#252542] text-gray-400 hover:bg-[#2a2a4e]'
-                    }`}
-                  >
-                    {s}x
-                  </button>
-                ))}
+              <button
+                disabled
+                className="text-gray-600 p-1 opacity-50"
+                title="Close (disabled)"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Menu Backdrop */}
+            <div
+              className={`absolute top-12 left-0 right-0 bottom-0 bg-[#0f0f1a] rounded-lg z-[5] transition-opacity duration-200 ${menuOpen ? 'opacity-80' : 'opacity-0 pointer-events-none'}`}
+              onClick={() => setMenuOpen(false)}
+            />
+
+            {/* Slide-in Menu */}
+            <div className={`absolute top-[38px] left-0 right-0 bg-[#1a1a2e] rounded-lg z-20 p-2 transition-all duration-200 ${menuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+              <div
+                onClick={() => { setPanelView('portfolio'); setMenuOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-[#252542] ${panelView === 'portfolio' ? 'text-blue-400' : 'text-gray-300'}`}
+                style={{ cursor: 'pointer' }}
+              >
+                Portfolio
+              </div>
+              <div
+                onClick={() => { setPanelView('transactions'); setMenuOpen(false) }}
+                className={`w-full text-left px-3 py-2 text-sm rounded-md hover:bg-[#252542] ${panelView === 'transactions' ? 'text-blue-400' : 'text-gray-300'}`}
+                style={{ cursor: 'pointer' }}
+              >
+                Transactions {transactionCount > 0 && <span className="text-gray-500 ml-1">({transactionCount})</span>}
               </div>
             </div>
 
-            {/* Accordions */}
-            <div className="flex-1 overflow-y-auto space-y-2">
+            {/* Portfolio View */}
+            <div className={`flex-1 flex flex-col gap-3 overflow-hidden ${panelView === 'portfolio' ? '' : 'opacity-0 absolute pointer-events-none'}`}>
+              {/* Accordions */}
+              <div className="flex-1 overflow-y-auto space-y-2">
               {/* Depository */}
               <Accordion
                 title="DEPOSITORY"
@@ -424,7 +545,7 @@ function App() {
 
               {/* Others */}
               <Accordion
-                title="OTHERS"
+                title="ASSETS"
                 isOpen={openAccordions.others}
                 onToggle={() => toggleAccordion('others')}
                 total={getTotal('others')}
@@ -445,17 +566,92 @@ function App() {
                   + Add Item
                 </button>
               </Accordion>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-[#1a1a2e] rounded-lg p-3 flex-shrink-0">
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-400">Net Worth</span>
+                  <span className="text-green-400 font-bold">${netWorth.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-400">Total Debt</span>
+                  <span className="text-red-400 font-bold">${totalDebt.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm border-t border-[#2a2a4e] pt-2 mt-2">
+                  <span className="text-gray-500">Transactions</span>
+                  <span className="text-gray-500">{transactionCount > 0 ? `${transactionCount} Loaded` : 'Drop CSV'}</span>
+                </div>
+              </div>
+
             </div>
 
-            {/* Summary */}
-            <div className="bg-[#1a1a2e] rounded-lg p-3 flex-shrink-0">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400">Net Worth</span>
-                <span className="text-green-400 font-bold">${netWorth.toLocaleString()}</span>
+            {/* Transactions View */}
+            <div className={`flex-1 flex flex-col gap-3 overflow-hidden ${panelView === 'transactions' ? '' : 'opacity-0 absolute pointer-events-none'}`}>
+              {/* Date Filter */}
+              <div className="flex gap-1">
+                {[['today', 'Today'], ['yesterday', 'Yesterday'], ['week', 'This Week'], ['month', 'This Month']].map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setDateFilter(key)}
+                    className={`flex-1 text-xs py-1.5 rounded font-bold cursor-pointer transition ${
+                      dateFilter === key
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-[#252542] text-gray-400 hover:bg-[#2a2a4e]'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Total Debt</span>
-                <span className="text-red-400 font-bold">${totalDebt.toLocaleString()}</span>
+
+              {/* Transaction List */}
+              <div className="flex-1 overflow-y-auto space-y-1">
+                {transactions.length === 0 ? (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    Drop a CSV file to import transactions
+                  </div>
+                ) : (
+                  transactions
+                    .filter(t => {
+                      const dateField = t.Date || t.date || t.DATE || Object.values(t)[0]
+                      if (!dateField) return true
+                      const txDate = new Date(dateField)
+                      const now = new Date()
+                      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+                      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+
+                      if (dateFilter === 'today') {
+                        return txDate >= today
+                      } else if (dateFilter === 'yesterday') {
+                        return txDate >= yesterday && txDate < today
+                      } else if (dateFilter === 'week') {
+                        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+                        return txDate >= weekAgo
+                      } else if (dateFilter === 'month') {
+                        const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+                        return txDate >= monthAgo
+                      }
+                      return true
+                    })
+                    .map((t, i) => {
+                      const amount = parseFloat(t.Amount || t.amount || t.AMOUNT || 0)
+                      const desc = t.Description || t.description || t.Name || t.name || t.Merchant || t.merchant || Object.values(t)[1] || ''
+                      const date = t.Date || t.date || t.DATE || Object.values(t)[0] || ''
+                      const isExpense = amount < 0
+                      return (
+                        <div key={i} className="bg-[#1a1a2e] rounded px-3 py-2 flex justify-between items-center">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-gray-300 truncate">{desc}</div>
+                            <div className="text-xs text-gray-500">{date}</div>
+                          </div>
+                          <div className={`text-xs font-mono font-bold ${isExpense ? 'text-green-400' : 'text-red-400'}`}>
+                            {isExpense ? '+' : '-'}{Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                          </div>
+                        </div>
+                      )
+                    })
+                )}
               </div>
             </div>
           </div>

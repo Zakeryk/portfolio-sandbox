@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Load nvm and node
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Fallback: add common node paths
+export PATH="$HOME/.nvm/versions/node/v22.14.0/bin:$PATH"
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+
+PROJECT_DIR="/Users/zkryk/ORANGE_RUGGED_EXTERNALDRIVE/PORTFOLIO_INDEX/FINCRAFT"
+cd "$PROJECT_DIR"
+
+LOG_FILE="/tmp/fincraft-dev-$$.log"
+PID_FILE="/tmp/fincraft-dev-$$.pid"
+BROWSER_OPENED=false
+
+cleanup() {
+    if [[ -f "$PID_FILE" ]]; then
+        while read -r pid; do
+            kill "$pid" 2>/dev/null
+        done < "$PID_FILE"
+        rm -f "$PID_FILE"
+    fi
+    [[ -n "$NPM_PID" ]] && kill "$NPM_PID" 2>/dev/null
+    pgrep -f "node.*vite.*FINCRAFT" | xargs kill 2>/dev/null
+    rm -f "$LOG_FILE"
+    exit 0
+}
+
+trap cleanup SIGINT SIGTERM EXIT
+
+# Start dev server in background, log output
+npm run dev > "$LOG_FILE" 2>&1 &
+NPM_PID=$!
+echo "$NPM_PID" > "$PID_FILE"
+
+# Monitor log for URL and open browser once
+while kill -0 $NPM_PID 2>/dev/null; do
+    if [[ "$BROWSER_OPENED" == "false" ]] && grep -q "Local:" "$LOG_FILE" 2>/dev/null; then
+        URL=$(grep -o 'http://localhost:[0-9]*' "$LOG_FILE" | head -1)
+        if [[ -n "$URL" ]]; then
+            open "$URL"
+            BROWSER_OPENED=true
+        fi
+    fi
+    sleep 0.5
+done
+
+cleanup

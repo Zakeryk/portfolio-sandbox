@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fincraft Dev</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f0f1a;
+      color: white;
+      width: 280px;
+      height: 100px;
+      overflow: hidden;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #1a1a2e;
+      border-bottom: 1px solid #2a2a4e;
+    }
+    .left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .close-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #ff5f57;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-app-region: no-drag;
+      transition: all 0.15s;
+    }
+    .close-btn:hover {
+      background: #ff3b30;
+      transform: scale(1.1);
+    }
+    .close-btn svg {
+      width: 10px;
+      height: 10px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .close-btn:hover svg {
+      opacity: 1;
+    }
+    .hamburger {
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      padding: 4px;
+      border-radius: 4px;
+      -webkit-app-region: no-drag;
+    }
+    .hamburger:hover {
+      background: #2a2a4e;
+    }
+    .hamburger span {
+      display: block;
+      width: 14px;
+      height: 2px;
+      background: #888;
+      border-radius: 1px;
+    }
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      image-rendering: pixelated;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd700;
+      letter-spacing: 1px;
+    }
+    .status {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .status-text {
+      font-size: 12px;
+      color: #888;
+    }
+    .status-text a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .status-text a:hover {
+      text-decoration: underline;
+    }
+    .menu {
+      display: none;
+      position: absolute;
+      top: 50px;
+      left: 16px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 100;
+      -webkit-app-region: no-drag;
+    }
+    .menu.show { display: block; }
+    .menu-item {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .menu-item:hover {
+      background: #2a2a4e;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="left">
+      <button class="close-btn" onclick="stopServer()" title="Stop Server">
+        <svg viewBox="0 0 10 10" fill="white">
+          <path d="M1 1L9 9M9 1L1 9" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="hamburger" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="logo-area">
+        <img src="assets/ui/fincraft.png" class="logo" alt="Fincraft">
+        <span class="title">FINCRAFT</span>
+      </div>
+    </div>
+  </div>
+  <div class="status">
+    <div class="dot"></div>
+    <span class="status-text">dev server running at <a href="http://localhost:5173" target="_blank">localhost:5173</a></span>
+  </div>
+  <div class="menu" id="menu">
+    <button class="menu-item" onclick="openApp()">Open App</button>
+    <button class="menu-item" onclick="stopServer()">Stop Server</button>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('menu').classList.toggle('show');
+    }
+    function openApp() {
+      window.open('http://localhost:5173', '_blank');
+      toggleMenu();
+    }
+    function stopServer() {
+      // This writes a stop signal that the launcher script watches for
+      fetch('http://localhost:5173/__stop__').catch(() => {});
+      // Close this window
+      window.close();
+    }
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.hamburger') && !e.target.closest('.menu')) {
+        document.getElementById('menu').classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>

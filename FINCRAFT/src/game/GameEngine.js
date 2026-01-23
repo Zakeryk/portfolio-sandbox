@@ -9,12 +9,19 @@ export class GameEngine {
 
     this.entities = {
       townHall: null,
+      mine: null,     // income spawn point
       buildings: [],  // account-based buildings
-      peons: [],      // gold carriers
+      peons: [],      // gold carriers (income units)
       demons: [],     // debt enemies
       creeps: [],     // expense attackers
       infantry: [],   // debt payment attackers
+      transactionNpcs: [], // transaction-driven npcs
     }
+
+    // transaction npc system
+    this.transactionPool = []
+    this.lastTransactionSpawn = 0
+    this.transactionSpawnInterval = 1000 // ms, recalculated on load
 
     this.eventQueue = new EventQueue()
 
@@ -102,8 +109,181 @@ export class GameEngine {
     this.createTooltip()
     this.drawIsometricGrid()
     await this.createTownHall()
+    await this.createMine()
+    this.loadTransactionPool()
 
     this.app.ticker.add(() => this.gameLoop())
+  }
+
+  // === Transaction NPC System ===
+
+  loadTransactionPool() {
+    try {
+      const saved = localStorage.getItem('fincraft-transactions')
+      if (!saved) return
+
+      const transactions = JSON.parse(saved)
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
+
+      // filter to last 30 days
+      this.transactionPool = transactions.filter(t => {
+        const date = new Date(t.date || t.Date)
+        return date.getTime() >= thirtyDaysAgo
+      })
+
+      // calculate spawn interval based on pool size
+      // baseline: 30 transactions = 1 spawn per second
+      if (this.transactionPool.length > 0) {
+        const spawnsPerSecond = this.transactionPool.length / 30
+        this.transactionSpawnInterval = 1000 / Math.max(0.5, spawnsPerSecond)
+      }
+
+      console.log(`Transaction pool loaded: ${this.transactionPool.length} transactions, spawn interval: ${this.transactionSpawnInterval}ms`)
+    } catch (e) {
+      console.warn('Failed to load transaction pool:', e)
+    }
+  }
+
+  normalizeAccountName(name) {
+    if (!name) return ''
+    return name.toLowerCase()
+      .replace(/\b(card|account|checking|savings|credit|debit|bank)\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  findMatchingBuilding(csvAccount) {
+    if (!csvAccount) return null
+    const normalized = this.normalizeAccountName(csvAccount)
+    return this.entities.buildings.find(b => {
+      const buildingNorm = this.normalizeAccountName(b.name)
+      return normalized.includes(buildingNorm) || buildingNorm.includes(normalized)
+    })
+  }
+
+  getTransactionType(transaction) {
+    // check if internal transfer
+    const type = (transaction.type || transaction.Type || '').toLowerCase()
+    if (type === 'transfer' || type === 'internal') return 'transfer'
+
+    // check amount - negative = income, positive = expense
+    const amountStr = transaction.amount || transaction.Amount || '0'
+    const amount = parseFloat(amountStr.replace(/[,$]/g, ''))
+    return amount < 0 ? 'income' : 'expense'
+  }
+
+  spawnTransactionNpc() {
+    if (this.transactionPool.length === 0) return
+
+    // pick random transaction
+    const transaction = this.transactionPool[Math.floor(Math.random() * this.transactionPool.length)]
+    const type = this.getTransactionType(transaction)
+    const amountStr = transaction.amount || transaction.Amount || '0'
+    const amount = Math.abs(parseFloat(amountStr.replace(/[,$]/g, '')))
+    const name = transaction.name || transaction.Name || transaction.description || 'Unknown'
+    const account = transaction.account || transaction.Account || ''
+
+    // find matching building
+    const matchedBuilding = this.findMatchingBuilding(account)
+
+    let spawnX, spawnY, targetX, targetY, color
+
+    if (type === 'income') {
+      // income: spawn from mine, walk to matched building or town hall
+      const minePos = this.entities.mine ? { x: this.entities.mine.x, y: this.entities.mine.y } : this.toIso(this.mapWidth / 2 - 5, this.mapHeight / 2 - 3)
+      spawnX = minePos.x
+      spawnY = minePos.y
+      if (matchedBuilding) {
+        targetX = matchedBuilding.container.x
+        targetY = matchedBuilding.container.y
+      } else {
+        targetX = this.entities.townHall.x
+        targetY = this.entities.townHall.y
+      }
+      color = 0xffd93d // gold
+    } else if (type === 'transfer') {
+      // transfer: building to building (if we can match both)
+      // for now, just spawn from edge and go to matched building
+      if (matchedBuilding) {
+        const edge = this.getRandomEdgePosition()
+        spawnX = edge.x
+        spawnY = edge.y
+        targetX = matchedBuilding.container.x
+        targetY = matchedBuilding.container.y
+      } else {
+        return // skip transfers we can't match
+      }
+      color = 0x44ccff // cyan
+    } else {
+      // expense: spawn from matched building or edge, walk to town hall
+      if (matchedBuilding) {
+        spawnX = matchedBuilding.container.x
+        spawnY = matchedBuilding.container.y
+      } else {
+        const edge = this.getRandomEdgePosition()
+        spawnX = edge.x
+        spawnY = edge.y
+      }
+      targetX = this.entities.townHall.x
+      targetY = this.entities.townHall.y
+      color = 0xff6b6b // red
+    }
+
+    // create npc
+    const npc = new PIXI.Container()
+    npc.x = spawnX
+    npc.y = spawnY
+
+    // size based on amount: $1-$20 = 8px, $2000+ = 24px
+    const size = 8 + Math.min(16, Math.log10(amount + 1) * 6)
+
+    // shadow
+    const shadow = new PIXI.Graphics()
+    shadow.beginFill(0x000000, 0.3)
+    shadow.drawEllipse(0, size / 2, size * 0.8, size / 3)
+    shadow.endFill()
+    npc.addChild(shadow)
+
+    // body
+    const body = new PIXI.Graphics()
+    body.beginFill(color)
+    body.drawCircle(0, 0, size)
+    body.endFill()
+    npc.addChild(body)
+
+    // store transaction data for tooltips
+    npc.transactionData = {
+      name,
+      amount,
+      type,
+      account,
+      date: transaction.date || transaction.Date
+    }
+    npc.targetX = targetX
+    npc.targetY = targetY
+    npc.speed = 0.8 + Math.random() * 0.4
+    npc.wanderOffset = { x: 0, y: 0 }
+    npc.wanderTimer = 0
+    npc.npcType = type
+
+    // make interactive in edit mode
+    npc.eventMode = 'static'
+    npc.cursor = 'pointer'
+
+    this.unitLayer.addChild(npc)
+    this.entities.transactionNpcs.push(npc)
+  }
+
+  getRandomEdgePosition() {
+    const edge = Math.floor(Math.random() * 4)
+    let gridX, gridY
+    switch (edge) {
+      case 0: gridX = Math.floor(Math.random() * this.mapWidth); gridY = 0; break
+      case 1: gridX = this.mapWidth - 1; gridY = Math.floor(Math.random() * this.mapHeight); break
+      case 2: gridX = Math.floor(Math.random() * this.mapWidth); gridY = this.mapHeight - 1; break
+      case 3: gridX = 0; gridY = Math.floor(Math.random() * this.mapHeight); break
+    }
+    return this.toIso(gridX, gridY)
   }
 
   setupPanning() {
@@ -210,6 +390,8 @@ export class GameEngine {
     })
 
     window.addEventListener('keydown', (e) => {
+      // ignore when typing in inputs
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return
       if (e.key === '0') this.centerOnTownHall()
       if (e.key === '=' || e.key === '+') this.zoomBy(1.35)
       if (e.key === '-' || e.key === '_') this.zoomBy(0.65)
@@ -355,10 +537,11 @@ export class GameEngine {
     }
   }
 
-  makeInteractive(entity, getTooltipData) {
+  makeInteractive(entity, getTooltipData, buildingId = null) {
     entity.eventMode = 'static'
     entity.cursor = 'pointer'
     entity.tooltipData = getTooltipData
+    entity.buildingId = buildingId
 
     entity.on('pointerover', () => {
       this.hoveringBuilding = true
@@ -551,20 +734,46 @@ export class GameEngine {
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
     const pos = this.toIso(centerX, centerY)
-    const spriteConfig = SPRITES.buildings.townHall
 
     const townHall = new PIXI.Container()
     townHall.x = pos.x
     townHall.y = pos.y - 40
     townHall.zIndex = pos.y
+    townHall.sortableChildren = true
+
+    await this.drawTownHallSprite(townHall, 0)
+
+    townHall.gridX = centerX
+    townHall.gridY = centerY
+    townHall.isTownHall = true
+
+    this.buildingLayer.addChild(townHall)
+    this.entities.townHall = townHall
+    this.townHallLevel = 0
+
+    this.makeInteractive(townHall, () => {
+      const level = Math.floor(this.netWorth / 1000)
+      return {
+        title: 'TOWN HALL',
+        lines: [`Level ${level}`, 'Net Worth']
+      }
+    }, 'townHall')
+  }
+
+  async drawTownHallSprite(container, level) {
+    const spriteConfig = SPRITES.buildings.townHall
+
+    // remove old sprite if exists
+    const oldSprite = container.children.find(c => c instanceof PIXI.Sprite)
+    if (oldSprite) container.removeChild(oldSprite)
 
     try {
-      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const texture = await this.tryLoadLevelSprite(spriteConfig, level)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
       sprite.height = spriteConfig.displayHeight || spriteConfig.height
-      townHall.addChild(sprite)
+      container.addChildAt(sprite, 0)
     } catch (e) {
       // fallback procedural
       const body = new PIXI.Graphics()
@@ -577,27 +786,70 @@ export class GameEngine {
       body.lineTo(0, -40)
       body.closePath()
       body.endFill()
-      townHall.addChild(body)
+      container.addChildAt(body, 0)
+    }
+  }
+
+  async createMine() {
+    const centerX = Math.floor(this.mapWidth / 2)
+    const centerY = Math.floor(this.mapHeight / 2)
+    // place mine a few tiles away from town hall
+    const mineX = centerX - 5
+    const mineY = centerY - 3
+    const pos = this.toIso(mineX, mineY)
+    const spriteConfig = SPRITES.buildings.mine
+
+    const mine = new PIXI.Container()
+    mine.x = pos.x
+    mine.y = pos.y - 20
+    mine.zIndex = pos.y
+
+    try {
+      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const sprite = new PIXI.Sprite(texture)
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth || spriteConfig.width
+      sprite.height = spriteConfig.displayHeight || spriteConfig.height
+      sprite.y = (spriteConfig.displayHeight || spriteConfig.height) * 0.35  // move down 35%
+      mine.addChild(sprite)
+    } catch (e) {
+      // fallback procedural
+      const body = new PIXI.Graphics()
+      body.beginFill(0x8B4513)
+      body.moveTo(-25, -10)
+      body.lineTo(-25, 15)
+      body.lineTo(0, 25)
+      body.lineTo(25, 15)
+      body.lineTo(25, -10)
+      body.lineTo(0, -20)
+      body.closePath()
+      body.endFill()
+      body.y = 14  // move down 35%
+      mine.addChild(body)
     }
 
-    townHall.gridX = centerX
-    townHall.gridY = centerY
-    townHall.isTownHall = true
+    mine.gridX = mineX
+    mine.gridY = mineY
+    mine.isMine = true
 
-    this.buildingLayer.addChild(townHall)
-    this.entities.townHall = townHall
+    this.buildingLayer.addChild(mine)
+    this.entities.mine = mine
 
-    this.makeInteractive(townHall, () => {
-      const level = Math.floor(this.netWorth / 1000)
-      return {
-        title: 'TOWN HALL',
-        lines: [`Level ${level}`]
-      }
-    })
+    this.makeInteractive(mine, () => ({
+      title: 'GOLD MINE',
+      lines: ['Income']
+    }))
   }
 
   setNetWorth(value) {
+    const oldLevel = Math.floor(this.netWorth / 1000)
+    const newLevel = Math.floor(value / 1000)
     this.netWorth = value
+
+    // refresh town hall sprite if level changed
+    if (oldLevel !== newLevel && this.entities.townHall) {
+      this.drawTownHallSprite(this.entities.townHall, newLevel)
+    }
   }
 
   // === Account-based building system ===
@@ -667,9 +919,16 @@ export class GameEngine {
           this.entities.buildings.push(building)
         } else {
           // update existing building
+          const oldLevel = Math.floor(building.balance / 1000)
+          const newLevel = Math.floor(account.balance / 1000)
           building.balance = account.balance
           building.apr = account.apr || 0
           building.name = account.name
+
+          // refresh sprite if level changed
+          if (oldLevel !== newLevel) {
+            this.refreshBuildingSprite(building, category, newLevel)
+          }
         }
       })
     })
@@ -684,6 +943,27 @@ export class GameEngine {
   loadBuildingPosition(accountId) {
     const positions = JSON.parse(localStorage.getItem('fincraft-building-positions') || '{}')
     return positions[accountId] || null
+  }
+
+  async refreshBuildingSprite(building, category, level) {
+    const container = building.container
+    // remove old sprite (first PIXI.Sprite child)
+    const oldSprite = container.children.find(c => c instanceof PIXI.Sprite)
+    if (oldSprite) {
+      container.removeChild(oldSprite)
+    }
+
+    // redraw with new level
+    const isDebt = category === 'creditCards' || category === 'loans'
+    if (isDebt) {
+      await this.drawDebtBuilding(container, level)
+    } else if (category === 'depository') {
+      await this.drawStorehouse(container, level)
+    } else if (category === 'investments') {
+      await this.drawTower(container, level)
+    } else if (category === 'others') {
+      await this.drawStatue(container, level)
+    }
   }
 
   createAccountBuilding(account, category, index) {
@@ -715,14 +995,15 @@ export class GameEngine {
     container.gridX = gridX
     container.gridY = gridY
 
+    const level = Math.floor(account.balance / 1000)
     if (isDebt) {
-      this.drawDebtBuilding(container)
+      this.drawDebtBuilding(container, level)
     } else if (category === 'depository') {
-      this.drawStorehouse(container)
+      this.drawStorehouse(container, level)
     } else if (category === 'investments') {
-      this.drawTower(container)
+      this.drawTower(container, level)
     } else if (category === 'others') {
-      this.drawStatue(container)
+      this.drawStatue(container, level)
     } else {
       this.drawGoodBuilding(container, category)
     }
@@ -757,9 +1038,10 @@ export class GameEngine {
     this.makeInteractive(container, () => ({
       title: account.name,
       lines: [
+        `Level ${Math.floor(building.balance / 1000)}`,
         `Balance: $${building.balance.toLocaleString()}`,
         ...(building.apr ? [`APR: ${building.apr}%`] : []),
-        isDebt ? 'Spawns demons' : 'Holding'
+        isDebt ? 'Debt' : (category === 'others' ? 'Asset' : 'Holding')
       ]
     }))
 
@@ -805,11 +1087,32 @@ export class GameEngine {
     container.addChild(body)
   }
 
-  async drawDebtBuilding(container) {
+  getLevelSpritePath(basePath, level) {
+    // convert /assets/buildings/building-debt.png to /assets/buildings/building-debt-lvl0.png
+    const ext = basePath.match(/\.[^.]+$/) || ['.png']
+    const base = basePath.replace(/\.[^.]+$/, '')
+    return `${base}-lvl${level}${ext[0]}`
+  }
+
+  async tryLoadLevelSprite(spriteConfig, level) {
+    // try level-specific sprite first, then fall back to base
+    // clamp to 0 minimum so negative balances use lvl0 sprites
+    const clampedLevel = Math.max(0, level)
+    const levelPath = this.getLevelSpritePath(spriteConfig.path, clampedLevel)
+    try {
+      const texture = await PIXI.Assets.load(levelPath)
+      return texture
+    } catch (e) {
+      // level sprite not found, try base
+    }
+    return await PIXI.Assets.load(spriteConfig.path)
+  }
+
+  async drawDebtBuilding(container, level = 0) {
     const spriteConfig = SPRITES.buildings.debt
 
     try {
-      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const texture = await this.tryLoadLevelSprite(spriteConfig, level)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = (spriteConfig.displayWidth || spriteConfig.width) * 1.08
@@ -838,11 +1141,11 @@ export class GameEngine {
     }
   }
 
-  async drawStorehouse(container) {
+  async drawStorehouse(container, level = 0) {
     const spriteConfig = SPRITES.buildings.storehouse
 
     try {
-      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const texture = await this.tryLoadLevelSprite(spriteConfig, level)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
@@ -855,11 +1158,11 @@ export class GameEngine {
     }
   }
 
-  async drawTower(container) {
+  async drawTower(container, level = 0) {
     const spriteConfig = SPRITES.buildings.tower
 
     try {
-      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const texture = await this.tryLoadLevelSprite(spriteConfig, level)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
@@ -872,11 +1175,11 @@ export class GameEngine {
     }
   }
 
-  async drawStatue(container) {
+  async drawStatue(container, level = 0) {
     const spriteConfig = SPRITES.buildings.statue
 
     try {
-      const texture = await PIXI.Assets.load(spriteConfig.path)
+      const texture = await this.tryLoadLevelSprite(spriteConfig, level)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
@@ -1255,6 +1558,64 @@ export class GameEngine {
       return true
     })
 
+    // spawn transaction npcs at interval
+    const now = Date.now()
+    if (this.transactionPool.length > 0 && now - this.lastTransactionSpawn >= this.transactionSpawnInterval / this.playbackSpeed) {
+      this.spawnTransactionNpc()
+      this.lastTransactionSpawn = now
+    }
+
+    // move transaction npcs toward their targets
+    this.entities.transactionNpcs = this.entities.transactionNpcs.filter(npc => {
+      npc.wanderTimer++
+      if (npc.wanderTimer > 30) {
+        npc.wanderOffset.x = (Math.random() - 0.5) * 20
+        npc.wanderOffset.y = (Math.random() - 0.5) * 10
+        npc.wanderTimer = 0
+      }
+
+      const targetX = npc.targetX + npc.wanderOffset.x
+      const targetY = npc.targetY + npc.wanderOffset.y
+      const dx = targetX - npc.x
+      const dy = targetY - npc.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < 30) {
+        this.unitLayer.removeChild(npc)
+        // spawn particle based on type
+        if (npc.npcType === 'income') {
+          this.spawnTransactionParticle(npc.x, npc.y, npc.transactionData.amount, 'income')
+        } else if (npc.npcType === 'transfer') {
+          this.spawnTransactionParticle(npc.x, npc.y, npc.transactionData.amount, 'transfer')
+        } else {
+          this.spawnTransactionParticle(npc.x, npc.y, npc.transactionData.amount, 'expense')
+        }
+        return false
+      }
+
+      npc.x += (dx / dist) * npc.speed * this.playbackSpeed
+      npc.y += (dy / dist) * npc.speed * this.playbackSpeed
+      npc.zIndex = npc.y
+
+      // show name label in edit mode
+      if (this.buildMode && !npc.nameLabel) {
+        const label = new PIXI.Text(npc.transactionData.name.substring(0, 15), {
+          fontSize: 8,
+          fill: 0xffffff,
+          fontWeight: 'bold'
+        })
+        label.anchor.set(0.5)
+        label.y = -15
+        npc.addChild(label)
+        npc.nameLabel = label
+      } else if (!this.buildMode && npc.nameLabel) {
+        npc.removeChild(npc.nameLabel)
+        npc.nameLabel = null
+      }
+
+      return true
+    })
+
     // sort by depth
     this.buildingLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
     this.unitLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
@@ -1364,9 +1725,49 @@ export class GameEngine {
     this.app.ticker.add(animate)
   }
 
+  spawnTransactionParticle(x, y, amount, type) {
+    const colors = {
+      income: 0xffd700,   // gold
+      expense: 0xff6b6b, // red
+      transfer: 0x44ccff // cyan
+    }
+    const signs = {
+      income: '+',
+      expense: '-',
+      transfer: ''
+    }
+
+    const particle = new PIXI.Text(`${signs[type]}$${Math.round(amount)}`, {
+      fontSize: 11,
+      fill: colors[type] || 0xffffff,
+      fontWeight: 'bold'
+    })
+    particle.anchor.set(0.5)
+    particle.x = x
+    particle.y = y
+    this.effectLayer.addChild(particle)
+
+    let frames = 0
+    const animate = () => {
+      frames++
+      particle.y -= 0.8
+      particle.alpha -= 0.02
+      if (particle.alpha <= 0 || frames > 50) {
+        this.effectLayer.removeChild(particle)
+        this.app.ticker.remove(animate)
+      }
+    }
+    this.app.ticker.add(animate)
+  }
+
   // public method to push events from UI
   pushEvent(event) {
     this.eventQueue.push(event)
+  }
+
+  // reload transaction pool (call when new csv imported)
+  reloadTransactions() {
+    this.loadTransactionPool()
   }
 
   destroy() {
