@@ -2150,10 +2150,10 @@ export class GameEngine {
 
     // smooth keyboard panning
     const panSpeed = 8
-    if (this.keysPressed.has('ArrowUp') || this.keysPressed.has('w')) this.worldContainer.y += panSpeed
-    if (this.keysPressed.has('ArrowDown') || this.keysPressed.has('s')) this.worldContainer.y -= panSpeed
-    if (this.keysPressed.has('ArrowLeft') || this.keysPressed.has('a')) this.worldContainer.x += panSpeed
-    if (this.keysPressed.has('ArrowRight') || this.keysPressed.has('d')) this.worldContainer.x -= panSpeed
+    if (this.keysPressed.has('arrowup') || this.keysPressed.has('w')) this.worldContainer.y += panSpeed
+    if (this.keysPressed.has('arrowdown') || this.keysPressed.has('s')) this.worldContainer.y -= panSpeed
+    if (this.keysPressed.has('arrowleft') || this.keysPressed.has('a')) this.worldContainer.x += panSpeed
+    if (this.keysPressed.has('arrowright') || this.keysPressed.has('d')) this.worldContainer.x -= panSpeed
 
     // tooltip animation
     this.updateTooltipAnim()
