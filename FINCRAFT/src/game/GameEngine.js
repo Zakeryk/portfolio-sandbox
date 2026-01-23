@@ -559,11 +559,7 @@ export class GameEngine {
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
-      shadow.moveTo(0, shadowSize * 0.3)
-      shadow.lineTo(shadowSize, 0)
-      shadow.lineTo(0, -shadowSize * 0.3)
-      shadow.lineTo(-shadowSize, 0)
-      shadow.closePath()
+      shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
       shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
       npc.addChild(shadow)
@@ -584,11 +580,7 @@ export class GameEngine {
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
-      shadow.moveTo(0, shadowSize * 0.3)
-      shadow.lineTo(shadowSize, 0)
-      shadow.lineTo(0, -shadowSize * 0.3)
-      shadow.lineTo(-shadowSize, 0)
-      shadow.closePath()
+      shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
       shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
       npc.addChild(shadow)
@@ -607,15 +599,10 @@ export class GameEngine {
       sprite.width = spriteConfig.displayWidth * sizeScale
       sprite.height = spriteConfig.displayHeight * sizeScale
 
-      // isometric shadow
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
-      shadow.moveTo(0, shadowSize * 0.3)
-      shadow.lineTo(shadowSize, 0)
-      shadow.lineTo(0, -shadowSize * 0.3)
-      shadow.lineTo(-shadowSize, 0)
-      shadow.closePath()
+      shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
       shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
       npc.addChild(shadow)
@@ -632,13 +619,8 @@ export class GameEngine {
 
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.2)
-      shadow.moveTo(0, size * 0.6)
-      shadow.lineTo(size * 0.8, size * 0.3)
-      shadow.lineTo(0, 0)
-      shadow.lineTo(-size * 0.8, size * 0.3)
-      shadow.closePath()
+      shadow.drawEllipse(0, size * 0.3, size * 0.8, size * 0.3)
       shadow.endFill()
-      shadow.y = size * 0.5
       npc.addChild(shadow)
 
       const body = new PIXI.Graphics()
@@ -1960,11 +1942,7 @@ export class GameEngine {
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
-      shadow.moveTo(0, shadowSize * 0.3)
-      shadow.lineTo(shadowSize, 0)
-      shadow.lineTo(0, -shadowSize * 0.3)
-      shadow.lineTo(-shadowSize, 0)
-      shadow.closePath()
+      shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
       shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
       demon.addChild(shadow)
