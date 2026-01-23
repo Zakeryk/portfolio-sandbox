@@ -99,13 +99,15 @@ export class GameEngine {
     this.app.stage.addChild(this.worldContainer)
 
     this.groundLayer = new PIXI.Container()
-    this.buildingLayer = new PIXI.Container()
-    this.unitLayer = new PIXI.Container()
+    this.gameObjectLayer = new PIXI.Container() // merged buildings + units for proper z-sorting
     this.effectLayer = new PIXI.Container()
 
+    // aliases for backwards compat
+    this.buildingLayer = this.gameObjectLayer
+    this.unitLayer = this.gameObjectLayer
+
     this.worldContainer.addChild(this.groundLayer)
-    this.worldContainer.addChild(this.buildingLayer)
-    this.worldContainer.addChild(this.unitLayer)
+    this.worldContainer.addChild(this.gameObjectLayer)
     this.worldContainer.addChild(this.effectLayer)
 
     const centerTile = this.toIso(this.mapWidth / 2, this.mapHeight / 2)
@@ -118,6 +120,7 @@ export class GameEngine {
     await this.createTownHall()
     await this.createMine()
     await this.loadSkeletonTextures()
+    await this.loadHumanGoldTextures()
     this.loadTransactionPool()
 
     this.app.ticker.add(() => this.gameLoop())
@@ -146,6 +149,31 @@ export class GameEngine {
     } catch (e) {
       console.warn('Failed to load skeleton textures:', e)
       this.skeletonTextures = null
+    }
+  }
+
+  async loadHumanGoldTextures() {
+    try {
+      const spriteConfig = SPRITES.units.humanGold
+      const baseTexture = await PIXI.Assets.load(spriteConfig.path)
+
+      this.humanGoldTextures = []
+      for (let row = 0; row < spriteConfig.rows; row++) {
+        for (let col = 0; col < spriteConfig.framesPerRow; col++) {
+          const frame = new PIXI.Rectangle(
+            col * spriteConfig.frameWidth,
+            row * spriteConfig.frameHeight,
+            spriteConfig.frameWidth,
+            spriteConfig.frameHeight
+          )
+          const texture = new PIXI.Texture(baseTexture, frame)
+          this.humanGoldTextures.push(texture)
+        }
+      }
+      console.log(`Loaded ${this.humanGoldTextures.length} human gold frames`)
+    } catch (e) {
+      console.warn('Failed to load human gold textures:', e)
+      this.humanGoldTextures = null
     }
   }
 
@@ -453,11 +481,42 @@ export class GameEngine {
       npc.animFrame = 0
       npc.animTimer = 0
       npc.animSpeed = spriteConfig.animSpeed
+    } else if ((type === 'income' || type === 'transfer') && this.humanGoldTextures) {
+      // use animated human gold sprite for income/transfer
+      const spriteConfig = SPRITES.units.humanGold
+      const sprite = new PIXI.Sprite(this.humanGoldTextures[0])
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth * sizeScale
+      sprite.height = spriteConfig.displayHeight * sizeScale
+
+      // tint blue for transfers
+      if (type === 'transfer') {
+        sprite.tint = 0x44ccff
+      }
+
+      // isometric shadow
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.25)
+      const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
+      shadow.moveTo(0, shadowSize * 0.3)
+      shadow.lineTo(shadowSize, 0)
+      shadow.lineTo(0, -shadowSize * 0.3)
+      shadow.lineTo(-shadowSize, 0)
+      shadow.closePath()
+      shadow.endFill()
+      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
+      npc.addChild(shadow)
+      npc.addChild(sprite)
+
+      npc.animSprite = sprite
+      npc.animFrame = 0
+      npc.animTimer = 0
+      npc.animSpeed = spriteConfig.animSpeed
+      npc.useHumanGold = true
     } else {
-      // fallback: simple colored circle for other types
+      // fallback: simple colored circle
       const size = 2 + Math.min(3, Math.log10(amount + 1) * 1.2)
 
-      // isometric shadow on ground plane
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.2)
       shadow.moveTo(0, size * 0.6)
@@ -469,7 +528,6 @@ export class GameEngine {
       shadow.y = size * 0.5
       npc.addChild(shadow)
 
-      // body
       const body = new PIXI.Graphics()
       body.beginFill(color)
       body.drawCircle(0, 0, size)
@@ -2064,16 +2122,19 @@ export class GameEngine {
 
       npc.zIndex = npc.y
 
-      // animate skeleton sprite if present
-      if (npc.animSprite && this.skeletonTextures) {
-        npc.animTimer += npc.animSpeed * this.playbackSpeed
-        if (npc.animTimer >= 1) {
-          npc.animTimer = 0
-          npc.animFrame = (npc.animFrame + 1) % 4
-          npc.animSprite.texture = this.skeletonTextures[npc.animFrame]
+      // animate sprite if present
+      if (npc.animSprite) {
+        const textures = npc.useHumanGold ? this.humanGoldTextures : this.skeletonTextures
+        if (textures) {
+          npc.animTimer += npc.animSpeed * this.playbackSpeed
+          if (npc.animTimer >= 1) {
+            npc.animTimer = 0
+            npc.animFrame = (npc.animFrame + 1) % 4
+            npc.animSprite.texture = textures[npc.animFrame]
+          }
+          // mirror sprite if npc is to the right of target
+          npc.animSprite.scale.x = (npc.x > npc.targetX) ? -Math.abs(npc.animSprite.scale.x) : Math.abs(npc.animSprite.scale.x)
         }
-        // mirror sprite if npc is to the right of target
-        npc.animSprite.scale.x = (npc.x > npc.targetX) ? -Math.abs(npc.animSprite.scale.x) : Math.abs(npc.animSprite.scale.x)
       }
 
       // show name label in edit mode
@@ -2103,8 +2164,7 @@ export class GameEngine {
     })
 
     // sort by depth
-    this.buildingLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
-    this.unitLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
+    this.gameObjectLayer.children.sort((a, b) => (a.zIndex || 0) - (b.zIndex || 0))
   }
 
   calculateSpawnRate(balance) {

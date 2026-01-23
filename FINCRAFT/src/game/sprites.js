@@ -177,12 +177,23 @@ export const SPRITES = {
     skeleton: {
       path: '/assets/units/unit-skeleton.png',
       useFallback: true,
-      // sprite sheet: 4 frames x 2 rows
       frameWidth: 704,
       frameHeight: 768,
       framesPerRow: 4,
       rows: 2,
-      // row 0 = facing right, row 1 = facing left
+      displayWidth: 24,
+      displayHeight: 26,
+      anchorX: 0.5,
+      anchorY: 0.85,
+      animSpeed: 0.12
+    },
+    humanGold: {
+      path: '/assets/units/unit-human-gold.png',
+      useFallback: true,
+      frameWidth: 704,
+      frameHeight: 768,
+      framesPerRow: 4,
+      rows: 2,
       displayWidth: 24,
       displayHeight: 26,
       anchorX: 0.5,
