@@ -1156,43 +1156,12 @@ export class GameEngine {
   }
 
   drawIsometricGrid() {
-    this.tiles = []
     for (let y = 0; y < this.mapHeight; y++) {
-      this.tiles[y] = []
       for (let x = 0; x < this.mapWidth; x++) {
         const tile = this.createIsometricTile(x, y)
-        this.tiles[y][x] = tile
         this.groundLayer.addChild(tile)
       }
     }
-  }
-
-  setTileDirt(gridX, gridY) {
-    if (gridX < 0 || gridX >= this.mapWidth || gridY < 0 || gridY >= this.mapHeight) return
-    const tile = this.tiles[gridY]?.[gridX]
-    if (!tile || tile.isDirt) return
-
-    tile.clear()
-    const baseColor = 0x8b7355 // tan/dirt
-    const shade = Math.random() * 0.1
-    const color = this.adjustBrightness(baseColor, shade)
-
-    tile.beginFill(color)
-    tile.moveTo(0, 0)
-    tile.lineTo(this.tileWidth / 2, this.tileHeight / 2)
-    tile.lineTo(0, this.tileHeight)
-    tile.lineTo(-this.tileWidth / 2, this.tileHeight / 2)
-    tile.closePath()
-    tile.endFill()
-
-    tile.lineStyle(1, 0x6b5344, 0.3)
-    tile.moveTo(0, 0)
-    tile.lineTo(this.tileWidth / 2, this.tileHeight / 2)
-    tile.lineTo(0, this.tileHeight)
-    tile.lineTo(-this.tileWidth / 2, this.tileHeight / 2)
-    tile.closePath()
-
-    tile.isDirt = true
   }
 
   createIsometricTile(gridX, gridY) {
@@ -1249,13 +1218,6 @@ export class GameEngine {
     this.buildingLayer.addChild(townHall)
     this.entities.townHall = townHall
     this.townHallLevel = 0
-
-    // set dirt tiles for 3x3 town hall footprint
-    for (let dy = -2; dy <= 0; dy++) {
-      for (let dx = -2; dx <= 0; dx++) {
-        this.setTileDirt(centerX + dx, centerY + dy)
-      }
-    }
 
     this.makeInteractive(townHall, () => {
       const level = Math.floor(this.netWorth / 1000)
@@ -1340,13 +1302,6 @@ export class GameEngine {
 
     this.buildingLayer.addChild(mine)
     this.entities.mine = mine
-
-    // set dirt tiles for 2x2 mine footprint
-    for (let dy = -1; dy <= 0; dy++) {
-      for (let dx = -1; dx <= 0; dx++) {
-        this.setTileDirt(mineX + dx, mineY + dy)
-      }
-    }
 
     this.makeInteractive(mine, () => ({
       title: 'GOLD MINE',
@@ -1539,13 +1494,6 @@ export class GameEngine {
     container.addChild(label)
 
     this.buildingLayer.addChild(container)
-
-    // set dirt tiles for 2x2 building footprint
-    for (let dy = -1; dy <= 0; dy++) {
-      for (let dx = -1; dx <= 0; dx++) {
-        this.setTileDirt(gridX + dx, gridY + dy)
-      }
-    }
 
     const building = {
       accountId: account.id,
