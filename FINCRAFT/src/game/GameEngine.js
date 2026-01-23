@@ -351,23 +351,40 @@ export class GameEngine {
       }
       color = 0x44ccff // Cyan
     } else {
-      // EXPENSE: External world -> Account -> Town Hall (money leaving)
-      // Spawn from edge, go to account building, represents spending
-      if (matchedBuilding) {
-        // Expense hits the account first
-        spawnGridX = matchedBuilding.gridX
-        spawnGridY = matchedBuilding.gridY
-        targetGridX = centerX
-        targetGridY = centerY
-      } else {
-        // No matched account - spawn from edge to town hall
-        const edge = Math.floor(Math.random() * 4)
-        switch (edge) {
-          case 0: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = 0; break
-          case 1: spawnGridX = this.mapWidth - 1; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
-          case 2: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = this.mapHeight - 1; break
-          case 3: spawnGridX = 0; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
+      // EXPENSE: Spawn from edge, attack depository building (checking preferred)
+      // Spawn from random edge
+      const edge = Math.floor(Math.random() * 4)
+      switch (edge) {
+        case 0: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = 0; break
+        case 1: spawnGridX = this.mapWidth - 1; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
+        case 2: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = this.mapHeight - 1; break
+        case 3: spawnGridX = 0; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
+      }
+
+      // Target: matched building > checking > other depository > town hall
+      let expenseTarget = matchedBuilding
+      if (!expenseTarget) {
+        const depositoryBuildings = this.entities.buildings.filter(b => b.category === 'depository')
+        // Prefer checking accounts
+        const checkingBuildings = depositoryBuildings.filter(b =>
+          b.name.toLowerCase().includes('checking')
+        )
+        const savingsBuildings = depositoryBuildings.filter(b =>
+          !b.name.toLowerCase().includes('checking')
+        )
+
+        if (checkingBuildings.length > 0) {
+          expenseTarget = checkingBuildings[Math.floor(Math.random() * checkingBuildings.length)]
+        } else if (savingsBuildings.length > 0) {
+          expenseTarget = savingsBuildings[Math.floor(Math.random() * savingsBuildings.length)]
         }
+      }
+
+      if (expenseTarget) {
+        targetGridX = expenseTarget.gridX
+        targetGridY = expenseTarget.gridY
+      } else {
+        // No depository - attack town hall
         targetGridX = centerX
         targetGridY = centerY
       }
