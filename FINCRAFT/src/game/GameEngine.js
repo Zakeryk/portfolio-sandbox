@@ -168,6 +168,28 @@ export class GameEngine {
     })
   }
 
+  // Try to find a building mentioned in transaction text (name, note, etc.)
+  findBuildingFromText(text) {
+    if (!text) return null
+    const normalized = text.toLowerCase()
+
+    // Check each building name against the text
+    for (const building of this.entities.buildings) {
+      const buildingNorm = this.normalizeAccountName(building.name)
+      if (buildingNorm.length >= 3 && normalized.includes(buildingNorm)) {
+        return building
+      }
+      // Also check common variations
+      const words = building.name.toLowerCase().split(/\s+/)
+      for (const word of words) {
+        if (word.length >= 4 && normalized.includes(word)) {
+          return building
+        }
+      }
+    }
+    return null
+  }
+
   getTransactionType(transaction) {
     // check if internal transfer - multiple indicators
     const type = (transaction.type || transaction.Type || '').toLowerCase()
@@ -220,38 +242,64 @@ export class GameEngine {
       }
       color = 0xffd93d // gold
     } else if (type === 'transfer') {
-      // TRANSFER: Hub & Spoke System
+      // TRANSFER: Building to Building
+      // Try to find both source and destination accounts
 
-      // We need the raw signed amount to know direction
-      // (Negative = Inflow/Credit, Positive = Outflow/Debit)
       const rawAmount = parseFloat(amountStr.replace(/[,$]/g, ''))
 
-      if (matchedBuilding) {
+      // Try to extract destination from transaction name
+      // e.g., "Apple Card Payment", "Transfer to Savings", "Roth IRA Contribution"
+      const destBuilding = this.findBuildingFromText(name)
+
+      if (matchedBuilding && destBuilding && matchedBuilding !== destBuilding) {
+        // Found both source and destination - path between them
+        if (rawAmount > 0) {
+          // Outflow from this account -> goes to destination
+          spawnGridX = matchedBuilding.gridX
+          spawnGridY = matchedBuilding.gridY
+          targetGridX = destBuilding.gridX
+          targetGridY = destBuilding.gridY
+        } else {
+          // Inflow to this account <- comes from destination (which is actually source)
+          spawnGridX = destBuilding.gridX
+          spawnGridY = destBuilding.gridY
+          targetGridX = matchedBuilding.gridX
+          targetGridY = matchedBuilding.gridY
+        }
+      } else if (matchedBuilding) {
+        // Only found one building - use town hall as hub
         if (rawAmount < 0) {
-          // INFLOW (e.g. Payment to Credit Card, Deposit to Roth)
-          // Path: Town Hall -> Building
           spawnGridX = centerX
           spawnGridY = centerY
           targetGridX = matchedBuilding.gridX
           targetGridY = matchedBuilding.gridY
         } else {
-          // OUTFLOW (e.g. Transfer out of Checking)
-          // Path: Building -> Town Hall
           spawnGridX = matchedBuilding.gridX
           spawnGridY = matchedBuilding.gridY
           targetGridX = centerX
           targetGridY = centerY
         }
+      } else if (destBuilding) {
+        // Found destination in name but not source
+        spawnGridX = centerX
+        spawnGridY = centerY
+        targetGridX = destBuilding.gridX
+        targetGridY = destBuilding.gridY
       } else {
         return // Skip unmatched transfers
       }
       color = 0x44ccff // Cyan
     } else {
-      // expense: spawn from matched building or edge, walk to town hall
+      // EXPENSE: External world -> Account -> Town Hall (money leaving)
+      // Spawn from edge, go to account building, represents spending
       if (matchedBuilding) {
+        // Expense hits the account first
         spawnGridX = matchedBuilding.gridX
         spawnGridY = matchedBuilding.gridY
+        targetGridX = centerX
+        targetGridY = centerY
       } else {
+        // No matched account - spawn from edge to town hall
         const edge = Math.floor(Math.random() * 4)
         switch (edge) {
           case 0: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = 0; break
@@ -259,9 +307,9 @@ export class GameEngine {
           case 2: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = this.mapHeight - 1; break
           case 3: spawnGridX = 0; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
         }
+        targetGridX = centerX
+        targetGridY = centerY
       }
-      targetGridX = centerX
-      targetGridY = centerY
       color = 0xff6b6b // red
     }
 
