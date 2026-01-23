@@ -1345,10 +1345,72 @@ export class GameEngine {
     if (!enabled) {
       this.draggingBuilding = null
     }
-    // toggle building label visibility
+    // toggle building label and flip arrow visibility
     for (const b of this.entities.buildings) {
       if (b.label) b.label.visible = enabled
+      if (b.flipArrows) b.flipArrows.visible = enabled
     }
+  }
+
+  saveBuildingDirection(accountId, facingRight) {
+    const saved = JSON.parse(localStorage.getItem('fincraft-building-directions') || '{}')
+    saved[accountId] = facingRight
+    localStorage.setItem('fincraft-building-directions', JSON.stringify(saved))
+  }
+
+  loadBuildingDirection(accountId) {
+    const saved = JSON.parse(localStorage.getItem('fincraft-building-directions') || '{}')
+    return saved[accountId] ?? false // default facing left
+  }
+
+  flipBuilding(building) {
+    building.facingRight = !building.facingRight
+    this.applyBuildingFlip(building)
+    this.saveBuildingDirection(building.accountId, building.facingRight)
+  }
+
+  applyBuildingFlip(building) {
+    // find the sprite child and flip it
+    const sprite = building.container.children.find(c => c instanceof PIXI.Sprite)
+    if (sprite) {
+      sprite.scale.x = building.facingRight ? -Math.abs(sprite.scale.x) : Math.abs(sprite.scale.x)
+    }
+  }
+
+  createFlipArrows(building) {
+    const arrows = new PIXI.Container()
+    arrows.zIndex = 200
+    arrows.visible = this.buildMode
+
+    // left arrow
+    const leftArrow = new PIXI.Text('◀', { fontSize: 14, fill: 0xffffff })
+    leftArrow.anchor.set(0.5)
+    leftArrow.x = -35
+    leftArrow.y = -20
+    leftArrow.eventMode = 'static'
+    leftArrow.cursor = 'pointer'
+    leftArrow.on('pointerdown', (e) => {
+      e.stopPropagation()
+      if (!building.facingRight) return // already facing left
+      this.flipBuilding(building)
+    })
+
+    // right arrow
+    const rightArrow = new PIXI.Text('▶', { fontSize: 14, fill: 0xffffff })
+    rightArrow.anchor.set(0.5)
+    rightArrow.x = 35
+    rightArrow.y = -20
+    rightArrow.eventMode = 'static'
+    rightArrow.cursor = 'pointer'
+    rightArrow.on('pointerdown', (e) => {
+      e.stopPropagation()
+      if (building.facingRight) return // already facing right
+      this.flipBuilding(building)
+    })
+
+    arrows.addChild(leftArrow)
+    arrows.addChild(rightArrow)
+    return arrows
   }
 
   isTownHallZone(gridX, gridY) {
@@ -1511,8 +1573,17 @@ export class GameEngine {
       label,
       gridX,
       gridY,
-      lastSpawn: 0
+      lastSpawn: 0,
+      facingRight: this.loadBuildingDirection(account.id)
     }
+
+    // add flip arrows (only visible in edit mode)
+    const flipArrows = this.createFlipArrows(building)
+    container.addChild(flipArrows)
+    building.flipArrows = flipArrows
+
+    // apply saved flip state
+    this.applyBuildingFlip(building)
 
     this.makeInteractive(container, () => ({
       title: account.name,
