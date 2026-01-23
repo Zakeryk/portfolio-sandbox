@@ -442,8 +442,15 @@ export class GameEngine {
           targetGridY = matchedBuilding.gridY
           targetBuilding = matchedBuilding
         }
+      } else if (destBuilding) {
+        // Found destination in transaction name - path from town hall
+        spawnGridX = centerX
+        spawnGridY = centerY
+        targetGridX = destBuilding.gridX
+        targetGridY = destBuilding.gridY
+        targetBuilding = destBuilding
       } else if (matchedBuilding) {
-        // Only found one building - use town hall as hub
+        // Only found source account - use town hall as hub
         if (rawAmount < 0) {
           spawnGridX = centerX
           spawnGridY = centerY
@@ -456,13 +463,6 @@ export class GameEngine {
           targetGridX = centerX
           targetGridY = centerY
         }
-      } else if (destBuilding) {
-        // Found destination in name but not source
-        spawnGridX = centerX
-        spawnGridY = centerY
-        targetGridX = destBuilding.gridX
-        targetGridY = destBuilding.gridY
-        targetBuilding = destBuilding
       } else {
         // No buildings matched - default to townhall ↔ depository/investment
         // Prefer depository, fallback to investment
@@ -573,8 +573,8 @@ export class GameEngine {
       npc.animFrame = 0
       npc.animTimer = 0
       npc.animSpeed = spriteConfig.animSpeed
-    } else if (targetBuilding?.isDebt && type !== 'transfer' && this.barbarianTextures) {
-      // use barbarian sprite for expenses/fees going TO debt buildings (not payments)
+    } else if (targetBuilding?.isDebt && this.barbarianTextures) {
+      // use barbarian sprite when going TO debt buildings (credit cards, loans)
       const spriteConfig = SPRITES.units.barbarian
       const sprite = new PIXI.Sprite(this.barbarianTextures[0])
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
