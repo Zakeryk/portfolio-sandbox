@@ -62,6 +62,13 @@ export class GameEngine {
     }
   }
 
+  fromIso(screenX, screenY) {
+    // convert screen coordinates back to grid coordinates
+    const x = (screenX / (this.tileWidth / 2) + screenY / (this.tileHeight / 2)) / 2
+    const y = (screenY / (this.tileHeight / 2) - screenX / (this.tileWidth / 2)) / 2
+    return { x, y }
+  }
+
   async init() {
     const rect = this.container.getBoundingClientRect()
     this.width = rect.width || 900
@@ -170,9 +177,9 @@ export class GameEngine {
 
     // transfers indicated by type, category containing "transfer", or excluded flag
     if (type === 'transfer' || type === 'internal' ||
-        category.includes('transfer') ||
-        name.includes('transfer') ||
-        excluded === 'true' || excluded === true) {
+      category.includes('transfer') ||
+      name.includes('transfer') ||
+      excluded === 'true' || excluded === true) {
       return 'transfer'
     }
 
@@ -196,62 +203,88 @@ export class GameEngine {
     // find matching building
     const matchedBuilding = this.findMatchingBuilding(account)
 
-    let spawnX, spawnY, targetX, targetY, color
+    let spawnGridX, spawnGridY, targetGridX, targetGridY, color
+    const centerX = Math.floor(this.mapWidth / 2)
+    const centerY = Math.floor(this.mapHeight / 2)
 
     if (type === 'income') {
       // income: spawn from mine, walk to matched building or town hall
-      const minePos = this.entities.mine ? { x: this.entities.mine.x, y: this.entities.mine.y } : this.toIso(this.mapWidth / 2 - 5, this.mapHeight / 2 - 3)
-      spawnX = minePos.x
-      spawnY = minePos.y
+      spawnGridX = centerX - 5
+      spawnGridY = centerY - 3
       if (matchedBuilding) {
-        targetX = matchedBuilding.container.x
-        targetY = matchedBuilding.container.y
+        targetGridX = matchedBuilding.gridX
+        targetGridY = matchedBuilding.gridY
       } else {
-        targetX = this.entities.townHall.x
-        targetY = this.entities.townHall.y
+        targetGridX = centerX
+        targetGridY = centerY
       }
       color = 0xffd93d // gold
     } else if (type === 'transfer') {
-      // transfer: building to building (if we can match both)
-      // for now, just spawn from edge and go to matched building
+      // TRANSFER: Hub & Spoke System
+
+      // We need the raw signed amount to know direction
+      // (Negative = Inflow/Credit, Positive = Outflow/Debit)
+      const rawAmount = parseFloat(amountStr.replace(/[,$]/g, ''))
+
       if (matchedBuilding) {
-        const edge = this.getRandomEdgePosition()
-        spawnX = edge.x
-        spawnY = edge.y
-        targetX = matchedBuilding.container.x
-        targetY = matchedBuilding.container.y
+        if (rawAmount < 0) {
+          // INFLOW (e.g. Payment to Credit Card, Deposit to Roth)
+          // Path: Town Hall -> Building
+          spawnGridX = centerX
+          spawnGridY = centerY
+          targetGridX = matchedBuilding.gridX
+          targetGridY = matchedBuilding.gridY
+        } else {
+          // OUTFLOW (e.g. Transfer out of Checking)
+          // Path: Building -> Town Hall
+          spawnGridX = matchedBuilding.gridX
+          spawnGridY = matchedBuilding.gridY
+          targetGridX = centerX
+          targetGridY = centerY
+        }
       } else {
-        return // skip transfers we can't match
+        return // Skip unmatched transfers
       }
-      color = 0x44ccff // cyan
+      color = 0x44ccff // Cyan
     } else {
       // expense: spawn from matched building or edge, walk to town hall
       if (matchedBuilding) {
-        spawnX = matchedBuilding.container.x
-        spawnY = matchedBuilding.container.y
+        spawnGridX = matchedBuilding.gridX
+        spawnGridY = matchedBuilding.gridY
       } else {
-        const edge = this.getRandomEdgePosition()
-        spawnX = edge.x
-        spawnY = edge.y
+        const edge = Math.floor(Math.random() * 4)
+        switch (edge) {
+          case 0: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = 0; break
+          case 1: spawnGridX = this.mapWidth - 1; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
+          case 2: spawnGridX = Math.floor(Math.random() * this.mapWidth); spawnGridY = this.mapHeight - 1; break
+          case 3: spawnGridX = 0; spawnGridY = Math.floor(Math.random() * this.mapHeight); break
+        }
       }
-      targetX = this.entities.townHall.x
-      targetY = this.entities.townHall.y
+      targetGridX = centerX
+      targetGridY = centerY
       color = 0xff6b6b // red
     }
 
-    // create npc
+    // create npc at grid position
+    const spawnPos = this.toIso(spawnGridX, spawnGridY)
     const npc = new PIXI.Container()
-    npc.x = spawnX
-    npc.y = spawnY
+    npc.x = spawnPos.x
+    npc.y = spawnPos.y
 
-    // size based on amount: tiny units - $1 = 2px, $2000+ = 6px
-    const size = 2 + Math.min(4, Math.log10(amount + 1) * 1.5)
+    // size based on amount: tiny units - $1 = 2px, $2000+ = 5px
+    const size = 2 + Math.min(3, Math.log10(amount + 1) * 1.2)
 
-    // shadow
+    // isometric shadow on ground plane
     const shadow = new PIXI.Graphics()
-    shadow.beginFill(0x000000, 0.25)
-    shadow.drawEllipse(0, size / 2, size * 0.7, size / 4)
+    shadow.beginFill(0x000000, 0.2)
+    // diamond shape shadow for isometric look
+    shadow.moveTo(0, size * 0.6)
+    shadow.lineTo(size * 0.8, size * 0.3)
+    shadow.lineTo(0, 0)
+    shadow.lineTo(-size * 0.8, size * 0.3)
+    shadow.closePath()
     shadow.endFill()
+    shadow.y = size * 0.5
     npc.addChild(shadow)
 
     // body
@@ -261,6 +294,20 @@ export class GameEngine {
     body.endFill()
     npc.addChild(body)
 
+    // store grid-based movement data
+    npc.gridX = spawnGridX
+    npc.gridY = spawnGridY
+    npc.targetGridX = targetGridX
+    npc.targetGridY = targetGridY
+    npc.currentTileX = spawnPos.x
+    npc.currentTileY = spawnPos.y
+    npc.nextTileX = spawnPos.x
+    npc.nextTileY = spawnPos.y
+    npc.moveProgress = 1 // 1 = ready for next tile
+    npc.speed = 0.015 + Math.random() * 0.008 // progress per frame
+    npc.npcType = type
+    npc.npcColor = color
+
     // store transaction data for tooltips
     npc.transactionData = {
       name,
@@ -269,19 +316,99 @@ export class GameEngine {
       account,
       date: transaction.date || transaction.Date
     }
-    npc.targetX = targetX
-    npc.targetY = targetY
-    npc.speed = 0.25 + Math.random() * 0.15 // much slower
-    npc.wanderOffset = { x: 0, y: 0 }
-    npc.wanderTimer = 0
-    npc.npcType = type
 
     // make interactive in edit mode
     npc.eventMode = 'static'
     npc.cursor = 'pointer'
 
+    // Convert target grid coords to pixel coords so gameLoop can move it
+    const targetPos = this.toIso(targetGridX, targetGridY)
+    npc.targetX = targetPos.x
+    npc.targetY = targetPos.y
+
+    // Initialize movement variables required by gameLoop
+    npc.wanderOffset = { x: 0, y: 0 }
+    npc.wanderTimer = 0
+    // --- MISSING LOGIC END ---
+
     this.unitLayer.addChild(npc)
     this.entities.transactionNpcs.push(npc)
+  }
+
+  // get next grid tile toward target, avoiding buildings
+  getNextTile(npc) {
+    const dx = npc.targetGridX - npc.gridX
+    const dy = npc.targetGridY - npc.gridY
+
+    if (dx === 0 && dy === 0) return null // at target
+
+    // possible moves in iso grid (4 directions)
+    const moves = [
+      { x: 1, y: 0 },  // east
+      { x: -1, y: 0 }, // west
+      { x: 0, y: 1 },  // south
+      { x: 0, y: -1 }, // north
+    ]
+
+    // score each move by distance to target
+    let bestMove = null
+    let bestScore = Infinity
+
+    for (const move of moves) {
+      const newX = npc.gridX + move.x
+      const newY = npc.gridY + move.y
+
+      // bounds check
+      if (newX < 0 || newX >= this.mapWidth || newY < 0 || newY >= this.mapHeight) continue
+
+      // check if tile is blocked by building (unless it's the target)
+      if (this.isTileOccupied(newX, newY, npc.targetGridX, npc.targetGridY)) continue
+
+      // manhattan distance to target
+      const score = Math.abs(npc.targetGridX - newX) + Math.abs(npc.targetGridY - newY)
+
+      // add small random factor to prevent clumping
+      const randomized = score + Math.random() * 0.5
+
+      if (randomized < bestScore) {
+        bestScore = randomized
+        bestMove = { x: newX, y: newY }
+      }
+    }
+
+    return bestMove
+  }
+
+  // check if a tile is occupied by a building
+  isTileOccupied(gridX, gridY, targetX, targetY) {
+    // don't block the target tile
+    if (gridX === targetX && gridY === targetY) return false
+
+    const centerX = Math.floor(this.mapWidth / 2)
+    const centerY = Math.floor(this.mapHeight / 2)
+
+    // town hall occupies 3x3 area
+    if (gridX >= centerX - 1 && gridX <= centerX + 1 &&
+      gridY >= centerY - 1 && gridY <= centerY + 1) {
+      return true
+    }
+
+    // mine
+    const mineX = centerX - 5
+    const mineY = centerY - 3
+    if (gridX >= mineX - 1 && gridX <= mineX && gridY >= mineY - 1 && gridY <= mineY) {
+      return true
+    }
+
+    // check account buildings (each occupies ~2x2)
+    for (const building of this.entities.buildings) {
+      if (gridX >= building.gridX - 1 && gridX <= building.gridX &&
+        gridY >= building.gridY - 1 && gridY <= building.gridY) {
+        return true
+      }
+    }
+
+    return false
   }
 
   // check if screen position is near a building (for obstacle avoidance)
@@ -344,13 +471,13 @@ export class GameEngine {
 
     // avoid town hall
     if (this.entities.townHall &&
-        (npc.targetX !== this.entities.townHall.x || npc.targetY !== this.entities.townHall.y)) {
+      (npc.targetX !== this.entities.townHall.x || npc.targetY !== this.entities.townHall.y)) {
       checkBuilding(this.entities.townHall.x, this.entities.townHall.y)
     }
 
     // avoid mine
     if (this.entities.mine &&
-        (npc.targetX !== this.entities.mine.x || npc.targetY !== this.entities.mine.y)) {
+      (npc.targetX !== this.entities.mine.x || npc.targetY !== this.entities.mine.y)) {
       checkBuilding(this.entities.mine.x, this.entities.mine.y)
     }
 
@@ -973,7 +1100,7 @@ export class GameEngine {
     // town hall 3x3 highlight occupies: [centerX-3 to centerX-1, centerY-3 to centerY-1]
     // check if they overlap
     return gridX >= centerX - 3 && gridX <= centerX &&
-           gridY >= centerY - 3 && gridY <= centerY
+      gridY >= centerY - 3 && gridY <= centerY
   }
 
   getTimeMultiplier() {
@@ -1335,7 +1462,7 @@ export class GameEngine {
     // shadow
     const shadow = new PIXI.Graphics()
     shadow.beginFill(0x000000, 0.4)
-    shadow.drawEllipse(0, size/2, size, size/3)
+    shadow.drawEllipse(0, size / 2, size, size / 3)
     shadow.endFill()
     demon.addChild(shadow)
 
@@ -1655,22 +1782,10 @@ export class GameEngine {
       this.lastTransactionSpawn = now
     }
 
-    // move transaction npcs toward their targets
+    // move transaction npcs along isometric grid
     this.entities.transactionNpcs = this.entities.transactionNpcs.filter(npc => {
-      npc.wanderTimer++
-      if (npc.wanderTimer > 30) {
-        npc.wanderOffset.x = (Math.random() - 0.5) * 10
-        npc.wanderOffset.y = (Math.random() - 0.5) * 5
-        npc.wanderTimer = 0
-      }
-
-      const targetX = npc.targetX + npc.wanderOffset.x
-      const targetY = npc.targetY + npc.wanderOffset.y
-      let dx = targetX - npc.x
-      let dy = targetY - npc.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-
-      if (dist < 25) {
+      // check if reached target grid
+      if (npc.gridX === npc.targetGridX && npc.gridY === npc.targetGridY) {
         this.unitLayer.removeChild(npc)
         // spawn particle based on type
         if (npc.npcType === 'income') {
@@ -1683,31 +1798,45 @@ export class GameEngine {
         return false
       }
 
-      // get avoidance steering to navigate around buildings
-      const avoid = this.getAvoidanceVector(npc)
-      dx = dx / dist + avoid.x * 2
-      dy = dy / dist + avoid.y * 2
-
-      // normalize combined vector
-      const combinedDist = Math.sqrt(dx * dx + dy * dy)
-      if (combinedDist > 0) {
-        dx /= combinedDist
-        dy /= combinedDist
+      // if ready for next tile, pick one
+      if (npc.moveProgress >= 1) {
+        const nextTile = this.getNextTile(npc)
+        if (nextTile) {
+          npc.currentTileX = npc.x
+          npc.currentTileY = npc.y
+          const nextPos = this.toIso(nextTile.x, nextTile.y)
+          npc.nextTileX = nextPos.x
+          npc.nextTileY = nextPos.y
+          npc.gridX = nextTile.x
+          npc.gridY = nextTile.y
+          npc.moveProgress = 0
+        }
       }
 
-      npc.x += dx * npc.speed * this.playbackSpeed
-      npc.y += dy * npc.speed * this.playbackSpeed
+      // interpolate between current and next tile
+      if (npc.moveProgress < 1) {
+        npc.moveProgress += npc.speed * this.playbackSpeed
+        if (npc.moveProgress > 1) npc.moveProgress = 1
+
+        // smooth easing
+        const t = npc.moveProgress
+        const ease = t * t * (3 - 2 * t) // smoothstep
+
+        npc.x = npc.currentTileX + (npc.nextTileX - npc.currentTileX) * ease
+        npc.y = npc.currentTileY + (npc.nextTileY - npc.currentTileY) * ease
+      }
+
       npc.zIndex = npc.y
 
       // show name label in edit mode
       if (this.buildMode && !npc.nameLabel) {
         const label = new PIXI.Text(npc.transactionData.name.substring(0, 15), {
-          fontSize: 8,
+          fontSize: 7,
           fill: 0xffffff,
           fontWeight: 'bold'
         })
         label.anchor.set(0.5)
-        label.y = -15
+        label.y = -10
         npc.addChild(label)
         npc.nameLabel = label
       } else if (!this.buildMode && npc.nameLabel) {
