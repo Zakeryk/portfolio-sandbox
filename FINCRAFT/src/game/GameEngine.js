@@ -101,6 +101,7 @@ export class GameEngine {
     this.app.stage.addChild(this.worldContainer)
 
     this.groundLayer = new PIXI.Container()
+    this.shadowLayer = new PIXI.Container() // shadows render below buildings/units
     this.gameObjectLayer = new PIXI.Container() // merged buildings + units for proper z-sorting
     this.effectLayer = new PIXI.Container()
 
@@ -109,6 +110,7 @@ export class GameEngine {
     this.unitLayer = this.gameObjectLayer
 
     this.worldContainer.addChild(this.groundLayer)
+    this.worldContainer.addChild(this.shadowLayer)
     this.worldContainer.addChild(this.gameObjectLayer)
     this.worldContainer.addChild(this.effectLayer)
 
@@ -555,14 +557,16 @@ export class GameEngine {
       sprite.width = spriteConfig.displayWidth * sizeScale
       sprite.height = spriteConfig.displayHeight * sizeScale
 
-      // isometric shadow
+      // shadow on separate layer
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.25
       shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
-      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
-      npc.addChild(shadow)
+      shadow.x = npc.x
+      shadow.y = npc.y + spriteConfig.displayHeight * sizeScale * 0.1
+      this.shadowLayer.addChild(shadow)
+      npc.shadow = shadow
       npc.addChild(sprite)
 
       npc.animSprite = sprite
@@ -582,8 +586,10 @@ export class GameEngine {
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.25
       shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
-      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
-      npc.addChild(shadow)
+      shadow.x = npc.x
+      shadow.y = npc.y + spriteConfig.displayHeight * sizeScale * 0.1
+      this.shadowLayer.addChild(shadow)
+      npc.shadow = shadow
       npc.addChild(sprite)
 
       npc.animSprite = sprite
@@ -604,8 +610,10 @@ export class GameEngine {
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.25
       shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
-      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
-      npc.addChild(shadow)
+      shadow.x = npc.x
+      shadow.y = npc.y + spriteConfig.displayHeight * sizeScale * 0.1
+      this.shadowLayer.addChild(shadow)
+      npc.shadow = shadow
       npc.addChild(sprite)
 
       npc.animSprite = sprite
@@ -619,9 +627,12 @@ export class GameEngine {
 
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.2)
-      shadow.drawEllipse(0, size * 0.3, size * 0.5, size * 0.2)
+      shadow.drawEllipse(0, 0, size * 0.5, size * 0.2)
       shadow.endFill()
-      npc.addChild(shadow)
+      shadow.x = npc.x
+      shadow.y = npc.y + size * 0.3
+      this.shadowLayer.addChild(shadow)
+      npc.shadow = shadow
 
       const body = new PIXI.Graphics()
       body.beginFill(color)
@@ -1944,8 +1955,10 @@ export class GameEngine {
       const shadowSize = spriteConfig.displayWidth * sizeScale * 0.25
       shadow.drawEllipse(0, 0, shadowSize, shadowSize * 0.4)
       shadow.endFill()
-      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
-      demon.addChild(shadow)
+      shadow.x = demon.x
+      shadow.y = demon.y + spriteConfig.displayHeight * sizeScale * 0.1
+      this.shadowLayer.addChild(shadow)
+      demon.shadow = shadow
       demon.addChild(sprite)
 
       demon.animSprite = sprite
@@ -1957,9 +1970,12 @@ export class GameEngine {
       const size = 8 + intensity * 6
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.4)
-      shadow.drawEllipse(0, size / 2, size, size / 3)
+      shadow.drawEllipse(0, 0, size, size / 3)
       shadow.endFill()
-      demon.addChild(shadow)
+      shadow.x = demon.x
+      shadow.y = demon.y + size / 2
+      this.shadowLayer.addChild(shadow)
+      demon.shadow = shadow
 
       const body = new PIXI.Graphics()
       body.beginFill(0xff0000 + Math.floor(intensity * 0x000066))
@@ -2215,6 +2231,7 @@ export class GameEngine {
 
       if (dist < 35) {
         this.unitLayer.removeChild(demon)
+        if (demon.shadow) this.shadowLayer.removeChild(demon.shadow)
         this.spawnDebtParticle(demon.x, demon.y)
         return false
       }
@@ -2222,6 +2239,12 @@ export class GameEngine {
       demon.x += (dx / dist) * demon.speed * this.playbackSpeed
       demon.y += (dy / dist) * demon.speed * this.playbackSpeed
       demon.zIndex = demon.y
+
+      // update shadow position
+      if (demon.shadow) {
+        demon.shadow.x = demon.x
+        demon.shadow.y = demon.y + 3
+      }
 
       // animate imp sprite
       if (demon.animSprite && this.impTextures) {
@@ -2310,6 +2333,7 @@ export class GameEngine {
       // check if reached target
       if (distToTarget < 15) {
         this.unitLayer.removeChild(npc)
+        if (npc.shadow) this.shadowLayer.removeChild(npc.shadow)
         if (npc.npcType === 'income') {
           this.spawnTransactionParticle(npc.x, npc.y, npc.transactionData.amount, 'income')
         } else if (npc.npcType === 'transfer') {
@@ -2383,6 +2407,12 @@ export class GameEngine {
 
       npc.zIndex = npc.y
 
+      // update shadow position
+      if (npc.shadow) {
+        npc.shadow.x = npc.x
+        npc.shadow.y = npc.y + 3
+      }
+
       // animate sprite if present
       if (npc.animSprite) {
         const textures = npc.useBarbarian ? this.barbarianTextures :
@@ -2419,6 +2449,7 @@ export class GameEngine {
       npc.lifetime = (npc.lifetime || 0) + 1
       if (npc.lifetime > 3000) { // ~50 seconds at 60fps
         this.unitLayer.removeChild(npc)
+        if (npc.shadow) this.shadowLayer.removeChild(npc.shadow)
         return false
       }
 
