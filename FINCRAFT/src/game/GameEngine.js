@@ -286,7 +286,33 @@ export class GameEngine {
         targetGridX = destBuilding.gridX
         targetGridY = destBuilding.gridY
       } else {
-        return // Skip unmatched transfers
+        // No buildings matched - pick random internal path
+        // Always show transfers as blue units moving between buildings
+        const buildings = this.entities.buildings
+        if (buildings.length >= 2) {
+          // Random building to building
+          const srcIdx = Math.floor(Math.random() * buildings.length)
+          let destIdx = Math.floor(Math.random() * buildings.length)
+          while (destIdx === srcIdx && buildings.length > 1) {
+            destIdx = Math.floor(Math.random() * buildings.length)
+          }
+          spawnGridX = buildings[srcIdx].gridX
+          spawnGridY = buildings[srcIdx].gridY
+          targetGridX = buildings[destIdx].gridX
+          targetGridY = buildings[destIdx].gridY
+        } else if (buildings.length === 1) {
+          // One building to town hall
+          spawnGridX = buildings[0].gridX
+          spawnGridY = buildings[0].gridY
+          targetGridX = centerX
+          targetGridY = centerY
+        } else {
+          // No buildings - town hall to mine
+          spawnGridX = centerX
+          spawnGridY = centerY
+          targetGridX = centerX - 5
+          targetGridY = centerY - 3
+        }
       }
       color = 0x44ccff // Cyan
     } else {
@@ -390,17 +416,23 @@ export class GameEngine {
 
     if (dx === 0 && dy === 0) return null // at target
 
-    // possible moves in iso grid (4 directions)
+    // possible moves - 8 directions including diagonals
     const moves = [
-      { x: 1, y: 0 },  // east
-      { x: -1, y: 0 }, // west
-      { x: 0, y: 1 },  // south
-      { x: 0, y: -1 }, // north
+      { x: 1, y: 0 },   // east
+      { x: -1, y: 0 },  // west
+      { x: 0, y: 1 },   // south
+      { x: 0, y: -1 },  // north
+      { x: 1, y: 1 },   // SE
+      { x: -1, y: -1 }, // NW
+      { x: 1, y: -1 },  // NE
+      { x: -1, y: 1 },  // SW
     ]
 
     // score each move by distance to target
     let bestMove = null
     let bestScore = Infinity
+    let bestBlockedMove = null
+    let bestBlockedScore = Infinity
 
     for (const move of moves) {
       const newX = npc.gridX + move.x
@@ -409,22 +441,30 @@ export class GameEngine {
       // bounds check
       if (newX < 0 || newX >= this.mapWidth || newY < 0 || newY >= this.mapHeight) continue
 
-      // check if tile is blocked by building (unless it's the target)
-      if (this.isTileOccupied(newX, newY, npc.targetGridX, npc.targetGridY)) continue
+      // euclidean distance to target (better for diagonals)
+      const distX = npc.targetGridX - newX
+      const distY = npc.targetGridY - newY
+      const score = Math.sqrt(distX * distX + distY * distY)
 
-      // manhattan distance to target
-      const score = Math.abs(npc.targetGridX - newX) + Math.abs(npc.targetGridY - newY)
+      // check if tile is blocked
+      const isBlocked = this.isTileOccupied(newX, newY, npc.targetGridX, npc.targetGridY)
 
-      // add small random factor to prevent clumping
-      const randomized = score + Math.random() * 0.5
-
-      if (randomized < bestScore) {
-        bestScore = randomized
-        bestMove = { x: newX, y: newY }
+      if (!isBlocked) {
+        if (score < bestScore) {
+          bestScore = score
+          bestMove = { x: newX, y: newY }
+        }
+      } else {
+        // track best blocked move as fallback
+        if (score < bestBlockedScore) {
+          bestBlockedScore = score
+          bestBlockedMove = { x: newX, y: newY }
+        }
       }
     }
 
-    return bestMove
+    // if no unblocked move, use blocked move (prevents getting stuck)
+    return bestMove || bestBlockedMove
   }
 
   // check if a tile is occupied by a building
@@ -1857,33 +1897,61 @@ export class GameEngine {
       npc.gridX = Math.round(currentGrid.x)
       npc.gridY = Math.round(currentGrid.y)
 
-      // recalculate direction every few frames for grid-aligned movement
-      npc.pathTimer = (npc.pathTimer || 0) + 1
-      if (npc.pathTimer > 10 || !npc.moveDir) {
-        npc.pathTimer = 0
-        const nextTile = this.getNextTile(npc)
-        if (nextTile) {
-          const nextPos = this.toIso(nextTile.x, nextTile.y)
-          const ndx = nextPos.x - npc.x
-          const ndy = nextPos.y - npc.y
-          const ndist = Math.sqrt(ndx * ndx + ndy * ndy)
-          if (ndist > 0) {
-            npc.moveDir = { x: ndx / ndist, y: ndy / ndist }
-          }
-        } else {
-          // no valid tile, move directly toward target
-          if (distToTarget > 0) {
-            npc.moveDir = { x: dx / distToTarget, y: dy / distToTarget }
-          }
-        }
+      // initialize direction if needed
+      if (!npc.moveDir) {
+        npc.moveDir = { x: 0, y: 0 }
+        npc.targetDir = { x: dx / distToTarget, y: dy / distToTarget }
       }
 
-      // continuous movement in current direction
-      if (npc.moveDir) {
-        const moveSpeed = 0.4 * this.playbackSpeed
-        npc.x += npc.moveDir.x * moveSpeed
-        npc.y += npc.moveDir.y * moveSpeed
+      // recalculate target direction less frequently (every 30 frames)
+      npc.pathTimer = (npc.pathTimer || 0) + 1
+      if (npc.pathTimer > 30) {
+        npc.pathTimer = 0
+
+        // look ahead 2-3 tiles for smoother pathing
+        let targetDir = { x: dx / distToTarget, y: dy / distToTarget }
+        const nextTile = this.getNextTile(npc)
+        if (nextTile) {
+          // look one more step ahead
+          const tempNpc = { gridX: nextTile.x, gridY: nextTile.y, targetGridX: npc.targetGridX, targetGridY: npc.targetGridY }
+          const nextNextTile = this.getNextTile(tempNpc)
+          if (nextNextTile) {
+            const farPos = this.toIso(nextNextTile.x, nextNextTile.y)
+            const fdx = farPos.x - npc.x
+            const fdy = farPos.y - npc.y
+            const fdist = Math.sqrt(fdx * fdx + fdy * fdy)
+            if (fdist > 0) {
+              targetDir = { x: fdx / fdist, y: fdy / fdist }
+            }
+          } else {
+            const nextPos = this.toIso(nextTile.x, nextTile.y)
+            const ndx = nextPos.x - npc.x
+            const ndy = nextPos.y - npc.y
+            const ndist = Math.sqrt(ndx * ndx + ndy * ndy)
+            if (ndist > 0) {
+              targetDir = { x: ndx / ndist, y: ndy / ndist }
+            }
+          }
+        }
+        npc.targetDir = targetDir
       }
+
+      // smoothly ease current direction toward target direction
+      const easing = 0.08
+      npc.moveDir.x += (npc.targetDir.x - npc.moveDir.x) * easing
+      npc.moveDir.y += (npc.targetDir.y - npc.moveDir.y) * easing
+
+      // normalize to prevent speed changes
+      const dirMag = Math.sqrt(npc.moveDir.x * npc.moveDir.x + npc.moveDir.y * npc.moveDir.y)
+      if (dirMag > 0.01) {
+        npc.moveDir.x /= dirMag
+        npc.moveDir.y /= dirMag
+      }
+
+      // continuous movement
+      const moveSpeed = 0.5 * this.playbackSpeed
+      npc.x += npc.moveDir.x * moveSpeed
+      npc.y += npc.moveDir.y * moveSpeed
 
       npc.zIndex = npc.y
 
