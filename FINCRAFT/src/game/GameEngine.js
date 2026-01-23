@@ -122,6 +122,7 @@ export class GameEngine {
     await this.loadSkeletonTextures()
     await this.loadHumanGoldTextures()
     await this.loadBarbarianTextures()
+    await this.loadImpTextures()
     this.loadTransactionPool()
 
     this.app.ticker.add(() => this.gameLoop())
@@ -200,6 +201,31 @@ export class GameEngine {
     } catch (e) {
       console.warn('Failed to load barbarian textures:', e)
       this.barbarianTextures = null
+    }
+  }
+
+  async loadImpTextures() {
+    try {
+      const spriteConfig = SPRITES.units.imp
+      const baseTexture = await PIXI.Assets.load(spriteConfig.path)
+
+      this.impTextures = []
+      for (let row = 0; row < spriteConfig.rows; row++) {
+        for (let col = 0; col < spriteConfig.framesPerRow; col++) {
+          const frame = new PIXI.Rectangle(
+            col * spriteConfig.frameWidth,
+            row * spriteConfig.frameHeight,
+            spriteConfig.frameWidth,
+            spriteConfig.frameHeight
+          )
+          const texture = new PIXI.Texture(baseTexture, frame)
+          this.impTextures.push(texture)
+        }
+      }
+      console.log(`Loaded ${this.impTextures.length} imp frames`)
+    } catch (e) {
+      console.warn('Failed to load imp textures:', e)
+      this.impTextures = null
     }
   }
 
@@ -1891,29 +1917,54 @@ export class GameEngine {
     demon.y = pos.y
 
     const intensity = Math.min(1, building.apr / 25)
-    const size = 8 + intensity * 6
+    const sizeScale = 0.8 + intensity * 0.4
 
-    // shadow
-    const shadow = new PIXI.Graphics()
-    shadow.beginFill(0x000000, 0.4)
-    shadow.drawEllipse(0, size / 2, size, size / 3)
-    shadow.endFill()
-    demon.addChild(shadow)
+    if (this.impTextures) {
+      const spriteConfig = SPRITES.units.imp
+      const sprite = new PIXI.Sprite(this.impTextures[0])
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth * sizeScale
+      sprite.height = spriteConfig.displayHeight * sizeScale
 
-    // body
-    const body = new PIXI.Graphics()
-    body.beginFill(0xff0000 + Math.floor(intensity * 0x000066))
-    body.drawCircle(0, 0, size)
-    body.endFill()
-    demon.addChild(body)
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.25)
+      const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
+      shadow.moveTo(0, shadowSize * 0.3)
+      shadow.lineTo(shadowSize, 0)
+      shadow.lineTo(0, -shadowSize * 0.3)
+      shadow.lineTo(-shadowSize, 0)
+      shadow.closePath()
+      shadow.endFill()
+      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
+      demon.addChild(shadow)
+      demon.addChild(sprite)
 
-    // eyes
-    const eyes = new PIXI.Graphics()
-    eyes.beginFill(0xffff00)
-    eyes.drawCircle(-3, -2, 2)
-    eyes.drawCircle(3, -2, 2)
-    eyes.endFill()
-    demon.addChild(eyes)
+      demon.animSprite = sprite
+      demon.animFrame = 0
+      demon.animTimer = 0
+      demon.animSpeed = spriteConfig.animSpeed
+    } else {
+      // fallback placeholder
+      const size = 8 + intensity * 6
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.4)
+      shadow.drawEllipse(0, size / 2, size, size / 3)
+      shadow.endFill()
+      demon.addChild(shadow)
+
+      const body = new PIXI.Graphics()
+      body.beginFill(0xff0000 + Math.floor(intensity * 0x000066))
+      body.drawCircle(0, 0, size)
+      body.endFill()
+      demon.addChild(body)
+
+      const eyes = new PIXI.Graphics()
+      eyes.beginFill(0xffff00)
+      eyes.drawCircle(-3, -2, 2)
+      eyes.drawCircle(3, -2, 2)
+      eyes.endFill()
+      demon.addChild(eyes)
+    }
 
     demon.targetX = this.entities.townHall.x
     demon.targetY = this.entities.townHall.y
@@ -2152,6 +2203,19 @@ export class GameEngine {
       demon.x += (dx / dist) * demon.speed * this.playbackSpeed
       demon.y += (dy / dist) * demon.speed * this.playbackSpeed
       demon.zIndex = demon.y
+
+      // animate imp sprite
+      if (demon.animSprite && this.impTextures) {
+        demon.animTimer += demon.animSpeed * this.playbackSpeed
+        if (demon.animTimer >= 1) {
+          demon.animTimer = 0
+          demon.animFrame = (demon.animFrame + 1) % 4
+          demon.animSprite.texture = this.impTextures[demon.animFrame]
+        }
+        // mirror sprite based on movement direction
+        demon.animSprite.scale.x = (dx < 0) ? -Math.abs(demon.animSprite.scale.x) : Math.abs(demon.animSprite.scale.x)
+      }
+
       return true
     })
 
