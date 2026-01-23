@@ -1327,9 +1327,9 @@ export class GameEngine {
 
   // === Account-based building system ===
 
-  setAccounts(accounts) {
+  async setAccounts(accounts) {
     this.accounts = accounts
-    this.syncBuildings()
+    await this.syncBuildings()
   }
 
   setTimeView(timeView) {
@@ -1370,10 +1370,11 @@ export class GameEngine {
   }
 
   applyBuildingFlip(building) {
-    // find the sprite child and flip it
-    const sprite = building.container.children.find(c => c instanceof PIXI.Sprite)
-    if (sprite) {
-      sprite.scale.x = building.facingRight ? -Math.abs(sprite.scale.x) : Math.abs(sprite.scale.x)
+    // find and flip all sprites/graphics (not text labels or arrow containers)
+    for (const child of building.container.children) {
+      if (child instanceof PIXI.Sprite || (child instanceof PIXI.Graphics && !child.isFlipArrow)) {
+        child.scale.x = building.facingRight ? -Math.abs(child.scale.x) : Math.abs(child.scale.x)
+      }
     }
   }
 
@@ -1436,7 +1437,7 @@ export class GameEngine {
     return multipliers[this.timeView] || 1
   }
 
-  syncBuildings() {
+  async syncBuildings() {
     // remove buildings that no longer exist
     this.entities.buildings = this.entities.buildings.filter(b => {
       const category = b.category
@@ -1449,12 +1450,13 @@ export class GameEngine {
 
     // add/update buildings for each account
     const categories = ['depository', 'investments', 'creditCards', 'loans', 'others']
-    categories.forEach(category => {
+    for (const category of categories) {
       const accounts = this.accounts[category] || []
-      accounts.forEach((account, idx) => {
+      for (let idx = 0; idx < accounts.length; idx++) {
+        const account = accounts[idx]
         let building = this.entities.buildings.find(b => b.accountId === account.id)
         if (!building) {
-          building = this.createAccountBuilding(account, category, idx)
+          building = await this.createAccountBuilding(account, category, idx)
           this.entities.buildings.push(building)
         } else {
           // update existing building
@@ -1466,11 +1468,11 @@ export class GameEngine {
 
           // refresh sprite if level changed
           if (oldLevel !== newLevel) {
-            this.refreshBuildingSprite(building, category, newLevel)
+            await this.refreshBuildingSprite(building, category, newLevel)
           }
         }
-      })
-    })
+      }
+    }
   }
 
   saveBuildingPosition(accountId, gridX, gridY) {
@@ -1503,9 +1505,12 @@ export class GameEngine {
     } else if (category === 'others') {
       await this.drawStatue(container, level)
     }
+
+    // reapply flip state
+    this.applyBuildingFlip(building)
   }
 
-  createAccountBuilding(account, category, index) {
+  async createAccountBuilding(account, category, index) {
     const isDebt = category === 'creditCards' || category === 'loans'
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
@@ -1536,13 +1541,13 @@ export class GameEngine {
 
     const level = Math.floor(account.balance / 1000)
     if (isDebt) {
-      this.drawDebtBuilding(container, level)
+      await this.drawDebtBuilding(container, level)
     } else if (category === 'depository') {
-      this.drawStorehouse(container, level)
+      await this.drawStorehouse(container, level)
     } else if (category === 'investments') {
-      this.drawTower(container, level)
+      await this.drawTower(container, level)
     } else if (category === 'others') {
-      this.drawStatue(container, level)
+      await this.drawStatue(container, level)
     } else {
       this.drawGoodBuilding(container, category)
     }
