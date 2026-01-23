@@ -197,12 +197,41 @@ export class GameEngine {
     const name = (transaction.name || transaction.Name || '').toLowerCase()
     const excluded = transaction.excluded || transaction.Excluded
 
-    // transfers indicated by type, category containing "transfer", or excluded flag
+    // keywords that indicate internal movement, not real income/expense
+    const transferKeywords = [
+      'transfer', 'payment', 'deposit', 'withdrawal', 'contribution',
+      'autopay', 'bill pay', 'billpay', 'ach', 'direct dep',
+      'payoff', 'pay off', 'internal', 'moving money',
+      'from checking', 'from savings', 'to checking', 'to savings',
+      'credit card payment', 'card payment', 'loan payment',
+      'ira', 'roth', '401k', '401(k)', 'brokerage'
+    ]
+
+    // check explicit transfer indicators
     if (type === 'transfer' || type === 'internal' ||
       category.includes('transfer') ||
-      name.includes('transfer') ||
       excluded === 'true' || excluded === true) {
       return 'transfer'
+    }
+
+    // check name for transfer keywords
+    for (const keyword of transferKeywords) {
+      if (name.includes(keyword)) {
+        return 'transfer'
+      }
+    }
+
+    // check if name contains a known bank/financial institution (likely internal)
+    const bankKeywords = [
+      'chase', 'wells fargo', 'bank of america', 'citi', 'capital one',
+      'amex', 'american express', 'discover', 'apple card', 'venmo',
+      'paypal', 'zelle', 'schwab', 'fidelity', 'vanguard', 'robinhood',
+      'coinbase', 'sofi', 'marcus', 'ally', 'betterment', 'wealthfront'
+    ]
+    for (const bank of bankKeywords) {
+      if (name.includes(bank)) {
+        return 'transfer'
+      }
     }
 
     // check amount - negative = income, positive = expense
