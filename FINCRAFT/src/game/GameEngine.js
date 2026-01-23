@@ -117,9 +117,36 @@ export class GameEngine {
     this.drawIsometricGrid()
     await this.createTownHall()
     await this.createMine()
+    await this.loadSkeletonTextures()
     this.loadTransactionPool()
 
     this.app.ticker.add(() => this.gameLoop())
+  }
+
+  async loadSkeletonTextures() {
+    try {
+      const spriteConfig = SPRITES.units.skeleton
+      const baseTexture = await PIXI.Assets.load(spriteConfig.path)
+
+      // create individual frame textures from sprite sheet
+      this.skeletonTextures = []
+      for (let row = 0; row < spriteConfig.rows; row++) {
+        for (let col = 0; col < spriteConfig.framesPerRow; col++) {
+          const frame = new PIXI.Rectangle(
+            col * spriteConfig.frameWidth,
+            row * spriteConfig.frameHeight,
+            spriteConfig.frameWidth,
+            spriteConfig.frameHeight
+          )
+          const texture = new PIXI.Texture(baseTexture, frame)
+          this.skeletonTextures.push(texture)
+        }
+      }
+      console.log(`Loaded ${this.skeletonTextures.length} skeleton frames`)
+    } catch (e) {
+      console.warn('Failed to load skeleton textures:', e)
+      this.skeletonTextures = null
+    }
   }
 
   // === Transaction NPC System ===
@@ -397,28 +424,58 @@ export class GameEngine {
     npc.x = spawnPos.x
     npc.y = spawnPos.y
 
-    // size based on amount: tiny units - $1 = 2px, $2000+ = 5px
-    const size = 2 + Math.min(3, Math.log10(amount + 1) * 1.2)
+    // size based on amount: tiny units - $1 scales up for larger amounts
+    const sizeScale = 0.8 + Math.min(0.6, Math.log10(amount + 1) * 0.2)
 
-    // isometric shadow on ground plane
-    const shadow = new PIXI.Graphics()
-    shadow.beginFill(0x000000, 0.2)
-    // diamond shape shadow for isometric look
-    shadow.moveTo(0, size * 0.6)
-    shadow.lineTo(size * 0.8, size * 0.3)
-    shadow.lineTo(0, 0)
-    shadow.lineTo(-size * 0.8, size * 0.3)
-    shadow.closePath()
-    shadow.endFill()
-    shadow.y = size * 0.5
-    npc.addChild(shadow)
+    if (type === 'expense' && this.skeletonTextures) {
+      // use animated skeleton sprite for expenses
+      const spriteConfig = SPRITES.units.skeleton
+      const sprite = new PIXI.Sprite(this.skeletonTextures[0])
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth * sizeScale
+      sprite.height = spriteConfig.displayHeight * sizeScale
 
-    // body
-    const body = new PIXI.Graphics()
-    body.beginFill(color)
-    body.drawCircle(0, 0, size)
-    body.endFill()
-    npc.addChild(body)
+      // isometric shadow
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.25)
+      const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
+      shadow.moveTo(0, shadowSize * 0.3)
+      shadow.lineTo(shadowSize, 0)
+      shadow.lineTo(0, -shadowSize * 0.3)
+      shadow.lineTo(-shadowSize, 0)
+      shadow.closePath()
+      shadow.endFill()
+      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
+      npc.addChild(shadow)
+      npc.addChild(sprite)
+
+      npc.animSprite = sprite
+      npc.animFrame = 0
+      npc.animTimer = 0
+      npc.animSpeed = spriteConfig.animSpeed
+    } else {
+      // fallback: simple colored circle for other types
+      const size = 2 + Math.min(3, Math.log10(amount + 1) * 1.2)
+
+      // isometric shadow on ground plane
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.2)
+      shadow.moveTo(0, size * 0.6)
+      shadow.lineTo(size * 0.8, size * 0.3)
+      shadow.lineTo(0, 0)
+      shadow.lineTo(-size * 0.8, size * 0.3)
+      shadow.closePath()
+      shadow.endFill()
+      shadow.y = size * 0.5
+      npc.addChild(shadow)
+
+      // body
+      const body = new PIXI.Graphics()
+      body.beginFill(color)
+      body.drawCircle(0, 0, size)
+      body.endFill()
+      npc.addChild(body)
+    }
 
     // store grid-based movement data
     npc.gridX = spawnGridX
@@ -2006,6 +2063,20 @@ export class GameEngine {
       npc.y += npc.moveDir.y * moveSpeed
 
       npc.zIndex = npc.y
+
+      // animate skeleton sprite if present
+      if (npc.animSprite && this.skeletonTextures) {
+        npc.animTimer += npc.animSpeed * this.playbackSpeed
+        if (npc.animTimer >= 1) {
+          npc.animTimer = 0
+          npc.animFrame = (npc.animFrame + 1) % 4 // 4 frames per direction
+
+          // determine direction row based on movement (row 0 = right, row 1 = left)
+          const row = npc.moveDir.x < 0 ? 1 : 0
+          const frameIndex = row * 4 + npc.animFrame
+          npc.animSprite.texture = this.skeletonTextures[frameIndex]
+        }
+      }
 
       // show name label in edit mode
       if (this.buildMode && !npc.nameLabel) {
