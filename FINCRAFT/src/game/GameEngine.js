@@ -489,11 +489,6 @@ export class GameEngine {
       sprite.width = spriteConfig.displayWidth * sizeScale
       sprite.height = spriteConfig.displayHeight * sizeScale
 
-      // tint blue for transfers
-      if (type === 'transfer') {
-        sprite.tint = 0x44ccff
-      }
-
       // isometric shadow
       const shadow = new PIXI.Graphics()
       shadow.beginFill(0x000000, 0.25)
@@ -1345,6 +1340,10 @@ export class GameEngine {
     if (!enabled) {
       this.draggingBuilding = null
     }
+    // toggle building label visibility
+    for (const b of this.entities.buildings) {
+      if (b.label) b.label.visible = enabled
+    }
   }
 
   isTownHallZone(gridX, gridY) {
@@ -1481,7 +1480,7 @@ export class GameEngine {
       this.drawGoodBuilding(container, category)
     }
 
-    // label (ensure it renders above sprite)
+    // label (ensure it renders above sprite, only visible in edit mode)
     container.sortableChildren = true
     const label = new PIXI.Text(account.name, {
       fontSize: 8,
@@ -1491,6 +1490,7 @@ export class GameEngine {
     label.anchor.set(0.5)
     label.y = isDebt ? 50 : 35
     label.zIndex = 100
+    label.visible = this.buildMode
     container.addChild(label)
 
     this.buildingLayer.addChild(container)
@@ -1503,6 +1503,7 @@ export class GameEngine {
       apr: account.apr || 0,
       isDebt,
       container,
+      label,
       gridX,
       gridY,
       lastSpawn: 0
