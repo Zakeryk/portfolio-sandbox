@@ -658,7 +658,9 @@ export class GameEngine {
     npc.nextTileX = spawnPos.x
     npc.nextTileY = spawnPos.y
     npc.moveProgress = 1 // 1 = ready for next tile
-    npc.speed = 0.015 + Math.random() * 0.008 // progress per frame
+    // smaller amounts move faster, larger amounts slower (log scale)
+    // $1 = 0.8 speed, $100 = 0.5, $1000 = 0.35, $10000 = 0.25
+    npc.speed = Math.max(0.2, 0.9 - Math.log10(amount + 1) * 0.18)
     npc.npcType = type
     npc.npcColor = color
 
@@ -2396,8 +2398,8 @@ export class GameEngine {
         npc.moveDir.y /= dirMag
       }
 
-      // continuous movement
-      const moveSpeed = 0.5 * this.playbackSpeed
+      // continuous movement - speed based on transaction amount
+      const moveSpeed = npc.speed * this.playbackSpeed
       npc.x += npc.moveDir.x * moveSpeed
       npc.y += npc.moveDir.y * moveSpeed
 
