@@ -121,6 +121,7 @@ export class GameEngine {
     await this.createMine()
     await this.loadSkeletonTextures()
     await this.loadHumanGoldTextures()
+    await this.loadBarbarianTextures()
     this.loadTransactionPool()
 
     this.app.ticker.add(() => this.gameLoop())
@@ -174,6 +175,31 @@ export class GameEngine {
     } catch (e) {
       console.warn('Failed to load human gold textures:', e)
       this.humanGoldTextures = null
+    }
+  }
+
+  async loadBarbarianTextures() {
+    try {
+      const spriteConfig = SPRITES.units.barbarian
+      const baseTexture = await PIXI.Assets.load(spriteConfig.path)
+
+      this.barbarianTextures = []
+      for (let row = 0; row < spriteConfig.rows; row++) {
+        for (let col = 0; col < spriteConfig.framesPerRow; col++) {
+          const frame = new PIXI.Rectangle(
+            col * spriteConfig.frameWidth,
+            row * spriteConfig.frameHeight,
+            spriteConfig.frameWidth,
+            spriteConfig.frameHeight
+          )
+          const texture = new PIXI.Texture(baseTexture, frame)
+          this.barbarianTextures.push(texture)
+        }
+      }
+      console.log(`Loaded ${this.barbarianTextures.length} barbarian frames`)
+    } catch (e) {
+      console.warn('Failed to load barbarian textures:', e)
+      this.barbarianTextures = null
     }
   }
 
@@ -315,6 +341,7 @@ export class GameEngine {
     const matchedBuilding = this.findMatchingBuilding(account)
 
     let spawnGridX, spawnGridY, targetGridX, targetGridY, color
+    let targetBuilding = null // track target building for sprite selection
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
 
@@ -325,6 +352,7 @@ export class GameEngine {
       if (matchedBuilding) {
         targetGridX = matchedBuilding.gridX
         targetGridY = matchedBuilding.gridY
+        targetBuilding = matchedBuilding
       } else {
         targetGridX = centerX
         targetGridY = centerY
@@ -348,12 +376,14 @@ export class GameEngine {
           spawnGridY = matchedBuilding.gridY
           targetGridX = destBuilding.gridX
           targetGridY = destBuilding.gridY
+          targetBuilding = destBuilding
         } else {
           // Inflow to this account <- comes from destination (which is actually source)
           spawnGridX = destBuilding.gridX
           spawnGridY = destBuilding.gridY
           targetGridX = matchedBuilding.gridX
           targetGridY = matchedBuilding.gridY
+          targetBuilding = matchedBuilding
         }
       } else if (matchedBuilding) {
         // Only found one building - use town hall as hub
@@ -362,6 +392,7 @@ export class GameEngine {
           spawnGridY = centerY
           targetGridX = matchedBuilding.gridX
           targetGridY = matchedBuilding.gridY
+          targetBuilding = matchedBuilding
         } else {
           spawnGridX = matchedBuilding.gridX
           spawnGridY = matchedBuilding.gridY
@@ -374,6 +405,7 @@ export class GameEngine {
         spawnGridY = centerY
         targetGridX = destBuilding.gridX
         targetGridY = destBuilding.gridY
+        targetBuilding = destBuilding
       } else {
         // No buildings matched - default to townhall ↔ depository/investment
         // Prefer depository, fallback to investment
@@ -486,6 +518,32 @@ export class GameEngine {
       npc.animFrame = 0
       npc.animTimer = 0
       npc.animSpeed = spriteConfig.animSpeed
+    } else if (targetBuilding?.isDebt && this.barbarianTextures) {
+      // use barbarian sprite when going TO debt buildings (credit cards, loans)
+      const spriteConfig = SPRITES.units.barbarian
+      const sprite = new PIXI.Sprite(this.barbarianTextures[0])
+      sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+      sprite.width = spriteConfig.displayWidth * sizeScale
+      sprite.height = spriteConfig.displayHeight * sizeScale
+
+      const shadow = new PIXI.Graphics()
+      shadow.beginFill(0x000000, 0.25)
+      const shadowSize = spriteConfig.displayWidth * sizeScale * 0.4
+      shadow.moveTo(0, shadowSize * 0.3)
+      shadow.lineTo(shadowSize, 0)
+      shadow.lineTo(0, -shadowSize * 0.3)
+      shadow.lineTo(-shadowSize, 0)
+      shadow.closePath()
+      shadow.endFill()
+      shadow.y = spriteConfig.displayHeight * sizeScale * 0.1
+      npc.addChild(shadow)
+      npc.addChild(sprite)
+
+      npc.animSprite = sprite
+      npc.animFrame = 0
+      npc.animTimer = 0
+      npc.animSpeed = spriteConfig.animSpeed
+      npc.useBarbarian = true
     } else if ((type === 'income' || type === 'transfer') && this.humanGoldTextures) {
       // use animated human gold sprite for income/transfer
       const spriteConfig = SPRITES.units.humanGold
@@ -558,9 +616,34 @@ export class GameEngine {
       date: transaction.date || transaction.Date
     }
 
-    // make interactive in edit mode
+    // make interactive (always, for hover tooltips)
     npc.eventMode = 'static'
-    npc.cursor = 'pointer'
+    npc.cursor = 'default' // changed from 'pointer'
+
+    npc.on('pointerover', () => {
+      // if build mode is on, gameLoop handles the label already
+      if (this.buildMode) return
+
+      if (!npc.hoverLabel) {
+        // match edit mode style exactly
+        const label = new PIXI.Text(name.substring(0, 15), {
+          fontSize: 7,
+          fill: 0xffffff,
+          fontWeight: 'bold'
+        })
+        label.anchor.set(0.5)
+        label.y = -10
+        npc.addChild(label)
+        npc.hoverLabel = label
+      }
+      npc.hoverLabel.visible = true
+    })
+
+    npc.on('pointerout', () => {
+      if (npc.hoverLabel) {
+        npc.hoverLabel.visible = false
+      }
+    })
 
     // Convert target grid coords to pixel coords so gameLoop can move it
     const targetPos = this.toIso(targetGridX, targetGridY)
@@ -1266,7 +1349,6 @@ export class GameEngine {
   async createMine() {
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
-    // place mine a few tiles away from town hall
     const mineX = centerX - 5
     const mineY = centerY - 3
     const pos = this.toIso(mineX, mineY)
@@ -1281,12 +1363,23 @@ export class GameEngine {
       const texture = await PIXI.Assets.load(spriteConfig.path)
       const sprite = new PIXI.Sprite(texture)
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
+
+      const baseHeight = spriteConfig.displayHeight || spriteConfig.height
+      const stretchFactor = -0.1 // -10%
+
       sprite.width = spriteConfig.displayWidth || spriteConfig.width
-      sprite.height = spriteConfig.displayHeight || spriteConfig.height
-      sprite.y = (spriteConfig.displayHeight || spriteConfig.height) * 0.35  // move down 35%
+
+      // stretch y axis
+      sprite.height = baseHeight * (1 + stretchFactor)
+
+      // offset y to fake "center" scaling
+      // original offset was 0.35. we add half the stretch (0.05) to push it down 
+      // balancing the upward growth
+      sprite.y = (baseHeight * 0.4) + (baseHeight * (stretchFactor / 2))
+
       mine.addChild(sprite)
     } catch (e) {
-      // fallback procedural
+      // ... keep existing fallback ...
       const body = new PIXI.Graphics()
       body.beginFill(0x8B4513)
       body.moveTo(-25, -10)
@@ -1297,7 +1390,7 @@ export class GameEngine {
       body.lineTo(0, -20)
       body.closePath()
       body.endFill()
-      body.y = 14  // move down 35%
+      body.y = 14
       mine.addChild(body)
     }
 
@@ -1370,9 +1463,12 @@ export class GameEngine {
   }
 
   applyBuildingFlip(building) {
-    // find and flip all sprites/graphics (not text labels or arrow containers)
+    // find and flip all sprites/graphics (but exclude Text objects and arrows)
     for (const child of building.container.children) {
-      if (child instanceof PIXI.Sprite || (child instanceof PIXI.Graphics && !child.isFlipArrow)) {
+      // Check if Sprite but NOT Text
+      if ((child instanceof PIXI.Sprite && !(child instanceof PIXI.Text)) ||
+        (child instanceof PIXI.Graphics && !child.isFlipArrow)) {
+
         child.scale.x = building.facingRight ? -Math.abs(child.scale.x) : Math.abs(child.scale.x)
       }
     }
@@ -2206,7 +2302,8 @@ export class GameEngine {
 
       // animate sprite if present
       if (npc.animSprite) {
-        const textures = npc.useHumanGold ? this.humanGoldTextures : this.skeletonTextures
+        const textures = npc.useBarbarian ? this.barbarianTextures :
+                         npc.useHumanGold ? this.humanGoldTextures : this.skeletonTextures
         if (textures) {
           npc.animTimer += npc.animSpeed * this.playbackSpeed
           if (npc.animTimer >= 1) {

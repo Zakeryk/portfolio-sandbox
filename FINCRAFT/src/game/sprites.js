@@ -199,6 +199,19 @@ export const SPRITES = {
       anchorX: 0.5,
       anchorY: 0.85,
       animSpeed: 0.12
+    },
+    barbarian: {
+      path: '/assets/units/unit-barbarian.png',
+      useFallback: true,
+      frameWidth: 704,
+      frameHeight: 752,
+      framesPerRow: 4,
+      rows: 2,
+      displayWidth: 24,
+      displayHeight: 26,
+      anchorX: 0.5,
+      anchorY: 0.85,
+      animSpeed: 0.12
     }
   },
 
