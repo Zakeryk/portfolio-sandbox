@@ -286,28 +286,34 @@ export class GameEngine {
         targetGridX = destBuilding.gridX
         targetGridY = destBuilding.gridY
       } else {
-        // No buildings matched - pick random internal path
-        // Always show transfers as blue units moving between buildings
-        const buildings = this.entities.buildings
-        if (buildings.length >= 2) {
-          // Random building to building
-          const srcIdx = Math.floor(Math.random() * buildings.length)
-          let destIdx = Math.floor(Math.random() * buildings.length)
-          while (destIdx === srcIdx && buildings.length > 1) {
-            destIdx = Math.floor(Math.random() * buildings.length)
+        // No buildings matched - default to townhall ↔ depository/investment
+        // Prefer depository, fallback to investment
+        const depositoryBuildings = this.entities.buildings.filter(b => b.category === 'depository')
+        const investmentBuildings = this.entities.buildings.filter(b => b.category === 'investments')
+
+        // Pick building: prefer depository, then investment
+        let targetBuilding = null
+        if (depositoryBuildings.length > 0) {
+          targetBuilding = depositoryBuildings[Math.floor(Math.random() * depositoryBuildings.length)]
+        } else if (investmentBuildings.length > 0) {
+          targetBuilding = investmentBuildings[Math.floor(Math.random() * investmentBuildings.length)]
+        }
+
+        if (targetBuilding) {
+          // Random direction: townhall → building or building → townhall
+          if (Math.random() > 0.5) {
+            spawnGridX = centerX
+            spawnGridY = centerY
+            targetGridX = targetBuilding.gridX
+            targetGridY = targetBuilding.gridY
+          } else {
+            spawnGridX = targetBuilding.gridX
+            spawnGridY = targetBuilding.gridY
+            targetGridX = centerX
+            targetGridY = centerY
           }
-          spawnGridX = buildings[srcIdx].gridX
-          spawnGridY = buildings[srcIdx].gridY
-          targetGridX = buildings[destIdx].gridX
-          targetGridY = buildings[destIdx].gridY
-        } else if (buildings.length === 1) {
-          // One building to town hall
-          spawnGridX = buildings[0].gridX
-          spawnGridY = buildings[0].gridY
-          targetGridX = centerX
-          targetGridY = centerY
         } else {
-          // No buildings - town hall to mine
+          // No depository/investment buildings - townhall to mine
           spawnGridX = centerX
           spawnGridY = centerY
           targetGridX = centerX - 5
