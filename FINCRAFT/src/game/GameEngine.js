@@ -2069,13 +2069,11 @@ export class GameEngine {
         npc.animTimer += npc.animSpeed * this.playbackSpeed
         if (npc.animTimer >= 1) {
           npc.animTimer = 0
-          npc.animFrame = (npc.animFrame + 1) % 4 // 4 frames per direction
-
-          // determine direction row based on movement (row 0 = right, row 1 = left)
-          const row = npc.moveDir.x < 0 ? 1 : 0
-          const frameIndex = row * 4 + npc.animFrame
-          npc.animSprite.texture = this.skeletonTextures[frameIndex]
+          npc.animFrame = (npc.animFrame + 1) % 4
+          npc.animSprite.texture = this.skeletonTextures[npc.animFrame]
         }
+        // mirror sprite if npc is to the right of target
+        npc.animSprite.scale.x = (npc.x > npc.targetX) ? -Math.abs(npc.animSprite.scale.x) : Math.abs(npc.animSprite.scale.x)
       }
 
       // show name label in edit mode
