@@ -381,8 +381,9 @@ export class GameEngine {
 
   // check if a tile is occupied by a building
   isTileOccupied(gridX, gridY, targetX, targetY) {
-    // don't block the target tile
-    if (gridX === targetX && gridY === targetY) return false
+    // don't block tiles near the target (allows NPCs to reach destination)
+    const distToTarget = Math.abs(gridX - targetX) + Math.abs(gridY - targetY)
+    if (distToTarget <= 2) return false
 
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
@@ -1782,12 +1783,17 @@ export class GameEngine {
       this.lastTransactionSpawn = now
     }
 
-    // move transaction npcs along isometric grid
+    // move transaction npcs along isometric grid - continuous movement
     this.entities.transactionNpcs = this.entities.transactionNpcs.filter(npc => {
-      // check if reached target grid
-      if (npc.gridX === npc.targetGridX && npc.gridY === npc.targetGridY) {
+      // get target position in screen coords
+      const targetPos = this.toIso(npc.targetGridX, npc.targetGridY)
+      const dx = targetPos.x - npc.x
+      const dy = targetPos.y - npc.y
+      const distToTarget = Math.sqrt(dx * dx + dy * dy)
+
+      // check if reached target
+      if (distToTarget < 15) {
         this.unitLayer.removeChild(npc)
-        // spawn particle based on type
         if (npc.npcType === 'income') {
           this.spawnTransactionParticle(npc.x, npc.y, npc.transactionData.amount, 'income')
         } else if (npc.npcType === 'transfer') {
@@ -1798,32 +1804,37 @@ export class GameEngine {
         return false
       }
 
-      // if ready for next tile, pick one
-      if (npc.moveProgress >= 1) {
+      // update grid position from screen position
+      const currentGrid = this.fromIso(npc.x, npc.y)
+      npc.gridX = Math.round(currentGrid.x)
+      npc.gridY = Math.round(currentGrid.y)
+
+      // recalculate direction every few frames for grid-aligned movement
+      npc.pathTimer = (npc.pathTimer || 0) + 1
+      if (npc.pathTimer > 10 || !npc.moveDir) {
+        npc.pathTimer = 0
         const nextTile = this.getNextTile(npc)
         if (nextTile) {
-          npc.currentTileX = npc.x
-          npc.currentTileY = npc.y
           const nextPos = this.toIso(nextTile.x, nextTile.y)
-          npc.nextTileX = nextPos.x
-          npc.nextTileY = nextPos.y
-          npc.gridX = nextTile.x
-          npc.gridY = nextTile.y
-          npc.moveProgress = 0
+          const ndx = nextPos.x - npc.x
+          const ndy = nextPos.y - npc.y
+          const ndist = Math.sqrt(ndx * ndx + ndy * ndy)
+          if (ndist > 0) {
+            npc.moveDir = { x: ndx / ndist, y: ndy / ndist }
+          }
+        } else {
+          // no valid tile, move directly toward target
+          if (distToTarget > 0) {
+            npc.moveDir = { x: dx / distToTarget, y: dy / distToTarget }
+          }
         }
       }
 
-      // interpolate between current and next tile
-      if (npc.moveProgress < 1) {
-        npc.moveProgress += npc.speed * this.playbackSpeed
-        if (npc.moveProgress > 1) npc.moveProgress = 1
-
-        // smooth easing
-        const t = npc.moveProgress
-        const ease = t * t * (3 - 2 * t) // smoothstep
-
-        npc.x = npc.currentTileX + (npc.nextTileX - npc.currentTileX) * ease
-        npc.y = npc.currentTileY + (npc.nextTileY - npc.currentTileY) * ease
+      // continuous movement in current direction
+      if (npc.moveDir) {
+        const moveSpeed = 0.4 * this.playbackSpeed
+        npc.x += npc.moveDir.x * moveSpeed
+        npc.y += npc.moveDir.y * moveSpeed
       }
 
       npc.zIndex = npc.y
@@ -1842,6 +1853,13 @@ export class GameEngine {
       } else if (!this.buildMode && npc.nameLabel) {
         npc.removeChild(npc.nameLabel)
         npc.nameLabel = null
+      }
+
+      // timeout - remove if stuck for too long
+      npc.lifetime = (npc.lifetime || 0) + 1
+      if (npc.lifetime > 3000) { // ~50 seconds at 60fps
+        this.unitLayer.removeChild(npc)
+        return false
       }
 
       return true
