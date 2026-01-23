@@ -300,11 +300,16 @@ export class GameEngine {
 
     // pick random transaction
     const transaction = this.transactionPool[Math.floor(Math.random() * this.transactionPool.length)]
-    const type = this.getTransactionType(transaction)
+    let type = this.getTransactionType(transaction)
     const amountStr = transaction.amount || transaction.Amount || '0'
     const amount = Math.abs(parseFloat(amountStr.replace(/[,$]/g, '')))
     const name = transaction.name || transaction.Name || transaction.description || 'Unknown'
     const account = transaction.account || transaction.Account || ''
+
+    // payroll always comes from income mine
+    if (name.toLowerCase().includes('payroll')) {
+      type = 'income'
+    }
 
     // find matching building
     const matchedBuilding = this.findMatchingBuilding(account)
