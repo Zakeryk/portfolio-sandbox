@@ -132,10 +132,10 @@ export class GameEngine {
       })
 
       // calculate spawn interval based on pool size
-      // baseline: 30 transactions = 1 spawn per second
+      // baseline: 30 transactions = 1 spawn every 2 seconds (slower, more ambient)
       if (this.transactionPool.length > 0) {
-        const spawnsPerSecond = this.transactionPool.length / 30
-        this.transactionSpawnInterval = 1000 / Math.max(0.5, spawnsPerSecond)
+        const spawnsPerSecond = this.transactionPool.length / 60 // halved rate
+        this.transactionSpawnInterval = 1000 / Math.max(0.3, Math.min(2, spawnsPerSecond))
       }
 
       console.log(`Transaction pool loaded: ${this.transactionPool.length} transactions, spawn interval: ${this.transactionSpawnInterval}ms`)
@@ -162,9 +162,19 @@ export class GameEngine {
   }
 
   getTransactionType(transaction) {
-    // check if internal transfer
+    // check if internal transfer - multiple indicators
     const type = (transaction.type || transaction.Type || '').toLowerCase()
-    if (type === 'transfer' || type === 'internal') return 'transfer'
+    const category = (transaction.category || transaction.Category || '').toLowerCase()
+    const name = (transaction.name || transaction.Name || '').toLowerCase()
+    const excluded = transaction.excluded || transaction.Excluded
+
+    // transfers indicated by type, category containing "transfer", or excluded flag
+    if (type === 'transfer' || type === 'internal' ||
+        category.includes('transfer') ||
+        name.includes('transfer') ||
+        excluded === 'true' || excluded === true) {
+      return 'transfer'
+    }
 
     // check amount - negative = income, positive = expense
     const amountStr = transaction.amount || transaction.Amount || '0'
@@ -234,13 +244,13 @@ export class GameEngine {
     npc.x = spawnX
     npc.y = spawnY
 
-    // size based on amount: $1-$20 = 8px, $2000+ = 24px
-    const size = 8 + Math.min(16, Math.log10(amount + 1) * 6)
+    // size based on amount: tiny units - $1 = 2px, $2000+ = 6px
+    const size = 2 + Math.min(4, Math.log10(amount + 1) * 1.5)
 
     // shadow
     const shadow = new PIXI.Graphics()
-    shadow.beginFill(0x000000, 0.3)
-    shadow.drawEllipse(0, size / 2, size * 0.8, size / 3)
+    shadow.beginFill(0x000000, 0.25)
+    shadow.drawEllipse(0, size / 2, size * 0.7, size / 4)
     shadow.endFill()
     npc.addChild(shadow)
 
@@ -261,7 +271,7 @@ export class GameEngine {
     }
     npc.targetX = targetX
     npc.targetY = targetY
-    npc.speed = 0.8 + Math.random() * 0.4
+    npc.speed = 0.25 + Math.random() * 0.15 // much slower
     npc.wanderOffset = { x: 0, y: 0 }
     npc.wanderTimer = 0
     npc.npcType = type
@@ -272,6 +282,86 @@ export class GameEngine {
 
     this.unitLayer.addChild(npc)
     this.entities.transactionNpcs.push(npc)
+  }
+
+  // check if screen position is near a building (for obstacle avoidance)
+  isNearBuilding(screenX, screenY, excludeTarget = null) {
+    const checkRadius = 40 // pixels
+
+    // check town hall
+    if (this.entities.townHall) {
+      const dx = screenX - this.entities.townHall.x
+      const dy = screenY - this.entities.townHall.y
+      if (Math.sqrt(dx * dx + dy * dy) < checkRadius * 1.5) {
+        if (!excludeTarget || (excludeTarget.x !== this.entities.townHall.x || excludeTarget.y !== this.entities.townHall.y)) {
+          return true
+        }
+      }
+    }
+
+    // check mine
+    if (this.entities.mine) {
+      const dx = screenX - this.entities.mine.x
+      const dy = screenY - this.entities.mine.y
+      if (Math.sqrt(dx * dx + dy * dy) < checkRadius) {
+        if (!excludeTarget || (excludeTarget.x !== this.entities.mine.x || excludeTarget.y !== this.entities.mine.y)) {
+          return true
+        }
+      }
+    }
+
+    // check account buildings
+    for (const building of this.entities.buildings) {
+      const dx = screenX - building.container.x
+      const dy = screenY - building.container.y
+      if (Math.sqrt(dx * dx + dy * dy) < checkRadius) {
+        if (!excludeTarget || (excludeTarget.x !== building.container.x || excludeTarget.y !== building.container.y)) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  // get avoidance steering vector
+  getAvoidanceVector(npc) {
+    const avoidRadius = 50
+    let avoidX = 0
+    let avoidY = 0
+
+    const checkBuilding = (bx, by) => {
+      const dx = npc.x - bx
+      const dy = npc.y - by
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < avoidRadius && dist > 0) {
+        // push away from building, stronger when closer
+        const strength = (avoidRadius - dist) / avoidRadius
+        avoidX += (dx / dist) * strength
+        avoidY += (dy / dist) * strength
+      }
+    }
+
+    // avoid town hall
+    if (this.entities.townHall &&
+        (npc.targetX !== this.entities.townHall.x || npc.targetY !== this.entities.townHall.y)) {
+      checkBuilding(this.entities.townHall.x, this.entities.townHall.y)
+    }
+
+    // avoid mine
+    if (this.entities.mine &&
+        (npc.targetX !== this.entities.mine.x || npc.targetY !== this.entities.mine.y)) {
+      checkBuilding(this.entities.mine.x, this.entities.mine.y)
+    }
+
+    // avoid account buildings
+    for (const building of this.entities.buildings) {
+      if (npc.targetX !== building.container.x || npc.targetY !== building.container.y) {
+        checkBuilding(building.container.x, building.container.y)
+      }
+    }
+
+    return { x: avoidX, y: avoidY }
   }
 
   getRandomEdgePosition() {
@@ -1569,18 +1659,18 @@ export class GameEngine {
     this.entities.transactionNpcs = this.entities.transactionNpcs.filter(npc => {
       npc.wanderTimer++
       if (npc.wanderTimer > 30) {
-        npc.wanderOffset.x = (Math.random() - 0.5) * 20
-        npc.wanderOffset.y = (Math.random() - 0.5) * 10
+        npc.wanderOffset.x = (Math.random() - 0.5) * 10
+        npc.wanderOffset.y = (Math.random() - 0.5) * 5
         npc.wanderTimer = 0
       }
 
       const targetX = npc.targetX + npc.wanderOffset.x
       const targetY = npc.targetY + npc.wanderOffset.y
-      const dx = targetX - npc.x
-      const dy = targetY - npc.y
+      let dx = targetX - npc.x
+      let dy = targetY - npc.y
       const dist = Math.sqrt(dx * dx + dy * dy)
 
-      if (dist < 30) {
+      if (dist < 25) {
         this.unitLayer.removeChild(npc)
         // spawn particle based on type
         if (npc.npcType === 'income') {
@@ -1593,8 +1683,20 @@ export class GameEngine {
         return false
       }
 
-      npc.x += (dx / dist) * npc.speed * this.playbackSpeed
-      npc.y += (dy / dist) * npc.speed * this.playbackSpeed
+      // get avoidance steering to navigate around buildings
+      const avoid = this.getAvoidanceVector(npc)
+      dx = dx / dist + avoid.x * 2
+      dy = dy / dist + avoid.y * 2
+
+      // normalize combined vector
+      const combinedDist = Math.sqrt(dx * dx + dy * dy)
+      if (combinedDist > 0) {
+        dx /= combinedDist
+        dy /= combinedDist
+      }
+
+      npc.x += dx * npc.speed * this.playbackSpeed
+      npc.y += dy * npc.speed * this.playbackSpeed
       npc.zIndex = npc.y
 
       // show name label in edit mode
