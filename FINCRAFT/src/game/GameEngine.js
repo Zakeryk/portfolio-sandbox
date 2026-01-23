@@ -573,8 +573,8 @@ export class GameEngine {
       npc.animFrame = 0
       npc.animTimer = 0
       npc.animSpeed = spriteConfig.animSpeed
-    } else if (targetBuilding?.isDebt && this.barbarianTextures) {
-      // use barbarian sprite when going TO debt buildings (credit cards, loans)
+    } else if (targetBuilding?.isDebt && type !== 'transfer' && this.barbarianTextures) {
+      // use barbarian sprite for expenses/fees going TO debt buildings (not payments)
       const spriteConfig = SPRITES.units.barbarian
       const sprite = new PIXI.Sprite(this.barbarianTextures[0])
       sprite.anchor.set(spriteConfig.anchorX, spriteConfig.anchorY)
