@@ -1972,6 +1972,32 @@ export class GameEngine {
     demon.wanderOffset = { x: 0, y: 0 }
     demon.wanderTimer = 0
 
+    // make interactive for hover label
+    demon.eventMode = 'static'
+    demon.cursor = 'default'
+
+    demon.on('pointerover', () => {
+      if (this.buildMode) return
+      if (!demon.hoverLabel) {
+        const label = new PIXI.Text('Interest', {
+          fontSize: 7,
+          fill: 0xffffff,
+          fontWeight: 'bold'
+        })
+        label.anchor.set(0.5)
+        label.y = -10
+        demon.addChild(label)
+        demon.hoverLabel = label
+      }
+      demon.hoverLabel.visible = true
+    })
+
+    demon.on('pointerout', () => {
+      if (demon.hoverLabel) {
+        demon.hoverLabel.visible = false
+      }
+    })
+
     this.unitLayer.addChild(demon)
     this.entities.demons.push(demon)
   }
