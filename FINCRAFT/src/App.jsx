@@ -676,6 +676,7 @@ function App() {
                 )}
               </div>
             </div>
+          </div>
           )}
 
           {/* Game Canvas */}
