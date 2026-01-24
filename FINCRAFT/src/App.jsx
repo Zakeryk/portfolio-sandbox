@@ -430,15 +430,6 @@ function App() {
                   onClick={() => window.location.reload()}
                 />
               </div>
-              <button
-                disabled
-                className="text-gray-600 p-1 opacity-50"
-                title="Close (disabled)"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
             </div>
 
             {/* Menu Backdrop */}
@@ -687,7 +678,7 @@ function App() {
             />
             <button
               onClick={() => setBuildMode(!buildMode)}
-              className={`absolute top-2 right-2 text-xs px-3 py-1.5 rounded font-bold transition ${
+              className={`absolute top-2 right-2 text-xs px-3 py-1.5 rounded font-bold transition cursor-pointer ${
                 buildMode
                   ? 'bg-orange-600 text-white'
                   : 'bg-[#1a1a2e] text-gray-400 hover:bg-[#2a2a4e] border border-[#3a3a5e]'
@@ -696,119 +687,23 @@ function App() {
               {buildMode ? 'EXIT EDIT' : 'EDIT'}
             </button>
 
-            {/* Top Left Controls */}
-            <div className="absolute top-2 left-2 flex gap-1">
-              {/* Fullscreen Toggle */}
-              <button
-                onClick={() => setIsFullscreen(!isFullscreen)}
-                className="text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
-                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              >
-                {isFullscreen ? (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5M9 15l-5 5m0 0h5m-5 0v-5m11-6l5-5m0 0h-5m5 0v5" />
-                  </svg>
-                ) : (
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
-                  </svg>
-                )}
-              </button>
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e] cursor-pointer"
+              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5M9 15l-5 5m0 0h5m-5 0v-5m11-6l5-5m0 0h-5m5 0v5" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
+                </svg>
+              )}
+            </button>
 
-              {/* Sim Panel Toggle */}
-              <button
-                onClick={toggleSimPanel}
-                className="text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
-              >
-                SIM
-              </button>
-            </div>
-
-            {/* Sim Panel */}
-            {showSimPanel && (
-              <div className="absolute bottom-2 left-2 bg-[#1a1a2e]/95 border border-[#3a3a5e] rounded-lg p-2 text-xs">
-                <div
-                  className="flex items-center justify-between cursor-pointer mb-2"
-                  onClick={() => setSimPanelCollapsed(!simPanelCollapsed)}
-                >
-                  <span className="font-bold text-gray-400">SIM PANEL</span>
-                  <span className="text-gray-500">{simPanelCollapsed ? '▶' : '▼'}</span>
-                </div>
-
-                {!simPanelCollapsed && (
-                  <div className="space-y-2">
-                    {/* Expenses */}
-                    <div>
-                      <div className="text-gray-500 mb-1">Expenses</div>
-                      <div className="flex gap-1 flex-wrap">
-                        <button
-                          onClick={() => pushEvent('expense', 25)}
-                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
-                        >
-                          Gas $25
-                        </button>
-                        <button
-                          onClick={() => pushEvent('expense', 50)}
-                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
-                        >
-                          Food $50
-                        </button>
-                        <button
-                          onClick={() => pushEvent('expense', 1500)}
-                          className="px-2 py-1 bg-red-900/50 hover:bg-red-800/50 rounded text-red-300"
-                        >
-                          Rent $1500
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Debt Payments */}
-                    {firstDebtAccount && (
-                      <div>
-                        <div className="text-gray-500 mb-1">Debt Payments</div>
-                        <div className="flex gap-1 flex-wrap">
-                          <button
-                            onClick={() => pushEvent('debt-payment', 100, firstDebtAccount.id)}
-                            className="px-2 py-1 bg-green-900/50 hover:bg-green-800/50 rounded text-green-300"
-                          >
-                            $100
-                          </button>
-                          <button
-                            onClick={() => pushEvent('debt-payment', 500, firstDebtAccount.id)}
-                            className="px-2 py-1 bg-green-900/50 hover:bg-green-800/50 rounded text-green-300"
-                          >
-                            $500
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Custom */}
-                    <div className="flex gap-1">
-                      <input
-                        type="number"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        placeholder="$"
-                        className="w-16 px-2 py-1 bg-[#0f0f1a] rounded border border-[#3a3a5e] text-white"
-                      />
-                      <button
-                        onClick={() => {
-                          const amt = parseFloat(customAmount)
-                          if (amt > 0) {
-                            pushEvent('expense', amt)
-                            setCustomAmount('')
-                          }
-                        }}
-                        className="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
-                      >
-                        Send
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>
