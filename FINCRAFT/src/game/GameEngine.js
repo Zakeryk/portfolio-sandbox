@@ -72,23 +72,29 @@ export class GameEngine {
   }
 
   // get approach point for town hall edge based on direction
+  // favors the direction the building is in, defaults to left (west)
   getTownHallEdge(otherX, otherY) {
     const centerX = Math.floor(this.mapWidth / 2)
     const centerY = Math.floor(this.mapHeight / 2)
 
-    // determine which side based on other position
     const dx = otherX - centerX
     const dy = otherY - centerY
 
-    // pick the edge tile closest to that direction
-    if (Math.abs(dx) > Math.abs(dy)) {
-      // east or west edge
+    // default to left (west in iso) if position is ambiguous or centered
+    if (dx === 0 && dy === 0) {
+      return { x: centerX - 2, y: centerY }
+    }
+
+    // favor the primary direction the building is in
+    // use the axis with larger offset, default to left if equal
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      // horizontal is dominant - use east or west edge
       return {
         x: centerX + (dx > 0 ? 2 : -2),
         y: centerY
       }
     } else {
-      // north or south edge
+      // vertical is dominant - use north or south edge
       return {
         x: centerX,
         y: centerY + (dy > 0 ? 2 : -2)
