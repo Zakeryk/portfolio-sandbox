@@ -1072,10 +1072,10 @@ export class GameEngine {
     bg.drawRoundedRect(0, 0, 140, 80, 6)
     bg.endFill()
 
-    const title = new PIXI.Text('', { fontSize: 11, fill: 0xffffff, fontWeight: 'bold', align: 'center' })
+    const title = new PIXI.Text('', { fontSize: 11, fill: 0xffffff, fontWeight: 'bold', align: 'center', resolution: 2 })
     title.anchor.set(0.5, 0)
 
-    const content = new PIXI.Text('', { fontSize: 10, fill: 0xcccccc, lineHeight: 14, align: 'center' })
+    const content = new PIXI.Text('', { fontSize: 10, fill: 0xcccccc, lineHeight: 14, align: 'center', resolution: 2 })
     content.anchor.set(0.5, 0)
 
     this.tooltip.addChild(bg)
