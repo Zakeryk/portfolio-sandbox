@@ -71,6 +71,41 @@ export class GameEngine {
     return { x, y }
   }
 
+  // get approach point for town hall edge based on direction
+  getTownHallEdge(otherX, otherY) {
+    const centerX = Math.floor(this.mapWidth / 2)
+    const centerY = Math.floor(this.mapHeight / 2)
+
+    // determine which side based on other position
+    const dx = otherX - centerX
+    const dy = otherY - centerY
+
+    // pick the edge tile closest to that direction
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // east or west edge
+      return {
+        x: centerX + (dx > 0 ? 2 : -2),
+        y: centerY
+      }
+    } else {
+      // north or south edge
+      return {
+        x: centerX,
+        y: centerY + (dy > 0 ? 2 : -2)
+      }
+    }
+  }
+
+  // get approach point for town hall (when unit goes TO town hall)
+  getTownHallApproach(spawnX, spawnY) {
+    return this.getTownHallEdge(spawnX, spawnY)
+  }
+
+  // get spawn point from town hall (when unit leaves FROM town hall)
+  getTownHallSpawn(targetX, targetY) {
+    return this.getTownHallEdge(targetX, targetY)
+  }
+
   async init() {
     const rect = this.container.getBoundingClientRect()
     this.width = rect.width || 900
@@ -411,8 +446,9 @@ export class GameEngine {
         targetGridY = matchedBuilding.gridY
         targetBuilding = matchedBuilding
       } else {
-        targetGridX = centerX
-        targetGridY = centerY
+        const approach = this.getTownHallApproach(spawnGridX, spawnGridY)
+        targetGridX = approach.x
+        targetGridY = approach.y
       }
       color = 0xffd93d // gold
     } else if (type === 'transfer') {
@@ -444,24 +480,27 @@ export class GameEngine {
         }
       } else if (destBuilding) {
         // Found destination in transaction name - path from town hall
-        spawnGridX = centerX
-        spawnGridY = centerY
+        const spawn = this.getTownHallSpawn(destBuilding.gridX, destBuilding.gridY)
+        spawnGridX = spawn.x
+        spawnGridY = spawn.y
         targetGridX = destBuilding.gridX
         targetGridY = destBuilding.gridY
         targetBuilding = destBuilding
       } else if (matchedBuilding) {
         // Only found source account - use town hall as hub
         if (rawAmount < 0) {
-          spawnGridX = centerX
-          spawnGridY = centerY
+          const spawn = this.getTownHallSpawn(matchedBuilding.gridX, matchedBuilding.gridY)
+          spawnGridX = spawn.x
+          spawnGridY = spawn.y
           targetGridX = matchedBuilding.gridX
           targetGridY = matchedBuilding.gridY
           targetBuilding = matchedBuilding
         } else {
           spawnGridX = matchedBuilding.gridX
           spawnGridY = matchedBuilding.gridY
-          targetGridX = centerX
-          targetGridY = centerY
+          const approach = this.getTownHallApproach(spawnGridX, spawnGridY)
+          targetGridX = approach.x
+          targetGridY = approach.y
         }
       } else {
         // No buildings matched - default to townhall ↔ depository/investment
@@ -480,20 +519,23 @@ export class GameEngine {
         if (targetBuilding) {
           // Random direction: townhall → building or building → townhall
           if (Math.random() > 0.5) {
-            spawnGridX = centerX
-            spawnGridY = centerY
+            const spawn = this.getTownHallSpawn(targetBuilding.gridX, targetBuilding.gridY)
+            spawnGridX = spawn.x
+            spawnGridY = spawn.y
             targetGridX = targetBuilding.gridX
             targetGridY = targetBuilding.gridY
           } else {
             spawnGridX = targetBuilding.gridX
             spawnGridY = targetBuilding.gridY
-            targetGridX = centerX
-            targetGridY = centerY
+            const approach = this.getTownHallApproach(spawnGridX, spawnGridY)
+            targetGridX = approach.x
+            targetGridY = approach.y
           }
         } else {
           // No depository/investment buildings - townhall to mine
-          spawnGridX = centerX
-          spawnGridY = centerY
+          const spawn = this.getTownHallSpawn(centerX - 5, centerY - 3)
+          spawnGridX = spawn.x
+          spawnGridY = spawn.y
           targetGridX = centerX - 5
           targetGridY = centerY - 3
         }
@@ -534,8 +576,9 @@ export class GameEngine {
         targetGridY = expenseTarget.gridY
       } else {
         // No depository - attack town hall
-        targetGridX = centerX
-        targetGridY = centerY
+        const approach = this.getTownHallApproach(spawnGridX, spawnGridY)
+        targetGridX = approach.x
+        targetGridY = approach.y
       }
       color = 0xff6b6b // red
     }
