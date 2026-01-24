@@ -170,6 +170,7 @@ function App() {
     loans: false,
     others: false
   })
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // persist to localStorage
   useEffect(() => {
@@ -227,21 +228,25 @@ function App() {
     }
   }, [])
 
-  // esc to exit edit mode
+  // keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
       // ignore when typing in inputs
       if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return
-      if (e.key === 'Escape' && buildMode) {
-        setBuildMode(false)
+      if (e.key === 'Escape') {
+        if (buildMode) setBuildMode(false)
+        if (isFullscreen) setIsFullscreen(false)
       }
       if (e.key === 'e' || e.key === 'E') {
         setBuildMode(prev => !prev)
       }
+      if (e.key === 'f' || e.key === 'F') {
+        setIsFullscreen(prev => !prev)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [buildMode])
+  }, [buildMode, isFullscreen])
 
   // csv drag and drop
   useEffect(() => {
@@ -387,8 +392,20 @@ function App() {
       <div className="flex flex-col flex-1 min-h-0 w-full">
 
         <div className="flex gap-4 flex-1 min-h-0">
+          {/* Fullscreen Tab - shows when sidebar hidden */}
+          {isFullscreen && (
+            <div
+              onClick={() => setIsFullscreen(false)}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-[#1a1a2e] hover:bg-[#252542] border border-[#3a3a5e] border-l-0 rounded-r-lg px-1 py-4 cursor-pointer transition-all"
+            >
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          )}
+
           {/* Control Panel */}
-          <div className="w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden relative">
+          <div className={`w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden relative transition-all duration-300 ${isFullscreen ? '-ml-80 opacity-0' : 'ml-0 opacity-100'}`}>
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -673,13 +690,33 @@ function App() {
               {buildMode ? 'EXIT EDIT' : 'EDIT'}
             </button>
 
-            {/* Sim Panel Toggle */}
-            <button
-              onClick={toggleSimPanel}
-              className="absolute top-2 left-2 text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
-            >
-              SIM
-            </button>
+            {/* Top Left Controls */}
+            <div className="absolute top-2 left-2 flex gap-1">
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              >
+                {isFullscreen ? (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5M9 15l-5 5m0 0h5m-5 0v-5m11-6l5-5m0 0h-5m5 0v5" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5h-4m4 0v-4m0 4l-5-5" />
+                  </svg>
+                )}
+              </button>
+
+              {/* Sim Panel Toggle */}
+              <button
+                onClick={toggleSimPanel}
+                className="text-xs px-2 py-1 rounded bg-[#1a1a2e] text-gray-500 hover:text-gray-300 border border-[#3a3a5e]"
+              >
+                SIM
+              </button>
+            </div>
 
             {/* Sim Panel */}
             {showSimPanel && (
