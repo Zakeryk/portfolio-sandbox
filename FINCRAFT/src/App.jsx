@@ -185,6 +185,22 @@ function App() {
     localStorage.setItem('fincraft-speed', playbackSpeed.toString())
   }, [playbackSpeed])
 
+  // trigger resize when fullscreen changes
+  useEffect(() => {
+    if (gameRef.current && gameRef.current.app) {
+      // small delay to let dom update
+      setTimeout(() => {
+        const rect = gameContainerRef.current?.getBoundingClientRect()
+        if (rect) {
+          gameRef.current.app.renderer.resize(rect.width, rect.height)
+          gameRef.current.width = rect.width
+          gameRef.current.height = rect.height
+          gameRef.current.centerOnTownHall()
+        }
+      }, 50)
+    }
+  }, [isFullscreen])
+
   // sync with game engine
   useEffect(() => {
     if (gameRef.current) {
@@ -392,20 +408,9 @@ function App() {
       <div className="flex flex-col flex-1 min-h-0 w-full">
 
         <div className="flex gap-4 flex-1 min-h-0">
-          {/* Fullscreen Tab - shows when sidebar hidden */}
-          {isFullscreen && (
-            <div
-              onClick={() => setIsFullscreen(false)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-[#1a1a2e] hover:bg-[#252542] border border-[#3a3a5e] border-l-0 rounded-r-lg px-1 py-4 cursor-pointer transition-all"
-            >
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          )}
-
           {/* Control Panel */}
-          <div className={`w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden relative transition-all duration-300 ${isFullscreen ? '-ml-80 opacity-0' : 'ml-0 opacity-100'}`}>
+          {!isFullscreen && (
+            <div className="w-80 flex flex-col gap-3 flex-shrink-0 overflow-hidden relative">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -671,7 +676,7 @@ function App() {
                 )}
               </div>
             </div>
-          </div>
+          )}
 
           {/* Game Canvas */}
           <div className="relative flex-1 min-h-0 min-w-0">
