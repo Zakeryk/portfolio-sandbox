@@ -1,6 +1,17 @@
 {
   "active": [
     {
+      "id": "fincraft",
+      "path": "./PROJECTS/FEATURED/fincraft/",
+      "title": "FINCRAFT",
+      "tags": [
+        "Experiment"
+      ],
+      "active": true,
+      "image": null,
+      "date": "2026-01-25T21:52:43.160Z"
+    },
+    {
       "id": "concept_files",
       "path": "./PROJECTS/FEATURED/concept_files/",
       "title": "CONCEPT_RESIDENT",
