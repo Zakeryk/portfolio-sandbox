@@ -1392,6 +1392,9 @@
             updateView();
         });
 
+        // Initialize button state on load
+        updateView();
+
         // 3. Operator Status (GitHub)
         async function checkOperatorStatus() {
             const opText = document.getElementById('op-text');
