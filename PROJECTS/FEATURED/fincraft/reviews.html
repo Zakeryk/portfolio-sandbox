@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCraft — Interactive Financial Planner</title>
+    <link rel="icon" type="image/png" href="assets/fincraft.png">
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;800&family=Roboto+Slab:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="app-wrapper">
+
+        <header class="main-header">
+            <div class="logo-container">
+                <a href="index.html" class="logo-link">
+                    <img src="assets/fincraft.png" alt="FinCraft Logo" class="logo-icon">
+                    <h1 class="logo-text">FinCraft</h1>
+                </a>
+                <h2 class="logo-subtitle">The budget tracker you actually want to use.</h2>
+                <p class="logo-description">Turns bills into enemies, savings into defenses, and debt into damage. All
+                    from a browser tab you’ll never want to close.</p>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <section class="testimonials-section">
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> All Testimonials</h3>
+                    <a href="index.html" class="view-all-link"><span class="arrow">←</span> Back to Home</a>
+                </div>
+
+                <div id="reviews-grid" class="reviews-grid">
+                    <!-- Loaded dynamically via script.js -->
+                </div>
+            </section>
+
+            <section class="newsletter-section">
+                <h2>Stay Updated</h2>
+                <p>Join our exclusive list for the latest updates and financial tips.</p>
+                <form class="newsletter-form" id="newsletterForm">
+                    <input type="email" placeholder="Enter your email address" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </section>
+        </main>
+
+        <footer class="main-footer">
+            <p class="credits"><a href="https://x.com/wvcbr0kie" target="_blank">Follow the Development @wvcbr0kie</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="reviews.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

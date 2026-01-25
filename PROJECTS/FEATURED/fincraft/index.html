@@ -1,117 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinCraft — Interactive Financial Planner</title>
+    <link rel="icon" type="image/png" href="assets/fincraft.png">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;800&family=Roboto+Slab:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
+    <div class="app-wrapper">
 
-    <header class="main-header">
-        <div class="logo-container">
-            <!-- Using a unicode symbol as a placeholder icon, can be replaced with SVG -->
-            <span class="logo-icon">❖</span>
-            <h1 class="logo-text">FinCraft</h1>
-        </div>
-    </header>
+        <header class="main-header">
+            <div class="logo-container">
+                <a href="index.html" class="logo-link">
+                    <img src="assets/fincraft.png" alt="FinCraft Logo" class="logo-icon">
+                    <h1 class="logo-text">FinCraft</h1>
+                </a>
+                <h2 class="logo-subtitle">The budget tracker you actually want to use.</h2>
+                <p class="logo-description">Turns bills into enemies, savings into defenses, and debt into damage. All
+                    from a browser tab you’ll never want to close.</p>
+            </div>
+        </header>
 
-    <main class="content-wrapper">
-        
-        <section class="testimonials-section">
-            <div class="testimonial-row row-left">
-                <div class="testimonial-track">
-                    <!-- Duplicated items for infinite loop -->
-                    <div class="testimonial-card">
-                        <p>"FinCraft changed how I view my assets."</p>
-                        <span class="author">— Sarah J.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"The dark mode is stunning and easy on the eyes."</p>
-                        <span class="author">— Mike T.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Finally, a financial tool that looks good."</p>
-                        <span class="author">— Elena R.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Intuitive and powerful features."</p>
-                        <span class="author">— David K.</span>
-                    </div>
-                     <div class="testimonial-card">
-                        <p>"FinCraft changed how I view my assets."</p>
-                        <span class="author">— Sarah J.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"The dark mode is stunning and easy on the eyes."</p>
-                        <span class="author">— Mike T.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Finally, a financial tool that looks good."</p>
-                        <span class="author">— Elena R.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Intuitive and powerful features."</p>
-                        <span class="author">— David K.</span>
+        <main class="content-wrapper">
+
+            <section class="testimonials-section">
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> What People Say</h3>
+                    <a href="reviews.html" class="view-all-link">View All <span class="arrow">→</span></a>
+                </div>
+                <div class="testimonial-row row-left">
+                    <div id="track-left" class="testimonial-track">
+                        <!-- Loaded dynamically via script.js -->
                     </div>
                 </div>
-            </div>
-
-            <div class="testimonial-row row-right">
-                <div class="testimonial-track">
-                     <!-- Duplicated items for infinite loop -->
-                    <div class="testimonial-card">
-                        <p>"A game changer for my portfolio."</p>
-                        <span class="author">— James L.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Sleek, fast, and reliable."</p>
-                        <span class="author">— Anna W.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"I love the gold accents, feels premium."</p>
-                        <span class="author">— Robert P.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Highly recommended for serious planners."</p>
-                        <span class="author">— Sophia M.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"A game changer for my portfolio."</p>
-                        <span class="author">— James L.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Sleek, fast, and reliable."</p>
-                        <span class="author">— Anna W.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"I love the gold accents, feels premium."</p>
-                        <span class="author">— Robert P.</span>
-                    </div>
-                    <div class="testimonial-card">
-                        <p>"Highly recommended for serious planners."</p>
-                        <span class="author">— Sophia M.</span>
+                <div class="testimonial-row row-right">
+                    <div id="track-right" class="testimonial-track">
+                        <!-- Loaded dynamically via script.js -->
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="newsletter-section">
-            <h2>Stay Updated</h2>
-            <p>Join our exclusive list for the latest updates and financial tips.</p>
-            <form class="newsletter-form" id="newsletterForm">
-                <input type="email" placeholder="Enter your email address" required>
-                <button type="submit">Subscribe</button>
-            </form>
-        </section>
+            <section class="showcase-section">
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> Early Access</h3>
+                    <a href="code.html" class="view-all-link">Have a Code? <span class="arrow">→</span></a>
+                </div>
+                <div class="screenshot-container">
+                    <img src="assets/screenshot-1.jpeg" alt="FinCraft App Screenshot" class="app-screenshot">
+                    <img src="assets/screenshot-2.png" alt="FinCraft App Screenshot Layered"
+                        class="app-screenshot layered">
+                </div>
+            </section>
 
-    </main>
+            <section class="features-section">
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> What is FinCraft?</h3>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-shield.png" alt="Shield Icon"
+                                class="feature-icon-img"></div>
+                        <h4>Defend Your Wealth</h4>
+                        <p>Assign budgets to towers. Stop expenses before they breach your walls and damage your net
+                            worth.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-lock.png" alt="Lock Icon"
+                                class="feature-icon-img"></div>
+                        <h4>Air-Gapped Privacy</h4>
+                        <p>No bank logins. Your data lives locally on your device—offline and 100% safe from breaches.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-crown.png" alt="Crown Icon"
+                                class="feature-icon-img"></div>
+                        <h4>Level Up Real Life</h4>
+                        <p>Evolve from a tent to a stone fortress as you save. Keep your net worth health bar full to
+                            win.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-crate.png" alt="Crate Icon"
+                                class="feature-icon-img"></div>
+                        <h4>The Supply Drop</h4>
+                        <p>Drag and drop CSVs to reload resources. No broken APIs, just pure manual control.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-skull.png" alt="Skull Icon"
+                                class="feature-icon-img"></div>
+                        <h4>Fight the Blight</h4>
+                        <p>Debt is corruption spreading across your map. Pay it down before it drains your gold mines.
+                        </p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon"><img src="assets/icons/icon-scroll.png" alt="Scroll Icon"
+                                class="feature-icon-img"></div>
+                        <h4>The Battle Log</h4>
+                        <p>Treat transactions as enemy encounters. Defeat expenses to keep your base standing.</p>
+                    </div>
+                </div>
+            </section>
 
-    <footer class="main-footer">
-        <p class="credits">Built by Zak Knowlton, 2026.</p>
-    </footer>
+            <section class="platforms-section features-section">
+                <!-- Reusing features-section class for consistent padding reset -->
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> Available Everywhere</h3>
+                </div>
+                <div class="platforms-grid">
+                    <div class="platform-item"><i class="fab fa-apple"></i> App Store</div>
+                    <div class="platform-item"><i class="fab fa-apple"></i> macOS</div>
+                    <div class="platform-item"><i class="fas fa-mobile-alt"></i> iPhone</div>
+                    <div class="platform-item"><i class="fab fa-android"></i> Android</div>
+                    <div class="platform-item"><i class="fab fa-chrome"></i> Chrome</div>
+                </div>
+            </section>
 
+            <section class="featured-in-section features-section">
+                <div class="section-header">
+                    <h3 class="section-label"><span class="accent-icon">❖</span> Featured In</h3>
+                </div>
+                <!-- Row 1: 2 Tiles -->
+                <div class="featured-grid-top">
+                    <!-- Tile 1 -->
+                    <div class="featured-card-large">
+                        <div class="card-header">
+                            <i class="fas fa-star accent-icon"></i>
+                            <h4>Product Hunt</h4>
+                        </div>
+                        <p class="quote">"A game-changer for personal finance gamification."</p>
+                        <span class="author">@producthunt</span>
+                    </div>
+                    <!-- Tile 2 -->
+                    <div class="featured-card-large">
+                        <div class="card-header">
+                            <i class="fas fa-trophy accent-icon"></i>
+                            <h4>Indie Hackers</h4>
+                        </div>
+                        <p class="quote">"The best way to actually stick to a budget."</p>
+                        <span class="author">@indiehackers</span>
+                    </div>
+                </div>
+
+                <!-- Row 2: 4 Tiles -->
+                <div class="featured-grid-bottom">
+                    <!-- Discord -->
+                    <div class="featured-card-small">
+                        <i class="fab fa-discord feature-icon"></i>
+                        <h4>Discord</h4>
+                        <p class="coming-soon">Coming Soon</p>
+                    </div>
+                    <!-- Documentation -->
+                    <div class="featured-card-small">
+                        <i class="fas fa-book feature-icon"></i>
+                        <h4>Documentation</h4>
+                        <p class="coming-soon">Coming Soon</p>
+                    </div>
+                    <!-- GitHub -->
+                    <div class="featured-card-small">
+                        <i class="fab fa-github feature-icon"></i>
+                        <h4>GitHub</h4>
+                        <p class="coming-soon">Coming Soon</p>
+                    </div>
+                    <!-- APIs -->
+                    <div class="featured-card-small">
+                        <i class="fas fa-code feature-icon"></i>
+                        <h4>APIs</h4>
+                        <p class="coming-soon">Coming Soon</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="newsletter-section">
+                <h2>Stay Updated</h2>
+                <p>Join our exclusive list for the latest updates and financial tips.</p>
+                <form class="newsletter-form" id="newsletterForm">
+                    <input type="email" placeholder="Enter your email address" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+            </section>
+
+        </main>
+
+        <footer class="main-footer">
+            <p class="credits"><a href="https://x.com/wvcbr0kie" target="_blank">Follow the Development @wvcbr0kie</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="reviews.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
