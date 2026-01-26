@@ -74,7 +74,18 @@ body::before {
     height: 6rem;
     /* Bigger icon */
     width: auto;
-    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+    animation: iconFloat 4s ease-in-out infinite alternate;
+}
+
+@keyframes iconFloat {
+    0% {
+        transform: translateY(0px);
+    }
+
+    100% {
+        transform: translateY(-8px);
+    }
 }
 
 h1,
@@ -572,6 +583,14 @@ a.featured-card-small:visited {
     max-width: 500px;
 }
 
+@media (max-width: 600px) {
+    .code-input-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+}
+
 .code-input {
     background: transparent;
     border: 2px solid rgba(212, 175, 55, 0.3);
@@ -583,9 +602,23 @@ a.featured-card-small:visited {
     letter-spacing: 1rem;
     padding: 1rem;
     text-align: center;
-    width: 250px;
+    width: 100%;
+    max-width: 280px;
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+@media (max-width: 600px) {
+    .code-input {
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+        padding: 0.8rem;
+    }
+
+    .enter-btn {
+        width: 100%;
+        max-width: 280px;
+    }
 }
 
 .code-input:focus {
@@ -597,7 +630,7 @@ a.featured-card-small:visited {
     background: var(--accent-gold);
     color: #1B2631;
     border: none;
-    padding: 0 2rem;
+    padding: 20px;
     font-weight: 800;
     font-size: 1.1rem;
     border-radius: 8px;
@@ -605,7 +638,10 @@ a.featured-card-small:visited {
     transition: background 0.3s ease, transform 0.2s;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    width: 100%;
+    max-width: 280px;
 }
 
 .enter-btn:hover {
@@ -631,9 +667,12 @@ a.featured-card-small:visited {
 
 /* Download Placeholder */
 .download-placeholder {
-    width: 100%;
+    width: 90%;
+    /* Prevent touching edges */
     max-width: 500px;
     height: 150px;
+    padding: 1.5rem;
+    text-align: center;
     border: 2px dashed rgba(212, 175, 55, 0.3);
     border-radius: 12px;
     display: flex;
