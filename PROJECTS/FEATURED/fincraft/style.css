@@ -212,8 +212,8 @@ h3 {
 
 .app-screenshot.layered {
     position: absolute;
-    top: 5%;
-    /* Moved down 5% */
+    top: 3%;
+    /* Moved down 3% */
     right: 12%;
     /* Moved left ~10% */
     z-index: 2;
@@ -225,12 +225,12 @@ h3 {
 
 .row-left .testimonial-track {
     animation-name: slideLeft;
-    animation-duration: 30s;
+    animation-duration: 57.02s;
 }
 
 .row-right .testimonial-track {
     animation-name: slideRight;
-    animation-duration: 35s;
+    animation-duration: 66.53s;
     /* Slightly different speed */
 }
 
@@ -434,6 +434,20 @@ h3 {
 .featured-card-small {
     padding: 1.5rem;
     text-align: center;
+    text-decoration: none;
+    /* Keep links from having underlines */
+    color: inherit;
+    /* Ensure text color doesn't change to standard link blue */
+    display: block;
+    /* Ensure it behaves as a container if it's an 'a' tag */
+}
+
+a.featured-card-small:hover,
+a.featured-card-small:active,
+a.featured-card-small:visited {
+    color: inherit;
+    /* Prevent color changes */
+    text-decoration: none;
 }
 
 .featured-card-small .feature-icon {
@@ -630,6 +644,7 @@ h3 {
     background: rgba(0, 0, 0, 0.2);
     margin: 0 auto;
 }
+
 /* Reviews Page Grid */
 .reviews-grid {
     display: grid;
@@ -637,10 +652,12 @@ h3 {
     gap: 2rem;
     width: 100%;
     margin-bottom: 4rem;
+    justify-items: center;
+    padding: 0 1.5rem;
 }
 
 .reviews-grid .testimonial-card {
-    min-width: 0; 
+    min-width: 0;
     margin: 0;
     cursor: default;
     background: rgba(255, 255, 255, 0.03);

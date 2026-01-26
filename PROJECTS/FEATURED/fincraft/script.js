@@ -10,24 +10,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalText = button.textContent;
 
             if (emailInput.value) {
-                // Simulate loading/success
                 button.textContent = 'Subscribing...';
                 button.disabled = true;
 
-                setTimeout(() => {
-                    button.textContent = 'Subscribed!';
-                    button.style.backgroundColor = '#27ae60'; // Success green
-                    button.style.color = 'white';
-                    emailInput.value = '';
+                // POST to Formspree
+                fetch('https://formspree.io/f/xykwzrro', {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        button.textContent = 'Subscribed!';
+                        button.style.backgroundColor = '#27ae60'; // Success green
+                        button.style.color = 'white';
+                        emailInput.value = '';
+
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                            button.disabled = false;
+                            button.style.backgroundColor = '';
+                            button.style.color = '';
+                        }, 3000);
+                    } else {
+                        throw new Error('Formspree response was not ok.');
+                    }
+                }).catch(error => {
+                    console.error('Newsletter Error:', error);
+                    button.textContent = 'Error!';
+                    button.style.backgroundColor = '#e74c3c'; // Error red
 
                     setTimeout(() => {
-                        // Reset after a few seconds
                         button.textContent = originalText;
                         button.disabled = false;
                         button.style.backgroundColor = '';
-                        button.style.color = '';
                     }, 3000);
-                }, 1000);
+                });
             }
         });
     }
